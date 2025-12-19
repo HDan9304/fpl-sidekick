@@ -2,66 +2,305 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My FPL Helper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FPL Team Lookup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f0f0f0; }
-        .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input { padding: 10px; width: 70%; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px; background: #37003c; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #00ff85; color: black; }
-        #result { margin-top: 20px; padding: 10px; border-top: 1px solid #eee; }
+        /* --- The "Premier League Vibe" Color Palette --- */
+        :root {
+            --pl-purple: #38003c;
+            --pl-green: #00ff85;
+            --pl-dark: #1f1f1f;
+            --pl-light-grey: #f4f4f4;
+            --text-on-purple: #ffffff;
+        }
+
+        /* --- Global Reset & Typography --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--pl-light-grey);
+            color: var(--pl-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header Styling --- */
+        header {
+            background-color: var(--pl-purple);
+            color: var(--text-on-purple);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            /* Adding a subtle PL lion-ish graphic element could go here later */
+        }
+        
+        header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* --- Main Container --- */
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Aligns to top, better for mobile */
+            padding: 30px 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            border-top: 6px solid var(--pl-green);
+        }
+
+        /* --- Input & Button Styling --- */
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-label {
+            display: block;
+            text-align: left;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--pl-purple);
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.3s ease;
+            /* Removes spinner arrows from number input */
+            -moz-appearance: textfield;
+        }
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--pl-purple);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--pl-purple);
+            color: var(--text-on-purple);
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        button:hover {
+            background-color: #4a0050; /* Slightly lighter purple */
+        }
+        
+        button:active {
+            transform: scale(0.98); /* Subtle button press effect */
+        }
+
+        /* --- Results Section Styling --- */
+        #result {
+            margin-top: 30px;
+            /* Hidden by default until content loads */
+            display: none; 
+            text-align: left;
+        }
+
+        .result-header {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--pl-purple);
+            border-bottom: 2px solid var(--pl-green);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .stat-value {
+            font-weight: 700;
+            color: var(--pl-dark);
+        }
+
+        /* --- Loading & Error States --- */
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(56, 0, 60, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--pl-purple);
+            animation: spin 0.8s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: #d9534f;
+            background: #f9dede;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            color: #888;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>FPL Team Finder</h2>
-    <p>Enter your Team ID below:</p>
-    
-    <input type="number" id="teamID" placeholder="e.g. 123456">
-    <button onclick="getTeam()">Search</button>
+<header>
+    <h1>FPL Connect</h1>
+    <p>Unofficial Fantasy Premier League Helper</p>
+</header>
 
-    <div id="result">Waiting for input...</div>
-</div>
+<main>
+    <div class="card">
+        <div class="input-group">
+            <label for="teamID" class="input-label">Enter your Team ID</label>
+            <input type="number" id="teamID" placeholder="e.g. 123456">
+        </div>
+        <button id="searchBtn" onclick="getTeam()">Find Team</button>
+
+        <div id="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Scouting...</p>
+        </div>
+
+        <div id="result">
+            </div>
+    </div>
+</main>
+
+<footer>
+    <p>Data provided by the official Fantasy Premier League API. Not affiliated with the PL.</p>
+</footer>
 
 <script>
+    // Add event listener for the "Enter" key
+    document.getElementById("teamID").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            getTeam();
+        }
+    });
+
     async function getTeam() {
-        // 1. Get the ID from the input box
-        const id = document.getElementById('teamID').value;
+        const idInput = document.getElementById('teamID');
         const resultDiv = document.getElementById('result');
+        const loadingDiv = document.getElementById('loading');
+        const searchBtn = document.getElementById('searchBtn');
+        const id = idInput.value;
 
         if (!id) {
-            alert("Please enter an ID!");
+            // Shake effect or simple alert for now
+            idInput.style.borderColor = '#d9534f';
+            setTimeout(() => { idInput.style.borderColor = '#e0e0e0'; }, 500);
             return;
         }
 
-        resultDiv.innerHTML = "Loading...";
+        // UI State: Loading
+        searchBtn.disabled = true;
+        searchBtn.innerText = 'Searching...';
+        resultDiv.style.display = 'none';
+        loadingDiv.style.display = 'block';
 
-        // 2. The API URL (Using a Proxy to bypass CORS blocks)
-        // We wrap the FPL url inside 'api.allorigins.win' so browsers allow it.
+        // The API URL & Proxy
         const fplUrl = `https://fantasy.premierleague.com/api/entry/${id}/`;
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(fplUrl)}`;
 
         try {
-            // 3. Fetch the data
             const response = await fetch(proxyUrl);
             const data = await response.json();
-            
-            // The actual FPL data is inside 'contents' because of the proxy
             const teamData = JSON.parse(data.contents);
 
-            // 4. Show the data on the screen
+            // Success: Update UI
             resultDiv.innerHTML = `
-                <h3>${teamData.name}</h3>
-                <p><strong>Manager:</strong> ${teamData.player_first_name} ${teamData.player_last_name}</p>
-                <p><strong>Total Points:</strong> ${teamData.summary_overall_points}</p>
-                <p><strong>Overall Rank:</strong> ${teamData.summary_overall_rank}</p>
+                <div class="result-header">${teamData.name}</div>
+                <div class="stat-row">
+                    <span class="stat-label">Manager</span>
+                    <span class="stat-value">${teamData.player_first_name} ${teamData.player_last_name}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total Points</span>
+                    <span class="stat-value">${teamData.summary_overall_points.toLocaleString()}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Overall Rank</span>
+                    <span class="stat-value">#${teamData.summary_overall_rank.toLocaleString()}</span>
+                </div>
+                 <div class="stat-row" style="border-bottom: none;">
+                    <span class="stat-label">Region</span>
+                    <span class="stat-value">${teamData.region_name}</span>
+                </div>
             `;
+            resultDiv.style.display = 'block';
 
         } catch (error) {
             console.error(error);
-            resultDiv.innerHTML = "<p style='color:red'>Error finding team. Check the ID.</p>";
+            resultDiv.innerHTML = `
+                <div class="error-message">
+                    could not find team ID ${id}.<br>Please double-check the number.
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+        } finally {
+            // UI State: Finished
+            loadingDiv.style.display = 'none';
+            searchBtn.disabled = false;
+            searchBtn.innerText = 'Find Team';
         }
     }
 </script>
