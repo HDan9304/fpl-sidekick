@@ -400,6 +400,7 @@
                     const fixMap = {};
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
+                    app.teams = teamShort; 
                     fixtures.forEach(f => {
                         fixMap[f.team_h] = { opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true };
                         fixMap[f.team_a] = { opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false };
@@ -503,20 +504,11 @@
             },
 
             // --- MODAL LOGIC ---
-            openModal: async (playerId) => {
+             openModal: async (playerId) => {
                 const p = app.playersCache[playerId];
-                if(!p) return;
-
-                const overlay = document.getElementById('playerModalOverlay');
-                const content = document.getElementById('modalFixtures');
-                
-                // Fill Static Info
                 document.getElementById('modalName').innerText = p.name;
-                document.getElementById('modalTeam').innerText = `${p.team} • £${p.price}m`;
-                document.getElementById('modalForm').innerText = p.form;
-                document.getElementById('modalSel').innerText = `${p.sel}%`;
-                document.getElementById('modalPts').innerText = p.event_points;
-
+                document.getElementById('modalInfo').innerText = `${p.team} • £${p.price}m • Sel: ${p.sel}%`;
+                
                 const newsEl = document.getElementById('modalNews');
                 if(p.news) {
                     newsEl.style.display = 'block';
@@ -525,40 +517,42 @@
                     newsEl.style.display = 'none';
                 }
 
-                // Show Modal
-                overlay.classList.add('open');
-                content.innerHTML = '<div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>';
+                document.getElementById('playerModalOverlay').classList.add('open');
+                document.getElementById('modalFixtures').innerHTML = '<div style="font-size:0.8rem; color:#888;">Loading...</div>';
 
-                // Fetch Deep Dive Data (Element Summary)
                 try {
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
                     
-                    // Render Upcoming Fixtures
                     let html = '';
-                    // First 5 fixtures
+                    
+                    // --- NEW LOGIC STARTS HERE ---
                     data.fixtures.slice(0, 5).forEach(f => {
                         const diff = f.difficulty;
-                        const oppId = f.is_home ? f.team_a : f.team_h;
-                        // Use basic logic if team map not avail inside modal scope easily, 
-                        // but we have team_h/a IDs. For now, just show difficulty dot.
-                        const isHome = f.is_home;
                         const colorClass = `fdr-${diff}`;
+                        
+                        // Calculate Opponent
+                        const isHome = f.is_home;
+                        const oppId = isHome ? f.team_a : f.team_h;
+                        const oppName = app.teams ? app.teams[oppId] : '---'; // Get Name
                         
                         html += `
                             <div class="fix-item">
-                                <div class="fix-opp">GW${f.event}</div>
-                                <div style="font-size:0.7rem; color:#666;">${isHome?'Home':'Away'}</div>
-                                <div style="margin-top:5px;">
+                                <div style="font-size:0.6rem; color:#888; font-weight:700;">GW${f.event}</div>
+                                <div style="font-weight:800; font-size:0.9rem; margin:2px 0; color:var(--primary);">
+                                    ${oppName} <span style="font-weight:400; color:#666; font-size:0.7rem;">${isHome ? '(H)' : '(A)'}</span>
+                                </div>
+                                <div style="margin-top:2px;">
                                     <span class="fix-diff-dot ${colorClass}"></span>
-                                    <span style="font-weight:700; font-size:0.8rem;">${diff}</span>
                                 </div>
                             </div>
                         `;
                     });
-                    content.innerHTML = html;
+                    // --- NEW LOGIC ENDS HERE ---
+
+                    document.getElementById('modalFixtures').innerHTML = html;
 
                 } catch (e) {
-                    content.innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>';
+                    document.getElementById('modalFixtures').innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>';
                 }
             }
         };
