@@ -11,328 +11,283 @@
     <style>
         :root {
             --primary: #37003c; --accent: #00ff85;
-            --bg-body: #f0f2f5; --bg-surface: #ffffff;
-            --text-main: #111827; --text-sub: #6b7280;
-            --border: #e5e7eb; --red: #e90052;
+            --bg: #f3f4f6; --surface: #ffffff;
+            --text: #111827; --text-sub: #6b7280;
+            --border: #e5e7eb;
             --grass-1: #059669; --grass-2: #047857;
             --status-warn: #fbbf24; --status-bad: #ef4444;
             --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e5e7eb; --fdr-4: #ff1751; --fdr-5: #80072d;
-            --fdr-text-dark: #00381b; --fdr-text-light: white;
+            --fdr-dark: #00381b; --fdr-light: white;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
 
-        body { 
-            background-color: var(--bg-body); color: var(--text-main); 
-            height: 100vh; width: 100vw; overflow: hidden;
-            display: flex;
-        }
-
-        /* --- LAYOUT STRUCTURE --- */
-        .app-shell { display: flex; width: 100%; height: 100%; }
-
-        /* SIDEBAR (Desktop: Fixed Left, Mobile: Drawer) */
+        /* --- LAYOUT ARCHITECTURE --- */
+        
+        /* 1. SIDEBAR */
         .sidebar {
-            width: 260px; background: var(--bg-surface); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; z-index: 100;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 250px; background: var(--surface); border-right: 1px solid var(--border);
+            height: 100vh; position: fixed; top: 0; left: 0; z-index: 100;
+            display: flex; flex-direction: column;
+            transition: transform 0.3s ease;
         }
         
-        /* MOBILE SIDEBAR HIDDEN BY DEFAULT */
-        @media (max-width: 1023px) {
-            .sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); box-shadow: 4px 0 25px rgba(0,0,0,0.1); }
+        /* Mobile Sidebar (Hidden by default) */
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); }
         }
 
-        /* MAIN CONTENT AREA */
-        .main-content { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative; }
-
-        /* HEADER */
-        header {
-            height: 64px; background: var(--bg-surface); border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
-            flex-shrink: 0;
+        /* 2. MAIN CONTENT WRAPPER */
+        .main {
+            flex: 1; margin-left: 250px; /* Offset for fixed sidebar */
+            display: flex; flex-direction: column; min-height: 100vh;
         }
         
-        /* DASHBOARD GRID (THE MAGIC) */
-        .dashboard-view {
-            flex: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-direction: column; gap: 20px;
+        /* Mobile Main (No offset) */
+        @media (max-width: 1024px) { .main { margin-left: 0; } }
+
+        /* 3. HEADER */
+        header {
+            background: var(--surface); height: 64px; padding: 0 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 90;
         }
 
-        /* DESKTOP LAYOUT */
-        @media (min-width: 1024px) {
-            .dashboard-view {
-                display: grid;
-                grid-template-columns: 1fr 400px; /* Pitch (Flex) | List (Fixed) */
-                grid-template-rows: auto 1fr;
-                gap: 24px;
-                overflow: hidden; /* Lock scroll to panels */
-                padding: 24px;
-            }
-            
-            /* HEADER SPAN */
-            .scoreboard { grid-column: 1 / -1; }
-
-            /* SCROLLABLE PANELS */
-            .left-panel { overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 20px; }
-            .right-panel { 
-                background: white; border-radius: 16px; border: 1px solid var(--border); 
-                overflow: hidden; display: flex; flex-direction: column; 
-            }
-            .list-scroll-area { flex: 1; overflow-y: auto; }
+        /* 4. DASHBOARD GRID (The Fix) */
+        .dashboard-container {
+            padding: 20px; max-width: 1200px; margin: 0 auto; width: 100%;
         }
 
-        /* MOBILE LAYOUT RESTORATION */
-        @media (max-width: 1023px) {
-            .right-panel { display: none; } /* Hide list on mobile to save space */
-            .left-panel { display: contents; }
+        .dashboard-row {
+            display: flex; gap: 24px; align-items: flex-start;
         }
+
+        /* Responsive Switching */
+        @media (max-width: 900px) {
+            .dashboard-row { flex-direction: column; } /* Stack on tablet/mobile */
+            .left-col, .right-col { width: 100% !important; }
+        }
+
+        .left-col { flex: 2; width: 65%; }  /* Pitch takes priority */
+        .right-col { flex: 1; width: 35%; } /* List takes remaining */
 
         /* --- COMPONENTS --- */
-
-        /* Header Elements */
-        .menu-btn { font-size: 1.2rem; cursor: pointer; display: none; }
-        @media (max-width: 1023px) { .menu-btn { display: block; margin-right: 15px; } }
-        .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        .brand i { color: var(--accent); }
-        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #f3f4f6; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--primary); }
-        .user-avatar.active { background: var(--primary); color: var(--accent); }
 
         /* Menu */
         .menu-header { height: 64px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
         .menu-item { display: flex; align-items: center; gap: 12px; padding: 14px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; border-left: 4px solid transparent; transition: 0.2s; }
         .menu-item:hover, .menu-item.active { background: #f9fafb; color: var(--primary); border-left-color: var(--primary); }
         .menu-footer { margin-top: auto; padding: 24px; border-top: 1px solid var(--border); }
-        .reset-btn { color: var(--red); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 90; display: none; }
-        .menu-overlay.open { display: block; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 95; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .menu-overlay.open { opacity: 1; pointer-events: auto; }
+        .menu-btn { font-size: 1.2rem; cursor: pointer; display: none; }
+        @media (max-width: 1024px) { .menu-btn { display: block; } }
 
         /* Scoreboard */
         .scoreboard {
-            background: var(--primary); color: white; padding: 20px 24px; border-radius: 16px;
+            background: var(--primary); color: white; padding: 24px; border-radius: 16px;
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 10px 30px -10px rgba(55,0,60,0.3);
+            box-shadow: 0 10px 25px -5px rgba(55,0,60,0.3); margin-bottom: 24px;
             background-image: radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 40%);
         }
-        .sb-manager { font-size: 1.2rem; font-weight: 800; }
+        .sb-name { font-size: 1.2rem; font-weight: 800; }
         .sb-stats { display: flex; gap: 30px; text-align: right; }
-        .sb-val { font-size: 1.4rem; font-weight: 800; color: var(--accent); line-height: 1; }
-        .sb-label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.8; font-weight: 600; letter-spacing: 0.5px; }
-        
-        @media (max-width: 600px) {
-            .scoreboard { flex-direction: column; text-align: center; gap: 15px; }
-            .sb-stats { width: 100%; justify-content: space-around; text-align: center; gap: 0; }
-        }
+        .sb-val { font-size: 1.5rem; font-weight: 800; color: var(--accent); line-height: 1; }
+        .sb-lbl { font-size: 0.7rem; text-transform: uppercase; opacity: 0.8; font-weight: 600; letter-spacing: 0.5px; }
+        @media (max-width: 600px) { .scoreboard { flex-direction: column; text-align: center; gap: 15px; } .sb-stats { justify-content: center; } }
 
         /* Pitch */
-        .pitch-wrapper { background: white; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .budget-bar { padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 600; color: var(--text-sub); }
-        .pitch-container {
+        .pitch-card { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .budget-bar { padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; color: var(--text-sub); }
+        .pitch-gfx {
             background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 10%, var(--grass-2) 10%, var(--grass-2) 20%);
-            padding: 20px; position: relative; display: flex; flex-direction: column; justify-content: space-around; min-height: 550px;
+            padding: 20px; position: relative; display: flex; flex-direction: column; justify-content: space-around; min-height: 600px;
         }
-        .pitch-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.5; }
-        .pitch-circle { width: 100px; height: 100px; border: 2px solid rgba(255,255,255,0.5); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .line-mid { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.5); }
-        .box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 40%; height: 12%; border: 2px solid rgba(255,255,255,0.5); border-top: none; }
-        .box-bot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 40%; height: 12%; border: 2px solid rgba(255,255,255,0.5); border-bottom: none; }
-        .field-row { display: flex; justify-content: center; gap: 20px; position: relative; z-index: 10; }
+        .field-row { display: flex; justify-content: center; gap: 2%; position: relative; z-index: 10; margin-bottom: 15px; }
+        
+        /* Bench */
+        .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); margin-top: 24px; }
+        .bench-head { background: #fafafa; padding: 10px 20px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; font-size: 0.75rem; border-bottom: 1px solid var(--border); }
+        .bench-row { display: flex; justify-content: center; gap: 3%; padding: 20px; }
 
-        /* Player Pill (Pitch) */
+        /* Player Pill */
         .player-pill {
-            background: rgba(255,255,255,0.95); width: 75px; padding: 4px 2px 6px 2px;
-            border-radius: 8px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s;
+            background: rgba(255,255,255,0.96); width: 18%; max-width: 80px; min-width: 65px;
+            padding: 4px; border-radius: 8px; text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center;
+            position: relative; cursor: pointer; transition: 0.2s;
         }
-        .player-pill:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index: 20; }
-        .kit-img { width: 40px; height: auto; object-fit: contain; margin: 2px 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
-        .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 95%; background: white; padding: 1px 0; border-radius: 2px; }
-        .pill-data { font-size: 0.6rem; color: #555; font-weight: 600; display: flex; gap: 3px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding: 2px 0; margin-top: 2px; }
-        .points-badge { background: var(--primary); color: white; padding: 0 3px; border-radius: 3px; font-weight: 700; }
-        .fix-badge { font-size: 0.5rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 20; }
-        .fdr-1, .fdr-2 { background: var(--fdr-2); color: var(--fdr-text-dark); }
+        .player-pill:hover { transform: translateY(-3px); box-shadow: 0 10px 15px rgba(0,0,0,0.2); z-index: 20; }
+        .kit-img { width: 80%; max-width: 45px; margin: 2px 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+        .pill-name { font-size: 0.7rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; background: white; border-radius: 4px; padding: 1px 0; }
+        .pill-meta { font-size: 0.65rem; color: #555; font-weight: 600; display: flex; gap: 4px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding: 3px 0; margin-top: 2px; }
+        .pts-badge { background: var(--primary); color: white; padding: 0 4px; border-radius: 3px; }
+        .fix-badge { position: absolute; top: -6px; background: white; padding: 1px 5px; border-radius: 4px; font-size: 0.55rem; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        
+        .fdr-1, .fdr-2 { background: var(--fdr-2); color: var(--fdr-dark); }
         .fdr-3 { background: var(--fdr-3); color: #333; }
         .fdr-4 { background: var(--fdr-4); color: white; }
         .fdr-5 { background: var(--fdr-5); color: white; }
-        .captain-badge { position: absolute; bottom: 28px; right: -3px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
-        .vice-badge { background: #666; }
-        .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
-        .status-warn { background: var(--status-warn); color: #78350f; }
-        .status-bad { background: var(--status-bad); color: white; }
 
-        /* Bench */
-        .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; margin-top: 0; }
-        .bench-header { background: #f9fafb; padding: 10px 20px; font-size: 0.75rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
-        .bench-row { display: flex; justify-content: center; gap: 20px; padding: 20px; }
-        .bench-pill { opacity: 0.9; }
-        .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
-
-        /* RIGHT PANEL: LIST VIEW */
-        .list-header { padding: 15px 20px; border-bottom: 1px solid var(--border); font-weight: 800; font-size: 0.9rem; color: var(--primary); display: flex; justify-content: space-between; align-items: center; background: #fdfdfd; }
-        .list-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: 0.2s; }
+        /* List View (Right Col) */
+        .list-card { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        .list-head { padding: 15px 20px; font-weight: 700; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; background: #fafafa; }
+        .list-row { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: 0.1s; }
         .list-row:hover { background: #f9fafb; }
         .list-pos { width: 30px; font-size: 0.7rem; font-weight: 700; color: var(--text-sub); }
         .list-info { flex: 1; }
-        .list-name { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
-        .list-meta { font-size: 0.75rem; color: var(--text-sub); display: flex; gap: 8px; align-items: center; }
-        .list-fix { font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
-        .list-price { font-weight: 600; font-size: 0.9rem; margin-right: 15px; color: var(--text-main); }
-        .list-pts { font-weight: 800; font-size: 0.9rem; color: var(--primary); width: 30px; text-align: center; }
+        .list-name { font-size: 0.85rem; font-weight: 600; }
+        .list-sub { font-size: 0.7rem; color: var(--text-sub); }
+        .list-pts { font-weight: 700; color: var(--primary); width: 30px; text-align: right; }
 
-        /* MODAL */
-        .modal-overlay { z-index: 1000; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
-        .modal-card { background: white; width: 90%; max-width: 400px; border-radius: 20px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: translateY(20px); opacity: 0; transition: 0.3s; }
-        .modal-overlay.open .modal-card { transform: translateY(0); opacity: 1; }
-        
-        /* UTILS */
+        /* Status & Modal */
+        .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
+        .status-warn { background: var(--status-warn); color: #78350f; }
+        .status-bad { background: var(--status-bad); color: white; }
+        .cap-badge { position: absolute; bottom: 30px; right: -4px; background: #111; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; border: 1px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 15; }
+
+        .modal-overlay { z-index: 1000; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); pointer-events: none; opacity: 0; transition: 0.2s; }
+        .modal-overlay.open { pointer-events: auto; opacity: 1; }
+        .modal-card { background: white; width: 90%; max-width: 450px; border-radius: 20px; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform: translateY(20px); transition: 0.3s; }
+        .modal-overlay.open .modal-card { transform: translateY(0); }
+
+        /* Utilities */
         .hidden { display: none !important; }
-        .card-center { text-align: center; padding: 60px 20px; background: white; border-radius: 20px; border: 1px solid var(--border); margin: 40px auto; max-width: 400px; }
-        input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: #f9fafb; }
-        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
-        .demo-alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 20px; border: 1px solid #ffeeba; }
-        .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
+        .center-msg { text-align: center; padding: 60px 20px; background: white; border-radius: 16px; border: 1px solid var(--border); max-width: 400px; margin: 40px auto; }
+        input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; text-align: center; margin: 20px 0; font-size: 1rem; }
+        .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .spinner { width: 30px; height: 30px; border: 3px solid rgba(0,0,0,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
     </style>
 </head>
 <body>
 
-    <div class="app-shell">
-        
-        <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
-        <div id="sideMenu" class="sidebar">
-            <div class="menu-header">FPL Hub Pro</div>
-            <div class="menu-items">
-                <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
-                    <i class="fa-solid fa-shirt"></i> Squad
-                </div>
-                <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
-                    <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
-                </div>
+    <div id="sideMenu" class="sidebar">
+        <div class="menu-header">FPL Hub Pro</div>
+        <div class="menu-items">
+            <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
+                <i class="fa-solid fa-shirt"></i> Squad
             </div>
-            <div class="menu-footer">
-                <div class="reset-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Logout</div>
+            <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
             </div>
         </div>
+        <div class="menu-footer">
+            <div class="reset-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Logout</div>
+        </div>
+    </div>
+    <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
 
-        <div class="main-content">
-            <header>
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <i class="fa-solid fa-bars menu-btn" onclick="toggleMenu()"></i>
-                    <div class="brand"><i class="fa-solid fa-bolt"></i> Dashboard</div>
+    <div class="main">
+        <header>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <i class="fa-solid fa-bars menu-btn" onclick="toggleMenu()"></i>
+                <div class="brand" style="font-weight:800; font-size:1.1rem; color:var(--primary);">
+                    <i class="fa-solid fa-bolt" style="color:var(--accent);"></i> Dashboard
                 </div>
-                <div class="user-avatar" id="userIcon" onclick="clearData()"><i class="fa-regular fa-user"></i></div>
-            </header>
+            </div>
+            <div class="user-avatar" id="userIcon"><i class="fa-regular fa-user"></i></div>
+        </header>
 
-            <div class="content">
+        <div class="content">
+            
+            <div id="welcomeView" class="center-msg hidden">
+                <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
+                <h2>Link Team</h2>
+                <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your FPL ID to start.</p>
+                <input type="number" id="teamID" placeholder="e.g. 123456">
+                <button class="btn" onclick="app.load()">Connect</button>
+            </div>
+
+            <div id="loadingView" class="center-msg hidden">
+                <div class="spinner"></div>
+                <p id="loadingMsg" style="color: var(--text-sub); margin-top: 15px;">Connecting...</p>
+            </div>
+
+            <div id="dashboardView" class="dashboard-container hidden">
                 
-                <div id="welcomeView" class="card-center hidden">
-                    <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
-                    <h2>Link Team</h2>
-                    <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your ID to unlock the Pro Dashboard.</p>
-                    <input type="number" id="teamID" placeholder="e.g. 123456">
-                    <button class="btn" onclick="app.load()">Connect</button>
+                <div id="demoAlert" style="background:#fff3cd; color:#856404; padding:10px; border-radius:8px; text-align:center; margin-bottom:20px; border:1px solid #ffeeba;" class="hidden">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
                 </div>
 
-                <div id="loadingView" class="card-center hidden">
-                    <div class="spinner"></div>
-                    <p id="loadingMsg" style="color: var(--text-sub); margin-top: 15px;">Analysing Squad...</p>
+                <div class="scoreboard">
+                    <div>
+                        <div class="sb-lbl">Manager</div>
+                        <div class="sb-name" id="dispName">...</div>
+                    </div>
+                    <div class="sb-stats">
+                        <div><div class="sb-lbl">GW Pts</div><div class="sb-val" id="dispGW">...</div></div>
+                        <div><div class="sb-lbl">Total</div><div class="sb-val" style="color:white" id="dispTotal">...</div></div>
+                        <div><div class="sb-lbl">Rank</div><div class="sb-val" style="color:white; font-size:1.2rem;" id="dispRank">...</div></div>
+                    </div>
                 </div>
 
-                <div id="dashboardView" class="dashboard-view hidden">
+                <div class="dashboard-row">
                     
-                    <div class="scoreboard">
-                        <div>
-                            <div class="sb-label">Manager</div>
-                            <div class="sb-manager" id="dispName">...</div>
-                        </div>
-                        <div class="sb-stats">
-                            <div>
-                                <div class="sb-label">GW Pts</div>
-                                <div class="sb-val" id="dispGW">...</div>
-                            </div>
-                            <div>
-                                <div class="sb-label">Total</div>
-                                <div class="sb-val" style="color:white" id="dispTotal">...</div>
-                            </div>
-                            <div>
-                                <div class="sb-label">Rank</div>
-                                <div class="sb-val" style="color:white" id="dispRank">...</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="demoAlert" class="demo-alert hidden">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
-                    </div>
-
-                    <div class="left-panel">
-                        <div class="pitch-wrapper">
+                    <div class="left-col">
+                        <div class="pitch-card">
                             <div class="budget-bar">
                                 <span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span>
                                 <span>Value: <span class="budget-val" id="dispValue">£0.0m</span></span>
                             </div>
-                            <div class="pitch-container">
-                                <div class="pitch-lines">
-                                    <div class="box-top"></div>
-                                    <div class="line-mid"></div>
-                                    <div class="pitch-circle"></div>
-                                    <div class="box-bot"></div>
+                            <div class="pitch-gfx">
+                                <div style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0.5;pointer-events:none;">
+                                    <div style="position:absolute;top:50%;left:0;width:100%;height:2px;background:rgba(255,255,255,0.5);"></div>
+                                    <div style="position:absolute;top:50%;left:50%;width:100px;height:100px;border:2px solid rgba(255,255,255,0.5);border-radius:50%;transform:translate(-50%,-50%);"></div>
+                                    <div style="position:absolute;top:0;left:25%;width:50%;height:12%;border:2px solid rgba(255,255,255,0.5);border-top:none;"></div>
+                                    <div style="position:absolute;bottom:0;left:25%;width:50%;height:12%;border:2px solid rgba(255,255,255,0.5);border-bottom:none;"></div>
                                 </div>
                                 <div id="pitchRows"></div>
                             </div>
                         </div>
 
                         <div class="bench-wrapper">
-                            <div class="bench-header">Bench</div>
+                            <div class="bench-head">Substitutes</div>
                             <div id="benchRow" class="bench-row"></div>
                         </div>
                     </div>
 
-                    <div class="right-panel">
-                        <div class="list-header">
-                            <span>Squad Analysis</span>
-                            <i class="fa-solid fa-list"></i>
+                    <div class="right-col">
+                        <div class="list-card">
+                            <div class="list-head">
+                                <span>Squad Analysis</span>
+                                <i class="fa-solid fa-list-ul" style="color:var(--primary);"></i>
+                            </div>
+                            <div id="squadList"></div>
                         </div>
-                        <div class="list-scroll-area" id="squadList"></div>
                     </div>
 
                 </div>
-
-                <div id="transfersView" class="hidden">
-                    <div class="card-center">
-                        <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
-                        <h2>Transfer Hub</h2>
-                        <p>Coming next...</p>
-                    </div>
-                </div>
-
             </div>
+
+            <div id="transfersView" class="center-msg hidden">
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
+                <h2>Transfer Hub</h2>
+                <p>Coming next...</p>
+            </div>
+
         </div>
     </div>
 
-    <div id="playerModalOverlay" class="menu-overlay">
+    <div id="playerModalOverlay" class="modal-overlay">
         <div class="modal-card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h3 id="modalName" style="color:var(--primary); font-size:1.3rem;">...</h3>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <h3 id="modalName" style="color:var(--primary); font-size:1.4rem;">...</h3>
                 <i class="fa-solid fa-xmark" style="font-size:1.2rem; cursor:pointer;" onclick="closeModal()"></i>
             </div>
-            <div id="modalNews" class="m-news"></div>
-            <div style="font-size:0.9rem; margin-bottom:15px;" id="modalInfo"></div>
-            <div style="font-size:0.8rem; font-weight:700; color:#888; text-transform:uppercase; margin-bottom:10px;">Upcoming Fixtures</div>
-            <div id="modalFixtures" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">Loading...</div>
+            <div id="modalNews" style="background:#fff3cd; color:#856404; padding:10px; border-radius:8px; font-size:0.85rem; margin-bottom:15px; display:none;"></div>
+            <div style="font-size:0.9rem; color:#666; margin-bottom:15px;" id="modalInfo">...</div>
+            <div style="font-weight:700; color:#888; font-size:0.75rem; text-transform:uppercase; margin-bottom:8px;">Upcoming Fixtures</div>
+            <div id="modalFixtures" style="display:flex; gap:8px; overflow-x:auto;"></div>
         </div>
     </div>
 
     <script>
         // MOCK DATA
-        const MOCK_DATA = {
+        const MOCK = {
             user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
             bank: 5, value: 1024,
             picks: [
@@ -342,9 +297,9 @@
                 { element: 13, position: 13 }, { element: 14, position: 14 }, { element: 15, position: 15 }
             ],
             players: {
-                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', news: "Knock", team: "MCI" },
-                5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', team: "LIV" },
-                1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', team: "EVE" },
+                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', news: "Knock", team: "MCI", sel: 70 },
+                5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', team: "LIV", sel: 45 },
+                1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', team: "EVE", sel: 15 },
                 2: { web_name: "Trent", team_code: 14, pos: 2, price: 8.0, event_points: 2, team: "LIV" },
                 3: { web_name: "Saliba", team_code: 3, pos: 2, price: 5.5, event_points: 6, team: "ARS" },
                 4: { web_name: "Porro", team_code: 6, pos: 2, price: 5.0, event_points: 1, team: "TOT" },
@@ -440,9 +395,9 @@
                 } catch (error) {
                     document.getElementById('demoAlert').classList.remove('hidden');
                     const mPlayers = {}; 
-                    Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = {...MOCK_DATA.players[k], id:k, team:'MOCK'});
+                    Object.keys(MOCK.players).forEach(k => mPlayers[k] = {...MOCK.players[k], id:k, team:'MOCK'});
                     app.playersCache = mPlayers;
-                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, MOCK_DATA.fixtures, {bank:5, value:1000}); }, 500);
+                    setTimeout(() => { app.render(MOCK.user, MOCK.picks, mPlayers, MOCK.fixtures, {bank:5, value:1000}); }, 500);
                 }
             },
             render: (user, picks, players, fixMap, stats) => {
@@ -462,43 +417,32 @@
                 const formation = { 1: [], 2: [], 3: [], 4: [] };
                 const squadList = [];
 
-                // Process Picks
                 picks.forEach((pick, i) => {
                     const p = players[pick.element];
                     if(!p) return;
-                    
-                    // Add meta to player obj for rendering
                     const pFull = { ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain, is_bench: i > 10, sub_order: i-10 };
                     squadList.push(pFull);
-
                     if (i < 11) formation[p.pos].push(pFull);
                     else benchDiv.innerHTML += app.createPill(pFull, fixMap);
                 });
 
-                // Render Pitch
                 [1, 2, 3, 4].forEach(posId => {
                     const row = document.createElement('div'); row.className = 'field-row';
                     formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap));
                     pitchDiv.appendChild(row);
                 });
 
-                // Render List View (Desktop)
-                squadList.sort((a,b) => a.pos - b.pos || a.is_bench - b.is_bench); // Sort by Pos then Bench
+                // Sort and Render List
+                squadList.sort((a,b) => a.pos - b.pos || a.is_bench - b.is_bench);
                 squadList.forEach(p => listDiv.innerHTML += app.createListRow(p, fixMap));
 
                 app.show('dashboardView');
             },
 
             createPill: (p, fixMap) => {
-                let capBadge = '';
-                if (p.is_captain) capBadge = `<div class="captain-badge">C</div>`;
-                else if (p.is_vice) capBadge = `<div class="captain-badge vice-badge">V</div>`;
-                
-                let statusBadge = '';
-                if (p.status === 'd') statusBadge = `<div class="status-flag status-warn">!</div>`;
-                else if (['i', 's'].includes(p.status)) statusBadge = `<div class="status-flag status-bad">×</div>`;
-                
-                let bNum = p.is_bench ? `<div class="bench-num">${p.sub_order}</div>` : '';
+                let capBadge = p.is_captain ? `<div class="cap-badge">C</div>` : (p.is_vice ? `<div class="cap-badge" style="background:#666;">V</div>` : '');
+                let statusBadge = p.status === 'd' ? `<div class="status-flag status-warn">!</div>` : (['i', 's'].includes(p.status) ? `<div class="status-flag status-bad">×</div>` : '');
+                let bNum = p.is_bench ? `<div style="position:absolute;top:0;left:0;background:#eee;color:#555;font-size:0.55rem;padding:1px 5px;border-radius:4px 0 4px 0;font-weight:700;">${p.sub_order}</div>` : '';
 
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
                 const fix = fixMap ? (fixMap[p.team_id] || { opp: '-', diff: 3, is_home: true }) : { opp: 'MOCK', diff: 3 };
@@ -510,9 +454,9 @@
                         <div class="fix-badge fdr-${fix.diff}">${fix.opp} ${loc}</div>
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
-                        <div class="pill-data">
+                        <div class="pill-meta">
                             <span>£${p.price}</span>
-                            <span class="points-badge">${p.event_points}</span>
+                            <span class="pts-badge">${p.event_points}</span>
                         </div>
                     </div>
                 `;
@@ -526,12 +470,11 @@
                         <div class="list-pos">${posName}</div>
                         <div class="list-info">
                             <div class="list-name">${p.name} <span style="font-weight:400; color:#666; font-size:0.75rem;">${p.team}</span></div>
-                            <div class="list-meta">
-                                <span class="list-fix fdr-${fix.diff}" style="color:${fix.diff>3?'white':'#333'}">${fix.opp}</span>
+                            <div class="list-sub">
+                                <span class="fdr-${fix.diff}" style="padding:1px 4px; border-radius:3px; font-weight:700;">${fix.opp}</span>
                                 ${p.status !== 'a' ? `<span style="color:red; font-weight:700;">!</span>` : ''}
                             </div>
                         </div>
-                        <div class="list-price">£${p.price}</div>
                         <div class="list-pts">${p.event_points}</div>
                     </div>
                 `;
@@ -556,7 +499,7 @@
                         const color = `fdr-${f.difficulty}`;
                         html += `<div style="min-width:70px; border:1px solid #eee; border-radius:8px; padding:8px; text-align:center;">
                             <div style="font-size:0.7rem; color:#666;">GW${f.event}</div>
-                            <div style="margin:4px 0;"><span class="fix-diff-dot ${color}"></span><span style="font-weight:700;">${f.difficulty}</span></div>
+                            <div style="margin:4px 0;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;" class="${color}"></span><span style="font-weight:700;">${f.difficulty}</span></div>
                             <div style="font-size:0.6rem;">${f.is_home?'Home':'Away'}</div>
                         </div>`;
                     });
@@ -566,7 +509,7 @@
         };
 
         function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
-        function switchTool(t) { if(window.innerWidth<1024) toggleMenu(); app.switchTool(t); }
+        function switchTool(t) { if(window.innerWidth < 1024) toggleMenu(); app.switchTool(t); }
         function clearData() { if(confirm("Logout?")) { localStorage.removeItem('fpl_id_final'); location.reload(); } }
         function closeModal() { document.getElementById('playerModalOverlay').classList.remove('open'); }
         document.getElementById('playerModalOverlay').addEventListener('click', (e) => { if(e.target.id==='playerModalOverlay') closeModal(); });
