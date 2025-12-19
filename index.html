@@ -16,10 +16,10 @@
             --border: #e5e7eb; --red: #e90052;
             
             /* PITCH COLORS */
-            --grass-1: #02894e; --grass-2: #027a45;
+            --grass-1: #059669; --grass-2: #047857;
             
             /* FDR Colors */
-            --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e7e7e7; --fdr-4: #ff1751; --fdr-5: #80072d;
+            --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e5e7eb; --fdr-4: #ff1751; --fdr-5: #80072d;
             --fdr-text-dark: #00381b; --fdr-text-light: white;
 
             /* STATUS COLORS */
@@ -33,24 +33,17 @@
         .app-container {
             width: 100%; max-width: 600px; background-color: var(--bg-app);
             min-height: 100vh; position: relative; display: flex; flex-direction: column;
-        }
-        @media (min-width: 600px) {
-            body { padding: 40px 0; }
-            .app-container {
-                min-height: auto; border-radius: 24px;
-                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
-                height: 90vh; overflow: hidden;
-            }
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
         }
 
         /* HEADER */
         header {
             background: var(--bg-app); height: 60px; padding: 0 20px;
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50;
+            border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50; position: sticky; top: 0;
         }
         .header-left { display: flex; align-items: center; gap: 15px; }
-        .menu-btn { font-size: 1.2rem; cursor: pointer; padding: 8px; margin-left: -8px; }
+        .menu-btn { font-size: 1.2rem; cursor: pointer; color: var(--text-main); }
         .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
         .brand i { color: var(--accent); }
         .user-avatar {
@@ -67,15 +60,15 @@
             box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
         }
         .sidebar.open { transform: translateX(0); }
-        .menu-header { height: 60px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
+        .menu-header { height: 60px; display: flex; align-items: center; padding-left: 20px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
         .menu-items { flex: 1; padding-top: 10px; }
-        .menu-item { display: flex; align-items: center; gap: 16px; padding: 16px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
+        .menu-item { display: flex; align-items: center; gap: 16px; padding: 16px 20px; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
         .menu-item:hover { background: #f9fafb; color: var(--primary); }
         .menu-item.active { color: var(--primary); background: rgba(55, 0, 60, 0.04); border-left-color: var(--primary); }
         .menu-footer { padding: 24px; border-top: 1px solid var(--border); }
         .reset-btn { color: var(--red); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
-        .menu-overlay.open { opacity: 1; visibility: visible; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; display: none; }
+        .menu-overlay.open { display: block; }
 
         /* CONTENT */
         .content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
@@ -99,17 +92,34 @@
         .pitch-wrapper { background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 20px; }
         .budget-bar { background: white; padding: 8px 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 0.75rem; font-weight: 600; color: var(--text-sub); }
         .budget-val { color: var(--primary); font-weight: 800; }
-        .pitch-container { background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 20px, var(--grass-2) 20px, var(--grass-2) 40px); padding: 25px 5px; position: relative; min-height: 480px; }
+        
+        .pitch-container { 
+            background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 20px, var(--grass-2) 20px, var(--grass-2) 40px); 
+            padding: 25px 5px; 
+            position: relative; 
+            min-height: 480px; 
+            /* Fix Formation Spacing */
+            display: flex; flex-direction: column; justify-content: space-around;
+        }
+        
         .pitch-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.6; }
         .pitch-circle { width: 80px; height: 80px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         .line-mid { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.4); }
         .box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-top: none; }
         .box-bot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-bottom: none; }
-        .field-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 20px; position: relative; z-index: 10; }
+        
+        /* Flex Row for Players */
+        .field-row { 
+            display: flex; justify-content: center; gap: 4px; 
+            position: relative; z-index: 10; width: 100%; 
+        }
         
         /* PLAYER PILL */
         .player-pill {
-            background: rgba(255,255,255,0.95); width: 68px; padding: 6px 2px; border-radius: 6px; text-align: center;
+            background: rgba(255,255,255,0.95); 
+            width: 19%; /* Fits 5 players perfectly */
+            max-width: 75px;
+            padding: 4px 2px; border-radius: 6px; text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s;
         }
         .player-pill:active { transform: scale(0.95); }
@@ -142,30 +152,28 @@
         .bench-pill { opacity: 0.85; }
         .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
 
-        /* --- FIXED MODAL CARD --- */
-        .modal-overlay { z-index: 1000; display: flex; justify-content: center; align-items: flex-end; } 
-        @media (min-width: 600px) { .modal-overlay { align-items: center; } }
+        /* --- FIXED MODAL CSS --- */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); z-index: 1000; 
+            display: none; /* Hidden by default */
+            align-items: flex-end; /* Align card to bottom */
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; } /* Show when open */
         
         .modal-card {
-            position: fixed;
-            bottom: 15px; /* Lift from bottom */
-            left: 50%;    /* Center Horizontal */
-            width: 94%;   /* Space on sides */
-            max-width: 500px;
-            background: white;
-            border-radius: 24px; /* Round all corners */
+            background: white; 
+            width: 100%; /* Edge to Edge */
+            max-width: 600px; /* Constrain on desktop */
+            border-radius: 20px 20px 0 0; /* Rounded top only */
             padding: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            /* Logic: X=-50% to center, Y=110% to hide down */
-            transform: translate(-50%, 110%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
+            box-shadow: 0 -5px 40px rgba(0,0,0,0.3);
+            transform: translateY(100%); 
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            margin: 0; /* No margin */
         }
-        
-        .modal-overlay.open .modal-card { 
-            /* Logic: X=-50% to center, Y=0 to show */
-            transform: translate(-50%, 0); 
-        }
+        .modal-overlay.open .modal-card { transform: translateY(0); }
 
         .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
@@ -192,7 +200,6 @@
 </head>
 <body>
 
-    <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
     <div id="sideMenu" class="sidebar">
         <div class="menu-header">FPL Hub</div>
         <div class="menu-items">
@@ -204,16 +211,17 @@
             </div>
         </div>
         <div class="menu-footer">
-            <div class="reset-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Reset App</div>
+            <div class="reset-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Logout</div>
         </div>
     </div>
+    <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
 
-    <div id="playerModalOverlay" class="menu-overlay">
-        <div class="modal-card">
+    <div id="playerModalOverlay" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div>
-                    <div class="m-player-name" id="modalName">Player Name</div>
-                    <div class="m-player-team" id="modalTeam">Team • Position</div>
+                    <div class="m-player-name" id="modalName">...</div>
+                    <div class="m-player-team" id="modalInfo">...</div>
                 </div>
                 <button class="close-modal" onclick="closeModal()">×</button>
             </div>
@@ -236,10 +244,9 @@
             </div>
 
             <div class="m-section-title">Upcoming Fixtures</div>
-            <div id="modalFixtures" class="fix-list">
-                <div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>
-            </div>
-            <div style="height:20px;"></div> </div>
+            <div id="modalFixtures" class="fix-list"></div>
+            <div style="height:20px;"></div>
+        </div>
     </div>
 
     <div class="app-container">
@@ -323,7 +330,7 @@
 
     <script>
         // --- MOCK DATA ---
-        const MOCK_DATA = {
+        const MOCK = {
             user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
             bank: 5, value: 1024,
             picks: [
@@ -333,16 +340,28 @@
                 { element: 13, position: 13 }, { element: 14, position: 14 }, { element: 15, position: 15 }
             ],
             players: {
-                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock - 75% chance of playing", sel: 70 },
-                5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40 },
-                1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a' }
+                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', news: "Knock", team: "MCI", sel: 70, form: "8.5" },
+                5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', team: "LIV", sel: 45, form: "7.2" },
+                1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', team: "EVE", sel: 15, form: "3.5" },
+                2: { web_name: "Trent", team_code: 14, pos: 2, price: 8.0, event_points: 2, team: "LIV", form: "4.0" },
+                3: { web_name: "Saliba", team_code: 3, pos: 2, price: 5.5, event_points: 6, team: "ARS", form: "5.0" },
+                4: { web_name: "Porro", team_code: 6, pos: 2, price: 5.0, event_points: 1, team: "TOT", form: "2.0" },
+                6: { web_name: "Saka", team_code: 3, pos: 3, price: 9.0, event_points: 8, team: "ARS", form: "6.5" },
+                7: { web_name: "Palmer", team_code: 8, pos: 3, price: 6.0, event_points: 10, team: "CHE", form: "9.0" },
+                8: { web_name: "Gordon", team_code: 4, pos: 3, price: 6.5, event_points: 5, team: "NEW", form: "4.2" },
+                10: { web_name: "Watkins", team_code: 7, pos: 4, price: 8.5, event_points: 2, team: "AVL", form: "3.0" },
+                11: { web_name: "Isak", team_code: 4, pos: 4, price: 7.5, event_points: 8, team: "NEW", form: "5.5" },
+                12: { web_name: "Areola", team_code: 21, pos: 1, price: 4.0, event_points: 0, team: "WHU", form: "2.0" },
+                13: { web_name: "Burn", team_code: 4, pos: 2, price: 4.5, event_points: 0, team: "NEW", form: "3.0" },
+                14: { web_name: "Rogers", team_code: 7, pos: 3, price: 5.0, event_points: 2, team: "AVL", form: "4.0" },
+                15: { web_name: "Archer", team_code: 20, pos: 4, price: 4.5, event_points: 1, team: "SOU", form: "2.5" }
             },
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
         const app = {
             currentTool: 'squad',
-            playersCache: {}, // Store full player objects
+            playersCache: {},
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
@@ -366,8 +385,6 @@
                     else app.load(localStorage.getItem('fpl_id_final'));
                 } else app.show('transfersView');
             },
-            
-            // PROXY ENGINE
             fetchUrl: async (targetUrl) => {
                 const proxies = [(url) => `https://corsproxy.io/?${encodeURIComponent(url)}`, (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`];
                 for (let i = 0; i < proxies.length; i++) {
@@ -379,7 +396,6 @@
                 }
                 throw new Error("Failed");
             },
-
             load: async (savedId = null) => {
                 const id = savedId || document.getElementById('teamID').value;
                 if(!id) return alert("Enter ID");
@@ -393,11 +409,8 @@
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                     const gw = staticData.events.find(e => e.is_current)?.id || 1;
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
-                    
-                    document.getElementById('loadingMsg').innerText = "Checking Fixtures...";
                     const fixtures = await app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`);
 
-                    // Map Fixtures
                     const fixMap = {};
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
@@ -406,7 +419,6 @@
                         fixMap[f.team_a] = { opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false };
                     });
 
-                    // Map Players (Include Status & Chance)
                     const players = {};
                     staticData.elements.forEach(p => {
                         players[p.id] = {
@@ -414,29 +426,22 @@
                             name: p.web_name, team: teamShort[p.team], team_id: p.team,
                             pos: p.element_type, price: p.now_cost / 10,
                             event_points: p.event_points, team_code: p.team_code,
-                            status: p.status, // a, d, i, s, u
-                            chance: p.chance_of_playing_next_round,
-                            news: p.news,
-                            sel: parseFloat(p.selected_by_percent),
-                            form: p.form
+                            status: p.status, news: p.news, sel: parseFloat(p.selected_by_percent), form: p.form
                         };
                     });
                     
-                    app.playersCache = players; // Save for modal
-
+                    app.playersCache = players;
                     document.getElementById('demoAlert').classList.add('hidden');
                     app.render(user, picks.picks, players, fixMap, picks.entry_history);
 
                 } catch (error) {
                     document.getElementById('demoAlert').classList.remove('hidden');
-                    // Mock Data Fallback logic omitted for brevity in this specific update, but keeps app alive
-                    const mPlayers = {}; // Use mock
-                    Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = {...MOCK_DATA.players[k], id:k, team:'MOCK'});
+                    const mPlayers = {}; 
+                    Object.keys(MOCK.players).forEach(k => mPlayers[k] = {...MOCK.players[k], id:k, team:'MOCK'});
                     app.playersCache = mPlayers;
-                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, MOCK_DATA.fixtures, {bank:5, value:1000}); }, 500);
+                    setTimeout(() => { app.render(MOCK.user, MOCK.picks, mPlayers, MOCK.fixtures, {bank:5, value:1000}); }, 500);
                 }
             },
-
             render: (user, picks, players, fixMap, stats) => {
                 document.getElementById('dispName').innerText = user.name;
                 document.getElementById('dispGW').innerText = user.summary_event_points || 0;
@@ -450,45 +455,30 @@
                 pitchDiv.innerHTML = ''; benchDiv.innerHTML = '';
                 const formation = { 1: [], 2: [], 3: [], 4: [] };
 
-                for (let i = 0; i < 11; i++) {
-                    const pick = picks[i];
+                picks.forEach((pick, i) => {
                     const p = players[pick.element];
-                    if (p) formation[p.pos].push({ ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain });
-                }
+                    if(!p) return;
+                    const pFull = { ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain, is_bench: i > 10, sub_order: i-10 };
+                    if (i < 11) formation[p.pos].push(pFull);
+                    else benchDiv.innerHTML += app.createPill(pFull, fixMap, true);
+                });
 
                 [1, 2, 3, 4].forEach(posId => {
                     const row = document.createElement('div'); row.className = 'field-row';
                     formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap));
                     pitchDiv.appendChild(row);
                 });
-
-                // Bench with Numbers
-                for (let i = 11; i < picks.length; i++) {
-                    const pick = picks[i];
-                    const p = players[pick.element];
-                    if(p) benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, fixMap, true, i - 10);
-                }
                 app.show('dashboardView');
             },
-
-            createPill: (p, fixMap, isBench = false, benchNum = 0) => {
-                let capBadge = '';
-                if (p.is_captain) capBadge = `<div class="captain-badge">C</div>`;
-                else if (p.is_vice) capBadge = `<div class="captain-badge vice-badge">V</div>`;
-                
-                // STATUS FLAGS
-                let statusBadge = '';
-                if (p.status === 'd') statusBadge = `<div class="status-flag status-warn">!</div>`;
-                else if (['i', 's'].includes(p.status)) statusBadge = `<div class="status-flag status-bad">×</div>`;
-                
-                // BENCH NUMBER
-                let bNum = isBench ? `<div class="bench-num">${benchNum}</div>` : '';
+            createPill: (p, fixMap, isBench = false) => {
+                let capBadge = p.is_captain ? `<div class="captain-badge">C</div>` : (p.is_vice ? `<div class="captain-badge vice-badge">V</div>` : '');
+                let statusBadge = p.status === 'd' ? `<div class="status-flag status-warn">!</div>` : (['i', 's'].includes(p.status) ? `<div class="status-flag status-bad">×</div>` : '');
+                let bNum = isBench ? `<div class="bench-num">${p.sub_order}</div>` : '';
 
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
                 const fix = fixMap ? (fixMap[p.team_id] || { opp: '-', diff: 3, is_home: true }) : { opp: 'MOCK', diff: 3 };
                 const loc = fix.is_home ? '(H)' : '(A)';
                 
-                // Onclick triggers modal
                 return `
                     <div class="player-pill ${isBench ? 'bench-pill' : ''}" onclick="app.openModal(${p.id})">
                         ${bNum} ${capBadge} ${statusBadge}
@@ -502,18 +492,10 @@
                     </div>
                 `;
             },
-
-            // --- MODAL LOGIC ---
             openModal: async (playerId) => {
                 const p = app.playersCache[playerId];
-                if(!p) return;
-
-                const overlay = document.getElementById('playerModalOverlay');
-                const content = document.getElementById('modalFixtures');
-                
-                // Fill Static Info
                 document.getElementById('modalName').innerText = p.name;
-                document.getElementById('modalTeam').innerText = `${p.team} • £${p.price}m`;
+                document.getElementById('modalInfo').innerText = `${p.team} • £${p.price}m • Sel: ${p.sel}%`;
                 document.getElementById('modalForm').innerText = p.form;
                 document.getElementById('modalSel').innerText = `${p.sel}%`;
                 document.getElementById('modalPts').innerText = p.event_points;
@@ -526,29 +508,19 @@
                     newsEl.style.display = 'none';
                 }
 
-                // Show Modal
-                overlay.classList.add('open');
-                content.innerHTML = '<div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>';
+                document.getElementById('playerModalOverlay').classList.add('open');
+                document.getElementById('modalFixtures').innerHTML = '<div style="font-size:0.8rem; color:#888;">Loading...</div>';
 
-                // Fetch Deep Dive Data (Element Summary)
                 try {
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
-                    
-                    // Render Upcoming Fixtures
                     let html = '';
-                    // First 5 fixtures
                     data.fixtures.slice(0, 5).forEach(f => {
                         const diff = f.difficulty;
-                        const oppId = f.is_home ? f.team_a : f.team_h;
-                        // Use basic logic if team map not avail inside modal scope easily, 
-                        // but we have team_h/a IDs. For now, just show difficulty dot.
-                        const isHome = f.is_home;
                         const colorClass = `fdr-${diff}`;
-                        
                         html += `
                             <div class="fix-item">
                                 <div class="fix-opp">GW${f.event}</div>
-                                <div style="font-size:0.7rem; color:#666;">${isHome?'Home':'Away'}</div>
+                                <div style="font-size:0.7rem; color:#666;">${f.is_home?'Home':'Away'}</div>
                                 <div style="margin-top:5px;">
                                     <span class="fix-diff-dot ${colorClass}"></span>
                                     <span style="font-weight:700; font-size:0.8rem;">${diff}</span>
@@ -556,20 +528,18 @@
                             </div>
                         `;
                     });
-                    content.innerHTML = html;
-
+                    document.getElementById('modalFixtures').innerHTML = html;
                 } catch (e) {
-                    content.innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>';
+                    document.getElementById('modalFixtures').innerHTML = '<div style="color:red; font-size:0.8rem;">Load failed.</div>';
                 }
             }
         };
 
-        function toggleMenu() { app.toggleMenu(); }
-        function switchTool(t) { app.switchTool(t); }
+        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
+        function switchTool(t) { toggleMenu(); app.switchTool(t); }
         function clearData() { if(confirm("Logout?")) { localStorage.removeItem('fpl_id_final'); location.reload(); } }
         function closeModal() { document.getElementById('playerModalOverlay').classList.remove('open'); }
         
-        // Close modal on background click
         document.getElementById('playerModalOverlay').addEventListener('click', (e) => {
             if (e.target.id === 'playerModalOverlay') closeModal();
         });
