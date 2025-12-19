@@ -3,50 +3,317 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FPL Scout</title>
+    <title>FPL Connect</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* --- DESIGN SYSTEM --- */
+        :root {
+            --bg-color: #ffffff;
+            --surface-color: #f3f4f6;
+            --pl-purple: #37003c;
+            --pl-green: #00ff85;
+            --pl-red: #e90052;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif; /* Clean, modern font */
+            background-color: var(--surface-color);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- HEADER --- */
+        header {
+            background-color: var(--pl-purple);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--pl-green);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .app-logo { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; }
+        .app-logo i { color: var(--pl-green); margin-right: 8px; }
+
+        /* --- MAIN CONTAINER --- */
+        .container {
+            max-width: 600px; /* Limits width on desktop */
+            margin: 0 auto;
+            background: var(--bg-color);
+            min-height: 100vh;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        /* --- INPUT AREA --- */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            background: var(--surface-color);
+            padding: 8px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid #e5e7eb;
+        }
+
+        input {
+            border: none;
+            background: transparent;
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            color: var(--pl-purple);
+            font-weight: 500;
+        }
+
+        button {
+            background: var(--pl-purple);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:active { opacity: 0.8; }
+        button:disabled { background: #9ca3af; }
+
+        /* --- MANAGER INFO CARD --- */
+        .manager-card {
+            text-align: center;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .manager-name { font-size: 1.25rem; font-weight: 700; color: var(--pl-purple); }
+        .manager-stats { 
+            font-size: 0.9rem; 
+            color: var(--text-sub); 
+            margin-top: 5px; 
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .stat-badge {
+            background: var(--surface-color);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        /* --- PLAYER LIST --- */
+        .list-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin-bottom: 10px;
+            padding-left: 5px;
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 5px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .player-left { display: flex; align-items: center; gap: 12px; }
+        
+        .position-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--surface-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            font-size: 0.8rem;
+        }
+
+        .p-info { display: flex; flex-direction: column; }
+        .p-name { font-weight: 600; font-size: 0.95rem; color: var(--text-main); }
+        .p-team { font-size: 0.75rem; color: var(--text-sub); }
+        
+        .p-price { font-weight: 600; font-size: 0.9rem; color: var(--pl-purple); }
+
+        /* --- CHIPS / ALERTS --- */
+        .chip {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .chip-cold {
+            background: rgba(233, 0, 82, 0.1);
+            color: var(--pl-red);
+        }
+
+        /* --- UTILS --- */
+        .hidden { display: none; }
+        .loading { text-align: center; padding: 40px; color: var(--text-sub); }
+        .fa-spin { margin-right: 8px; }
+
+    </style>
 </head>
 <body>
 
     <header>
-        <div class="header-content">
-            <div class="logo-area">
-                <i class="fa-solid fa-shield-halved"></i> FPL Scout
-            </div>
-            <p>Team Analyzer</p>
-        </div>
+        <div class="app-logo"><i class="fa-solid fa-futbol"></i> FPL Connect</div>
     </header>
 
-    <main>
-        <div class="card">
-            <div class="input-container">
-                <i class="fa-solid fa-user-tag input-icon"></i>
-                <input type="number" id="teamID" placeholder="Enter Team ID...">
-            </div>
-            
-            <button id="searchBtn">
-                <i class="fa-solid fa-magnifying-glass"></i> Find Team
-            </button>
-
-            <div id="loading" class="hidden">
-                <div class="spinner"></div>
-                <p>Scouting Database...</p>
-            </div>
-
-            <div id="result" class="hidden">
-                </div>
+    <div class="container">
+        
+        <div class="search-box">
+            <input type="number" id="teamID" placeholder="Enter Team ID (e.g. 123456)">
+            <button id="searchBtn"><i class="fa-solid fa-search"></i></button>
         </div>
-    </main>
 
-    <footer>
-        <p>Data via FPL API <i class="fa-solid fa-bolt"></i> Not official</p>
-    </footer>
+        <div id="loading" class="loading hidden">
+            <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i><br><br>
+            Scanning Premier League Database...
+        </div>
 
-    <script src="script.js"></script>
+        <div id="result" class="hidden">
+            </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchBtn = document.getElementById('searchBtn');
+            const inputField = document.getElementById('teamID');
+
+            // Trigger search on click or Enter key
+            searchBtn.addEventListener('click', fetchData);
+            inputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') fetchData();
+            });
+        });
+
+        async function fetchData() {
+            const id = document.getElementById('teamID').value;
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            const searchBtn = document.getElementById('searchBtn');
+
+            if (!id) return;
+
+            // UI Loading
+            searchBtn.disabled = true;
+            resultDiv.classList.add('hidden');
+            loadingDiv.classList.remove('hidden');
+
+            try {
+                // 1. Get Static Data (Players & Teams)
+                const staticRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/')}`);
+                const staticData = JSON.parse((await staticRes.json()).contents);
+
+                // Create Lookups
+                const playerMap = {};
+                staticData.elements.forEach(p => {
+                    playerMap[p.id] = {
+                        name: p.web_name,
+                        team: staticData.teams.find(t => t.id === p.team).short_name,
+                        cost: p.now_cost / 10,
+                        form: parseFloat(p.form),
+                        pos: p.element_type // 1=GK, 2=DEF, 3=MID, 4=FWD
+                    };
+                });
+
+                // Get Current GW
+                const gw = staticData.events.find(e => e.is_current)?.id || 1;
+
+                // 2. Get User Picks
+                const picksRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`)}`);
+                const picksData = JSON.parse((await picksRes.json()).contents);
+
+                // 3. Get User Profile
+                const entryRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/`)}`);
+                const entryData = JSON.parse((await entryRes.json()).contents);
+
+                // 4. Build HTML
+                let html = `
+                    <div class="manager-card">
+                        <div class="manager-name">${entryData.name}</div>
+                        <div class="manager-stats">
+                            <div class="stat-badge"><i class="fa-solid fa-user"></i> ${entryData.player_first_name}</div>
+                            <div class="stat-badge"><i class="fa-solid fa-star"></i> ${picksData.entry_history.points} pts</div>
+                        </div>
+                    </div>
+                    <div class="list-label">Starting XI</div>
+                `;
+
+                // Helper to get icon for position
+                const getPosIcon = (type) => {
+                    if(type === 1) return '<i class="fa-solid fa-hand"></i>'; // GK
+                    if(type === 2) return '<i class="fa-solid fa-shield"></i>'; // DEF
+                    if(type === 3) return '<i class="fa-solid fa-shoe-prints"></i>'; // MID
+                    return '<i class="fa-solid fa-bullseye"></i>'; // FWD
+                };
+
+                picksData.picks.forEach((pick, index) => {
+                    const p = playerMap[pick.element];
+                    
+                    // Logic: Cold Form (< 2.0)
+                    let alertHtml = '';
+                    if (index < 11 && p.form < 2.0) {
+                        alertHtml = `<span class="chip chip-cold"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
+                    }
+
+                    // Bench Splitter
+                    if (index === 11) {
+                        html += `<div class="list-label" style="margin-top:20px;">Bench</div>`;
+                    }
+
+                    html += `
+                        <div class="player-row" style="opacity: ${index > 10 ? '0.7' : '1'}">
+                            <div class="player-left">
+                                <div class="position-icon">${getPosIcon(p.pos)}</div>
+                                <div class="p-info">
+                                    <div class="p-name">${p.name} ${alertHtml}</div>
+                                    <div class="p-team">${p.team}</div>
+                                </div>
+                            </div>
+                            <div class="p-price">£${p.cost}</div>
+                        </div>
+                    `;
+                });
+
+                resultDiv.innerHTML = html;
+                resultDiv.classList.remove('hidden');
+
+            } catch (err) {
+                console.error(err);
+                resultDiv.innerHTML = `<div style="text-align:center; color:var(--pl-red); padding:20px;"><b>Error:</b> Could not find Team ID ${id}</div>`;
+                resultDiv.classList.remove('hidden');
+            } finally {
+                loadingDiv.classList.add('hidden');
+                searchBtn.disabled = false;
+            }
+        }
+    </script>
 </body>
 </html>
