@@ -504,11 +504,20 @@
             },
 
             // --- MODAL LOGIC ---
-             openModal: async (playerId) => {
+            openModal: async (playerId) => {
                 const p = app.playersCache[playerId];
-                document.getElementById('modalName').innerText = p.name;
-                document.getElementById('modalInfo').innerText = `${p.team} • £${p.price}m • Sel: ${p.sel}%`;
+                if(!p) return;
+
+                const overlay = document.getElementById('playerModalOverlay');
+                const content = document.getElementById('modalFixtures');
                 
+                // Fill Static Info
+                document.getElementById('modalName').innerText = p.name;
+                document.getElementById('modalTeam').innerText = `${p.team} • £${p.price}m`;
+                document.getElementById('modalForm').innerText = p.form;
+                document.getElementById('modalSel').innerText = `${p.sel}%`;
+                document.getElementById('modalPts').innerText = p.event_points;
+
                 const newsEl = document.getElementById('modalNews');
                 if(p.news) {
                     newsEl.style.display = 'block';
@@ -517,15 +526,17 @@
                     newsEl.style.display = 'none';
                 }
 
-                document.getElementById('playerModalOverlay').classList.add('open');
-                document.getElementById('modalFixtures').innerHTML = '<div style="font-size:0.8rem; color:#888;">Loading...</div>';
+                // Show Modal
+                overlay.classList.add('open');
+                content.innerHTML = '<div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>';
 
+                // Fetch Deep Dive Data (Element Summary)
                 try {
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
                     
+                    // Render Upcoming Fixtures
                     let html = '';
-                    
-                    // --- NEW LOGIC STARTS HERE ---
+                    // First 5 fixtures
                     data.fixtures.slice(0, 5).forEach(f => {
                         const diff = f.difficulty;
                         const colorClass = `fdr-${diff}`;
@@ -547,14 +558,12 @@
                             </div>
                         `;
                     });
-                    // --- NEW LOGIC ENDS HERE ---
-
-                    document.getElementById('modalFixtures').innerHTML = html;
+                    content.innerHTML = html;
 
                 } catch (e) {
-                    document.getElementById('modalFixtures').innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>';
+                    content.innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>';
                 }
-            }
+            }            
         };
 
         function toggleMenu() { app.toggleMenu(); }
