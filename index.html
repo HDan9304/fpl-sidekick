@@ -3,217 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FPL Hub</title>
+    <title>FPL Hub Pro</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* --- 1. DESIGN SYSTEM --- */
         :root {
-            --primary: #37003c;   /* Dark Purple */
-            --accent: #00ff85;    /* Neon Green */
-            --bg-body: #f0f2f5;   /* Desktop Background */
-            --bg-app: #ffffff;    /* App Card Background */
-            --text-main: #111827;
-            --text-sub: #6b7280;
-            --border: #e5e7eb;
-            --red: #e90052;
+            --primary: #37003c; --accent: #00ff85;
+            --bg-body: #f0f2f5; --bg-app: #ffffff;
+            --text-main: #111827; --text-sub: #6b7280;
+            --border: #e5e7eb; --red: #e90052;
+            --yellow-bg: #fff3cd; --yellow-text: #856404;
         }
 
-        /* --- 2. GLOBAL RESET --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
 
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-        }
+        body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; }
 
-        /* --- 3. APP CONTAINER --- */
+        /* APP CONTAINER */
         .app-container {
-            width: 100%;
-            max-width: 600px;
-            background-color: var(--bg-app);
-            min-height: 100vh;
-            position: relative;
-            box-shadow: none;
+            width: 100%; max-width: 600px; background-color: var(--bg-app);
+            min-height: 100vh; position: relative; box-shadow: none;
         }
-
         @media (min-width: 600px) {
-            body { padding-top: 40px; padding-bottom: 40px; }
+            body { padding: 40px 0; }
             .app-container {
-                min-height: auto;
-                border-radius: 24px;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-                overflow: hidden; /* Clips content to corners */
-                height: 90vh; /* Fixed height on desktop for scrolling */
-                overflow-y: auto; /* Scroll inside the card */
+                min-height: auto; border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+                height: 90vh; overflow: hidden; display: flex; flex-direction: column;
             }
         }
 
-        /* --- 4. HEADER --- */
+        /* HEADER */
         header {
-            background: var(--bg-app);
-            height: 65px;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 50;
+            background: var(--bg-app); height: 65px; padding: 0 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; flex-shrink: 0;
         }
-
         .header-left { display: flex; align-items: center; gap: 15px; }
-
-        .menu-btn {
-            font-size: 1.2rem;
-            color: var(--text-main);
-            cursor: pointer;
-            padding: 8px;
-            margin-left: -8px; /* Alignment fix */
-        }
-
-        .brand {
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: var(--primary);
-            display: flex; align-items: center; gap: 8px;
-            letter-spacing: -0.5px;
-        }
+        .menu-btn { font-size: 1.2rem; cursor: pointer; padding: 8px; margin-left: -8px; }
+        .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
         .brand i { color: var(--accent); }
-
         .user-avatar {
-            width: 34px; height: 34px;
-            border-radius: 50%;
-            background: #f3f4f6;
-            border: 1px solid var(--border);
-            color: var(--primary);
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
+            width: 34px; height: 34px; border-radius: 50%; background: #f3f4f6;
+            border: 1px solid var(--border); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-        .user-avatar.active {
-            background: var(--primary); color: var(--accent); border-color: var(--primary);
-        }
+        .user-avatar.active { background: var(--primary); color: var(--accent); border-color: var(--primary); }
 
-        /* --- 5. SIDEBAR MENU --- */
+        /* SIDEBAR */
         .sidebar {
             position: fixed; top: 0; left: 0; height: 100%; width: 280px;
-            background: var(--bg-app); z-index: 200;
-            transform: translateX(-100%);
+            background: var(--bg-app); z-index: 200; transform: translateX(-100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 4px 0 25px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column;
+            box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
         }
         .sidebar.open { transform: translateX(0); }
-
-        .menu-header {
-            height: 65px; display: flex; align-items: center; padding-left: 24px;
-            font-weight: 800; color: var(--primary); font-size: 1.2rem;
-            border-bottom: 1px solid var(--border);
-        }
-
+        .menu-header { height: 65px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
         .menu-items { flex: 1; padding-top: 10px; }
-
-        .menu-item {
-            display: flex; align-items: center; gap: 16px;
-            padding: 16px 24px;
-            color: var(--text-sub); font-weight: 600; cursor: pointer;
-            border-left: 4px solid transparent; transition: 0.2s;
-        }
+        .menu-item { display: flex; align-items: center; gap: 16px; padding: 16px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
         .menu-item:hover { background: #f9fafb; color: var(--primary); }
-        .menu-item.active {
-            color: var(--primary); background: rgba(55, 0, 60, 0.04);
-            border-left-color: var(--primary);
-        }
-        .menu-item i { width: 20px; text-align: center; font-size: 1.1rem; }
-
+        .menu-item.active { color: var(--primary); background: rgba(55, 0, 60, 0.04); border-left-color: var(--primary); }
         .menu-footer { padding: 24px; border-top: 1px solid var(--border); }
-        .reset-btn {
-            color: var(--red); font-weight: 600; cursor: pointer;
-            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
-        }
-
-        /* Overlay */
-        .menu-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); z-index: 150;
-            opacity: 0; visibility: hidden; transition: 0.3s;
-            backdrop-filter: blur(2px);
-        }
+        .reset-btn { color: var(--red); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
         .menu-overlay.open { opacity: 1; visibility: visible; }
 
-
-        /* --- 6. CONTENT VIEWS --- */
-        .content { padding: 20px; padding-bottom: 80px; }
-
-        /* Welcome Card */
-        .welcome-card {
-            text-align: center; padding: 40px 20px; background: #fafafa;
-            border-radius: 20px; border: 1px solid var(--border); margin-top: 20px;
-        }
-        input {
-            width: 100%; padding: 14px; border: 2px solid var(--border);
-            border-radius: 12px; text-align: center; margin: 20px 0; outline: none;
-            background: white; font-size: 1rem;
-        }
-        input:focus { border-color: var(--primary); }
-        .btn {
-            width: 100%; padding: 14px; background: var(--primary); color: white;
-            border: none; border-radius: 12px; font-weight: 700; cursor: pointer;
-            font-size: 1rem;
-        }
-
+        /* CONTENT */
+        .content { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        
+        .welcome-card { text-align: center; padding: 40px 20px; background: #fafafa; border-radius: 20px; border: 1px solid var(--border); margin-top: 20px; }
+        input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: white; font-size: 1rem; }
+        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
+        
         /* Dashboard */
-        .manager-header {
-            background: var(--primary); color: white; padding: 25px;
-            border-radius: 16px; text-align: center; margin-bottom: 25px;
-            box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2);
-        }
+        .demo-alert { background: var(--yellow-bg); color: var(--yellow-text); padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 20px; border: 1px solid #ffeeba; }
+        .manager-header { background: var(--primary); color: white; padding: 25px; border-radius: 16px; text-align: center; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2); }
         .manager-name { font-size: 1.3rem; font-weight: 700; }
         .manager-stats { opacity: 0.9; font-size: 0.9rem; margin-top: 5px; }
-
-        .section-label {
-            font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
-            color: var(--text-sub); margin-bottom: 10px; letter-spacing: 1px; padding-left: 5px;
-        }
-
+        .section-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-sub); margin-bottom: 10px; letter-spacing: 1px; padding-left: 5px; }
         .list-box { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-
-        .player-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 15px; border-bottom: 1px solid #f3f4f6;
-        }
+        .player-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f3f4f6; }
         .player-row:last-child { border-bottom: none; }
-
         .p-left { display: flex; align-items: center; gap: 12px; }
         .pos-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .pos-1 { background: #eab308; } .pos-2 { background: #3b82f6; }
-        .pos-3 { background: #22c55e; } .pos-4 { background: #ef4444; }
-
+        .pos-1 { background: #eab308; } .pos-2 { background: #3b82f6; } .pos-3 { background: #22c55e; } .pos-4 { background: #ef4444; }
         .p-name { font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
         .p-meta { font-size: 0.75rem; color: var(--text-sub); }
         .p-price { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
-
         .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; margin-left: 5px; background: #fee2e2; color: var(--red); }
-
-        /* Spinner & Status */
-        .spinner {
-            width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1);
-            border-top-color: var(--primary); border-radius: 50%;
-            animation: spin 0.8s linear infinite; margin: 0 auto 15px auto;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
         
-        .status-log {
-            font-size: 0.75rem; text-align: center; color: var(--text-sub);
-            padding: 8px; background: #f3f4f6; border-radius: 8px; margin-bottom: 15px; display: none;
-        }
-
+        .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -222,54 +103,47 @@
     <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
     <div id="sideMenu" class="sidebar">
         <div class="menu-header">FPL Hub</div>
-        
         <div class="menu-items">
             <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
                 <i class="fa-solid fa-shirt"></i> Squad
             </div>
-
             <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
             </div>
         </div>
-
         <div class="menu-footer">
-            <div class="reset-btn" onclick="clearData()">
-                <i class="fa-solid fa-power-off"></i> Reset App
-            </div>
+            <div class="reset-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Reset App</div>
         </div>
     </div>
 
     <div class="app-container">
-        
         <header>
             <div class="header-left">
                 <div class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></div>
                 <div class="brand"><i class="fa-solid fa-bolt"></i> FPL Hub</div>
             </div>
-            <div class="user-avatar" id="userIcon" onclick="clearData()">
-                <i class="fa-regular fa-user"></i>
-            </div>
+            <div class="user-avatar" id="userIcon" onclick="clearData()"><i class="fa-regular fa-user"></i></div>
         </header>
 
         <div class="content">
-
-            <div id="statusLog" class="status-log"></div>
-
             <div id="welcomeView" class="welcome-card hidden">
                 <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
-                <h2 style="font-size: 1.4rem; margin-bottom: 10px; color: var(--primary);">Link Team</h2>
-                <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your FPL ID to start.</p>
+                <h2>Link Team</h2>
+                <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your ID. If the network is busy, we will show demo data.</p>
                 <input type="number" id="teamID" placeholder="e.g. 123456">
                 <button class="btn" onclick="app.load()">Connect</button>
             </div>
 
             <div id="loadingView" class="welcome-card hidden" style="padding: 60px 20px;">
                 <div class="spinner"></div>
-                <p id="loadingMsg" style="color: var(--text-sub); font-weight: 500;">Connecting...</p>
+                <p id="loadingMsg" style="color: var(--text-sub);">Connecting...</p>
             </div>
 
             <div id="dashboardView" class="hidden">
+                <div id="demoAlert" class="demo-alert hidden">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Network Blocked. Showing <b>Demo Data</b>.
+                </div>
+
                 <div class="manager-header">
                     <div class="manager-name" id="dispName">...</div>
                     <div class="manager-stats" id="dispPoints">...</div>
@@ -286,21 +160,45 @@
                 <div class="welcome-card">
                     <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
                     <h2>Transfer Hub</h2>
-                    <p>This tool will be built in the next step.</p>
+                    <p>Coming up next...</p>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
+        // --- 1. MOCK DATA (FAILSAFE) ---
+        const MOCK_DATA = {
+            user: { name: "Demo Manager", summary_overall_points: 950, player_first_name: "Test", player_last_name: "User" },
+            picks: [
+                { element: 1, position: 1 }, { element: 2, position: 2 }, { element: 3, position: 3 }, { element: 4, position: 4 }, { element: 5, position: 5 },
+                { element: 6, position: 6 }, { element: 7, position: 7 }, { element: 8, position: 8 }, { element: 9, position: 9 }, { element: 10, position: 10 },
+                { element: 11, position: 11 }, { element: 12, position: 12 }, { element: 13, position: 13 }, { element: 14, position: 14 }, { element: 15, position: 15 }
+            ],
+            players: {
+                1: { web_name: "Pickford", team: "EVE", now_cost: 45, element_type: 1, form: "3.5" },
+                2: { web_name: "Alexander-Arnold", team: "LIV", now_cost: 80, element_type: 2, form: "1.2" },
+                3: { web_name: "Saliba", team: "ARS", now_cost: 55, element_type: 2, form: "4.0" },
+                4: { web_name: "Porro", team: "TOT", now_cost: 50, element_type: 2, form: "2.8" },
+                5: { web_name: "Salah", team: "LIV", now_cost: 130, element_type: 3, form: "8.5" },
+                6: { web_name: "Saka", team: "ARS", now_cost: 90, element_type: 3, form: "6.2" },
+                7: { web_name: "Palmer", team: "CHE", now_cost: 60, element_type: 3, form: "5.5" },
+                8: { web_name: "Gordon", team: "NEW", now_cost: 65, element_type: 3, form: "3.1" },
+                9: { web_name: "Haaland", team: "MCI", now_cost: 140, element_type: 4, form: "9.0" },
+                10: { web_name: "Watkins", team: "AVL", now_cost: 85, element_type: 4, form: "1.5" },
+                11: { web_name: "Isak", team: "NEW", now_cost: 75, element_type: 4, form: "4.2" },
+                12: { web_name: "Areola", team: "WHU", now_cost: 40, element_type: 1, form: "2.0" },
+                13: { web_name: "Branthwaite", team: "EVE", now_cost: 40, element_type: 2, form: "3.0" },
+                14: { web_name: "Garnacho", team: "MUN", now_cost: 50, element_type: 3, form: "1.8" },
+                15: { web_name: "Archer", team: "SHU", now_cost: 45, element_type: 4, form: "1.0" }
+            }
+        };
+
         const app = {
-            cacheKey: 'fpl_db_univ_v2',
-            cacheTime: 'fpl_ts_univ_v2',
             currentTool: 'squad',
 
             init: () => {
-                const savedId = localStorage.getItem('fpl_id_univ');
+                const savedId = localStorage.getItem('fpl_id_final');
                 if(savedId) {
                     document.getElementById('userIcon').classList.add('active');
                     document.getElementById('teamID').value = savedId;
@@ -311,101 +209,66 @@
             },
 
             show: (viewId) => {
-                // Hide all views
-                ['welcomeView', 'loadingView', 'dashboardView', 'transfersView'].forEach(v => {
-                    document.getElementById(v).classList.add('hidden');
-                });
-                // Show requested view
+                ['welcomeView', 'loadingView', 'dashboardView', 'transfersView'].forEach(v => document.getElementById(v).classList.add('hidden'));
                 document.getElementById(viewId).classList.remove('hidden');
             },
 
-            log: (msg) => {
-                const el = document.getElementById('statusLog');
-                el.style.display = 'block';
-                el.innerText = msg;
-            },
-
-            // --- NAVIGATION ---
             toggleMenu: () => {
-                const menu = document.getElementById('sideMenu');
-                const overlay = document.getElementById('menuOverlay');
-                menu.classList.toggle('open');
-                overlay.classList.toggle('open');
+                document.getElementById('sideMenu').classList.toggle('open');
+                document.getElementById('menuOverlay').classList.toggle('open');
             },
 
             switchTool: (toolName) => {
-                app.toggleMenu(); // Close menu
+                app.toggleMenu();
                 app.currentTool = toolName;
-
-                // Update Menu Styling
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-' + toolName).classList.add('active');
 
-                // Route Logic
                 if (toolName === 'squad') {
-                    const savedId = localStorage.getItem('fpl_id_univ');
-                    if(savedId && document.getElementById('startingList').innerHTML !== '') {
-                        app.show('dashboardView');
-                    } else if (savedId) {
-                        app.load(savedId); // Reload if empty
-                    } else {
-                        app.show('welcomeView');
-                    }
-                } 
-                else if (toolName === 'transfers') {
+                    if(document.getElementById('startingList').innerHTML !== '') app.show('dashboardView');
+                    else app.load(localStorage.getItem('fpl_id_final'));
+                } else if (toolName === 'transfers') {
                     app.show('transfersView');
                 }
             },
 
-            // --- DATA ENGINE ---
             fetchUrl: async (targetUrl) => {
+                // Try 2 reliable proxies
                 const proxies = [
                     (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                    (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-                    (url) => `https://thingproxy.freeboard.io/fetch/${url}`
+                    (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
                 ];
 
                 for (let i = 0; i < proxies.length; i++) {
-                    const proxyUrl = proxies[i](targetUrl);
-                    if(i > 0) app.log(`Retrying (${i+1}/${proxies.length})...`);
                     try {
                         const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 8000);
-                        const response = await fetch(proxyUrl, { signal: controller.signal });
+                        const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+                        const res = await fetch(proxies[i](targetUrl), { signal: controller.signal });
                         clearTimeout(timeoutId);
-                        if (response.ok) return await response.json();
-                    } catch (err) {}
+                        if(res.ok) return await res.json();
+                    } catch (e) { console.warn("Proxy failed"); }
                 }
-                throw new Error("Connection failed.");
+                throw new Error("Failed");
             },
 
             load: async (savedId = null) => {
                 const id = savedId || document.getElementById('teamID').value;
                 if(!id) return alert("Enter ID");
-
-                localStorage.setItem('fpl_id_univ', id);
+                localStorage.setItem('fpl_id_final', id);
                 document.getElementById('userIcon').classList.add('active');
                 
                 app.show('loadingView');
 
                 try {
-                    // 1. Database
-                    let staticData = null;
-                    const cachedDb = localStorage.getItem(app.cacheKey);
-                    const now = Date.now();
+                    // Try Real Network
+                    document.getElementById('loadingMsg').innerText = "Connecting...";
+                    
+                    const staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
+                    const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
+                    const gw = staticData.events.find(e => e.is_current)?.id || 1;
+                    const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
 
-                    if(cachedDb && localStorage.getItem(app.cacheTime) && (now - localStorage.getItem(app.cacheTime) < 1800000)) {
-                        app.log("Loading cache...");
-                        staticData = JSON.parse(cachedDb);
-                    } else {
-                        app.log("Downloading DB...");
-                        document.getElementById('loadingMsg').innerText = "Updating Database...";
-                        staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
-                        localStorage.setItem(app.cacheKey, JSON.stringify(staticData));
-                        localStorage.setItem(app.cacheTime, now);
-                    }
-
-                    // 2. Maps
+                    // Map Real Data
                     const players = {};
                     staticData.elements.forEach(p => {
                         players[p.id] = {
@@ -416,41 +279,42 @@
                             form: parseFloat(p.form)
                         };
                     });
-                    const gw = staticData.events.find(e => e.is_current)?.id || 1;
 
-                    // 3. User Data
-                    app.log("Scouting team...");
-                    document.getElementById('loadingMsg').innerText = "Analyzing Squad...";
-                    
-                    const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
-                    const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
-
-                    app.render(user, picks, players);
-                    document.getElementById('statusLog').style.display = 'none';
+                    document.getElementById('demoAlert').classList.add('hidden');
+                    app.render(user, picks.picks, players);
 
                 } catch (error) {
-                    app.log("Error");
-                    alert("Network Error. Please refresh.");
-                    app.show('welcomeView');
+                    console.warn("Network failed, loading DEMO.");
+                    // FAILSAFE: Load Demo Data
+                    document.getElementById('demoAlert').classList.remove('hidden');
+                    
+                    // Create Mock Map
+                    const mockPlayers = {};
+                    Object.values(MOCK_DATA.players).forEach((p, i) => {
+                         mockPlayers[i+1] = { name: p.web_name, team: p.team, pos: p.element_type, price: p.now_cost/10, form: parseFloat(p.form) };
+                    });
+                    
+                    setTimeout(() => {
+                        app.render(MOCK_DATA.user, MOCK_DATA.picks, mockPlayers);
+                    }, 1000);
                 }
             },
 
             render: (user, picks, players) => {
                 document.getElementById('dispName').innerText = user.name;
-                document.getElementById('dispPoints').innerText = `${user.summary_overall_points} pts • GW${picks.entry_history.event}`;
+                document.getElementById('dispPoints').innerText = `${user.summary_overall_points} pts`;
 
                 const sList = document.getElementById('startingList');
                 const bList = document.getElementById('benchList');
                 sList.innerHTML = ''; bList.innerHTML = '';
 
-                picks.picks.forEach((pick, i) => {
-                    const p = players[pick.element];
+                picks.forEach((pick, i) => {
+                    // Real or Mock mapping
+                    const p = players[pick.element] || players[i+1]; 
                     if(!p) return;
 
                     let badge = '';
-                    if(i < 11 && p.form < 2.5) {
-                        badge = `<span class="chip chip-cold"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
-                    }
+                    if(i < 11 && p.form < 2.5) badge = `<span class="chip chip-cold"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
 
                     const html = `
                         <div class="player-row">
@@ -464,23 +328,17 @@
                             <div class="p-price">£${p.price}</div>
                         </div>
                     `;
-
                     if(i < 11) sList.innerHTML += html;
                     else bList.innerHTML += html;
                 });
-
                 app.show('dashboardView');
             }
         };
 
-        // Global functions for HTML access
         function toggleMenu() { app.toggleMenu(); }
         function switchTool(t) { app.switchTool(t); }
         function clearData() {
-            if(confirm("Logout?")) {
-                localStorage.removeItem('fpl_id_univ');
-                location.reload();
-            }
+            if(confirm("Logout?")) { localStorage.removeItem('fpl_id_final'); location.reload(); }
         }
 
         document.addEventListener('DOMContentLoaded', app.init);
