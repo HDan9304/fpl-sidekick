@@ -14,13 +14,14 @@
             --bg-body: #f0f2f5; --bg-app: #ffffff;
             --text-main: #111827; --text-sub: #6b7280;
             --border: #e5e7eb; --red: #e90052;
-            --pitch-start: #02894e; --pitch-end: #007341;
+            
+            /* REFINED PITCH COLORS */
+            --grass-1: #02894e; 
+            --grass-2: #027a45; /* Darker stripe */
             
             /* FDR Colors */
-            --fdr-2: #01fc7a; --fdr-2-text: #00381b;
-            --fdr-3: #e7e7e7; --fdr-3-text: #333;
-            --fdr-4: #ff1751; --fdr-4-text: white;
-            --fdr-5: #80072d; --fdr-5-text: white;
+            --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e7e7e7; --fdr-4: #ff1751; --fdr-5: #80072d;
+            --fdr-text-dark: #00381b; --fdr-text-light: white;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -75,96 +76,121 @@
         .menu-overlay.open { opacity: 1; visibility: visible; }
 
         /* CONTENT */
-        .content { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        .content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
         
         .welcome-card { text-align: center; padding: 40px 20px; background: #fafafa; border-radius: 20px; border: 1px solid var(--border); margin-top: 20px; }
         input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: white; font-size: 1rem; }
         .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
         
-        .demo-alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 10px; border: 1px solid #ffeeba; }
-        .manager-header { text-align: center; margin-bottom: 20px; }
-        .manager-name { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
-        .manager-stats { font-size: 0.9rem; color: var(--text-sub); }
+        .demo-alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 15px; border: 1px solid #ffeeba; }
 
-        /* PITCH STYLES */
-        .pitch-container {
-            background: linear-gradient(180deg, var(--pitch-start) 0%, var(--pitch-end) 100%);
-            border-radius: 16px;
-            padding: 20px 5px;
-            position: relative;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 2px solid #005f36;
-            margin-bottom: 25px;
+        /* --- NEW SCOREBOARD HEADER --- */
+        .scoreboard {
+            background: var(--primary); color: white; padding: 20px;
+            border-radius: 16px; margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2);
         }
-        .pitch-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .pitch-circle { width: 80px; height: 80px; border: 2px solid rgba(255,255,255,0.1); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .line-mid { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.1); }
-        .box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.1); border-top: none; }
-        .box-bot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.1); border-bottom: none; }
+        .manager-name { font-size: 1.1rem; font-weight: 800; text-align: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; }
+        .stat-box { display: flex; flex-direction: column; }
+        .stat-label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; font-weight: 600; letter-spacing: 0.5px; }
+        .stat-val { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
+        .stat-val-small { font-size: 0.9rem; font-weight: 700; color: white; }
+
+        /* --- REFINED PITCH --- */
+        .pitch-wrapper {
+            background: #fff; border-radius: 16px; overflow: hidden;
+            border: 1px solid var(--border); margin-bottom: 20px;
+        }
+        
+        /* Budget Bar */
+        .budget-bar {
+            background: white; padding: 8px 15px; display: flex; justify-content: space-between;
+            border-bottom: 1px solid var(--border); font-size: 0.75rem; font-weight: 600; color: var(--text-sub);
+        }
+        .budget-val { color: var(--primary); font-weight: 800; }
+
+        /* Pitch Graphic with Striped Grass */
+        .pitch-container {
+            background: repeating-linear-gradient(
+                0deg,
+                var(--grass-1),
+                var(--grass-1) 20px,
+                var(--grass-2) 20px,
+                var(--grass-2) 40px
+            );
+            padding: 25px 5px; position: relative; min-height: 480px;
+        }
+        
+        /* Pitch Markings */
+        .pitch-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.6; }
+        .pitch-circle { width: 80px; height: 80px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .line-mid { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.4); }
+        .box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-top: none; }
+        .box-bot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-bottom: none; }
 
         .field-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 20px; position: relative; z-index: 10; }
         .field-row:last-child { margin-bottom: 0; }
 
-        /* PLAYER CARD */
+        /* --- PLAYER CARD REFINED --- */
         .player-pill {
             background: rgba(255,255,255,0.95);
-            width: 70px; 
-            padding: 6px 2px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
+            width: 68px; padding: 6px 2px;
+            border-radius: 6px; text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
             display: flex; flex-direction: column; align-items: center;
             position: relative;
         }
-        .player-pill:active { transform: scale(0.95); }
-
+        
         .kit-img {
-            width: 32px; height: 42px; object-fit: contain; margin-bottom: 2px;
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            width: 36px; height: 46px; object-fit: contain; margin-bottom: -2px; margin-top: 2px;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
         }
 
         .pill-name { 
             font-size: 0.65rem; font-weight: 700; color: #111; 
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            width: 100%; padding: 0 2px;
+            width: 100%; background: white; margin-top: 2px; padding: 1px 0;
         }
         
-        .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; }
-        .points-val { font-weight: 800; color: var(--primary); }
-
-        /* FIXTURE BADGE */
-        .fix-badge {
-            font-size: 0.55rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-top: 2px;
-            width: 90%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .pill-data { 
+            font-size: 0.6rem; color: #555; font-weight: 500; 
+            display: flex; gap: 4px; justify-content: center; width: 100%;
+            background: #f3f4f6; border-radius: 0 0 4px 4px; padding-bottom: 2px;
         }
-        /* FDR Colors */
-        .fdr-1, .fdr-2 { background: var(--fdr-2); color: var(--fdr-2-text); }
-        .fdr-3 { background: var(--fdr-3); color: var(--fdr-3-text); }
-        .fdr-4 { background: var(--fdr-4); color: var(--fdr-4-text); }
-        .fdr-5 { background: var(--fdr-5); color: var(--fdr-5-text); }
+        
+        /* New Points Badge */
+        .points-badge { 
+            background: var(--primary); color: white; 
+            padding: 0 4px; border-radius: 3px; font-weight: 700; 
+        }
 
-        /* CAPTAINCY */
+        /* Fixture Badge */
+        .fix-badge {
+            font-size: 0.5rem; font-weight: 700; padding: 1px 4px;
+            border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+            white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20;
+        }
+        .fdr-1, .fdr-2 { background: var(--fdr-2); color: var(--fdr-text-dark); }
+        .fdr-3 { background: var(--fdr-3); color: #333; }
+        .fdr-4 { background: var(--fdr-4); color: white; }
+        .fdr-5 { background: var(--fdr-5); color: white; }
+
+        /* Captain Badge */
         .captain-badge {
-            position: absolute; top: -5px; right: -5px;
+            position: absolute; bottom: 30px; right: -4px;
             background: #111; color: white; border-radius: 50%;
-            width: 18px; height: 18px; font-size: 0.65rem; font-weight: 700;
+            width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid white; z-index: 5;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15;
         }
         .vice-badge { background: #666; }
 
-        .bench-container { background: #f8f9fa; border-radius: 12px; padding: 15px; border: 1px solid var(--border); }
-        .bench-label { font-size: 0.7rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
-        .bench-row { display: flex; justify-content: space-around; }
-        .bench-pill { width: 65px; text-align: center; opacity: 0.8; }
+        /* Bench */
+        .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        .bench-header { background: #f8f9fa; padding: 8px 15px; font-size: 0.7rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+        .bench-row { display: flex; justify-content: space-around; padding: 15px; background: #fdfdfd; }
+        .bench-pill { opacity: 0.85; }
 
         .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -217,23 +243,43 @@
                     <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
                 </div>
 
-                <div class="manager-header">
+                <div class="scoreboard">
                     <div class="manager-name" id="dispName">...</div>
-                    <div class="manager-stats" id="dispPoints">...</div>
-                </div>
-
-                <div class="pitch-container">
-                    <div class="pitch-lines">
-                        <div class="box-top"></div>
-                        <div class="line-mid"></div>
-                        <div class="pitch-circle"></div>
-                        <div class="box-bot"></div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">GW Points</div>
+                            <div class="stat-val" id="dispGW">...</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Total Pts</div>
+                            <div class="stat-val-small" id="dispTotal">...</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Rank</div>
+                            <div class="stat-val-small" id="dispRank">...</div>
+                        </div>
                     </div>
-                    <div id="pitchRows"></div>
                 </div>
 
-                <div class="bench-container">
-                    <div class="bench-label">Bench</div>
+                <div class="pitch-wrapper">
+                    <div class="budget-bar">
+                        <span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span>
+                        <span>Value: <span class="budget-val" id="dispValue">£0.0m</span></span>
+                    </div>
+
+                    <div class="pitch-container">
+                        <div class="pitch-lines">
+                            <div class="box-top"></div>
+                            <div class="line-mid"></div>
+                            <div class="pitch-circle"></div>
+                            <div class="box-bot"></div>
+                        </div>
+                        <div id="pitchRows"></div>
+                    </div>
+                </div>
+
+                <div class="bench-wrapper">
+                    <div class="bench-header">Substitutes</div>
                     <div id="benchRow" class="bench-row"></div>
                 </div>
             </div>
@@ -251,7 +297,8 @@
     <script>
         // --- MOCK DATA ---
         const MOCK_DATA = {
-            user: { name: "Demo Manager", summary_overall_points: 950 },
+            user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
+            bank: 5, value: 1024,
             picks: [
                 { element: 1, position: 1, is_captain: false }, { element: 2, position: 2, is_captain: false }, 
                 { element: 3, position: 3, is_captain: false }, { element: 4, position: 4, is_captain: false }, 
@@ -334,19 +381,15 @@
                     const gw = staticData.events.find(e => e.is_current)?.id || 1;
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
                     
-                    // NEW: Fetch Fixtures
                     document.getElementById('loadingMsg').innerText = "Checking Fixtures...";
                     const fixtures = await app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`);
 
-                    // Create Fixture Map: TeamID -> {opp: 'ARS', diff: 3}
                     const fixMap = {};
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
                     
                     fixtures.forEach(f => {
-                        // Home Team Info
                         fixMap[f.team_h] = { opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true };
-                        // Away Team Info
                         fixMap[f.team_a] = { opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false };
                     });
 
@@ -360,7 +403,8 @@
                     });
 
                     document.getElementById('demoAlert').classList.add('hidden');
-                    app.render(user, picks.picks, players, fixMap);
+                    // Pass budget info
+                    app.render(user, picks.picks, players, fixMap, picks.entry_history);
 
                 } catch (error) {
                     document.getElementById('demoAlert').classList.remove('hidden');
@@ -368,17 +412,24 @@
                     Object.values(MOCK_DATA.players).forEach((p, i) => {
                          mockPlayers[i+1] = { ...p, team: "MOCK", team_id: 3 }; 
                     });
-                    // Fallback to mock fixtures if demo
                     const mockFix = MOCK_DATA.fixtures;
-                    // Default missing mock fixes
                     for(let i=1; i<20; i++) { if(!mockFix[i]) mockFix[i] = { opp: "AVL", diff: 3, is_home: true }; }
                     
-                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mockPlayers, mockFix); }, 1000);
+                    setTimeout(() => { 
+                        app.render(MOCK_DATA.user, MOCK_DATA.picks, mockPlayers, mockFix, { bank: MOCK_DATA.bank, value: MOCK_DATA.value }); 
+                    }, 1000);
                 }
             },
-            render: (user, picks, players, fixMap) => {
+            render: (user, picks, players, fixMap, stats) => {
+                // RENDER SCOREBOARD
                 document.getElementById('dispName').innerText = user.name;
-                document.getElementById('dispPoints').innerText = `${user.summary_overall_points} pts`;
+                document.getElementById('dispGW').innerText = user.summary_event_points || 0;
+                document.getElementById('dispTotal').innerText = user.summary_overall_points || 0;
+                document.getElementById('dispRank').innerText = (user.summary_overall_rank || 0).toLocaleString();
+
+                // RENDER BUDGET BAR
+                document.getElementById('dispBank').innerText = `£${(stats.bank/10).toFixed(1)}m`;
+                document.getElementById('dispValue').innerText = `£${(stats.value/10).toFixed(1)}m`;
 
                 const pitchDiv = document.getElementById('pitchRows');
                 const benchDiv = document.getElementById('benchRow');
@@ -410,22 +461,19 @@
                 else if (p.is_vice) capBadge = `<div class="captain-badge vice-badge">V</div>`;
                 
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
-                
-                // FIXTURE BADGE LOGIC
                 const fix = fixMap[p.team_id] || { opp: '-', diff: 3, is_home: true };
                 const loc = fix.is_home ? '(H)' : '(A)';
-                const fixClass = `fdr-${fix.diff}`;
                 
                 return `
                     <div class="player-pill ${isBench ? 'bench-pill' : ''}">
                         ${capBadge}
+                        <div class="fix-badge fdr-${fix.diff}">${fix.opp} ${loc}</div>
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
                         <div class="pill-data">
                             <span>£${p.price}</span>
-                            <span class="points-val">${p.event_points}</span>
+                            <span class="points-badge">${p.event_points}</span>
                         </div>
-                        <div class="fix-badge ${fixClass}">${fix.opp} ${loc}</div>
                     </div>
                 `;
             }
