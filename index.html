@@ -339,66 +339,6 @@
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
-        const TransferBot = {
-    // The "Brain" of the operation
-    analyze: (squad, allPlayers, bank) => {
-        let bestTransfer = null;
-        let maxImprovement = -999;
-
-        // 1. Find the Weakest Link in your Starting XI (simplification: looking at all 15)
-        // We calculate a 'Keep Score' for your players. Lower is worse.
-        let weakestPlayer = null;
-        let minScore = 9999;
-
-        squad.forEach(pick => {
-            const p = allPlayers[pick.element];
-            // Skip goalkeepers for now to keep it simple, focus on outfield
-            if(p.pos === 1) return; 
-
-            // Calculate Score: (Form * 5) + ICT
-            // If injured, score is -100 (Urgent sell)
-            let score = (parseFloat(p.form) * 5) + parseFloat(p.ict_index);
-            if (p.status !== 'a' || p.chance < 100) score = -100;
-
-            if (score < minScore) {
-                minScore = score;
-                weakestPlayer = p;
-            }
-        });
-
-        if (!weakestPlayer) return null; // Should not happen
-
-        // 2. Find the Best Replacement (The "Moneyball" Search)
-        // Budget = Money in Bank + Selling Price of Weakest Player
-        const budget = bank + weakestPlayer.price;
-
-        Object.values(allPlayers).forEach(target => {
-            // Constraints
-            if (target.id === weakestPlayer.id) return; // Can't buy own player
-            if (target.pos !== weakestPlayer.pos) return; // Must be same position
-            if (target.price > budget) return; // Must afford
-            if (target.status !== 'a' || target.chance < 100) return; // Must be healthy
-
-            // Calculate Target Score
-            const targetScore = (parseFloat(target.form) * 5) + parseFloat(target.ict_index);
-            
-            // Calculate "Delta" (Improvement)
-            const improvement = targetScore - minScore;
-
-            if (improvement > maxImprovement) {
-                maxImprovement = improvement;
-                bestTransfer = {
-                    out: weakestPlayer,
-                    in: target,
-                    scoreDiff: improvement.toFixed(1)
-                };
-            }
-        });
-
-        return bestTransfer;
-    }
-};
-
         const app = {
             currentTool: 'squad',
             playersCache: {}, // Store full player objects
@@ -423,9 +363,7 @@
                 if (t === 'squad') {
                     if(Object.keys(app.playersCache).length > 0) app.show('dashboardView');
                     else app.load(localStorage.getItem('fpl_id_final'));
-                } else {
-        app.show('transfersView');
-        app.renderTransfers();
+                } else app.show('transfersView');
             },
             
             // PROXY ENGINE
@@ -480,16 +418,13 @@
                             chance: p.chance_of_playing_next_round,
                             news: p.news,
                             sel: parseFloat(p.selected_by_percent),
-                            form: p.form,
-                            ict_index: p.ict_index
+                            form: p.form
                         };
                     });
                     
                     app.playersCache = players; // Save for modal
 
                     document.getElementById('demoAlert').classList.add('hidden');
-                    app.currentPicks = picks.picks; // Save picks for TransferBot
-                    app.currentBank = picks.entry_history.bank / 10; // Save bank
                     app.render(user, picks.picks, players, fixMap, picks.entry_history);
 
                 } catch (error) {
@@ -640,60 +575,6 @@
         document.getElementById('playerModalOverlay').addEventListener('click', (e) => {
             if (e.target.id === 'playerModalOverlay') closeModal();
         });
-
-renderTransfers: () => {
-    const container = document.getElementById('transfersView');
-    
-    // Show loading state first
-    container.innerHTML = '<div class="spinner"></div><p style="text-align:center;color:#888;margin-top:20px;">Scouting Market...</p>';
-
-    // Small delay to simulate "Thinking" (UX best practice)
-    setTimeout(() => {
-        // Get user data from memory (we need bank value and picks)
-        // Note: You need to save 'picks' and 'bank' globally in app.load or pass them here.
-        // For now, let's assume we saved them to app.currentPicks and app.currentBank in app.load
-        
-        if (!app.currentPicks) {
-            container.innerHTML = '<p style="text-align:center;">Please load squad first.</p>';
-            return;
-        }
-
-        const suggestion = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank);
-
-        if (suggestion) {
-            container.innerHTML = `
-                <div style="text-align:center; margin-bottom:30px;">
-                    <div style="font-size:3rem;">💡</div>
-                    <h2 style="color:var(--primary);">Smart Transfer</h2>
-                    <p style="color:var(--text-sub);">Based on Form & ICT Index</p>
-                </div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                    <div style="flex:1; background:#fff0f0; border:1px solid #ffcccc; border-radius:12px; padding:15px; text-align:center;">
-                        <div style="font-size:0.7rem; font-weight:800; color:#d9534f; margin-bottom:5px;">OUT</div>
-                        <div style="font-weight:700;">${suggestion.out.name}</div>
-                        <div style="font-size:0.8rem; color:#666;">£${suggestion.out.price}m</div>
-                    </div>
-
-                    <i class="fa-solid fa-arrow-right" style="color:#ccc;"></i>
-
-                    <div style="flex:1; background:#f0fff4; border:1px solid #ccffdd; border-radius:12px; padding:15px; text-align:center;">
-                        <div style="font-size:0.7rem; font-weight:800; color:#02894e; margin-bottom:5px;">IN</div>
-                        <div style="font-weight:700;">${suggestion.in.name}</div>
-                        <div style="font-size:0.8rem; color:#666;">£${suggestion.in.price}m</div>
-                    </div>
-                </div>
-
-                <div style="margin-top:20px; background:white; padding:15px; border-radius:12px; border:1px solid #eee; text-align:center;">
-                    <div style="font-size:0.8rem; color:#666; text-transform:uppercase; font-weight:700;">Predicted Impact</div>
-                    <div style="font-size:1.5rem; font-weight:800; color:var(--accent); text-shadow:0 1px 2px rgba(0,0,0,0.1);">+${suggestion.scoreDiff} <span style="font-size:0.8rem; color:#888; font-weight:400;">Power Score</span></div>
-                </div>
-            `;
-        } else {
-            container.innerHTML = '<p style="text-align:center;">Your squad is looking strong! No urgent transfers needed.</p>';
-        }
-    }, 800);
-},
 
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
