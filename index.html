@@ -14,39 +14,38 @@
             --bg-body: #f0f2f5; --bg-app: #ffffff;
             --text-main: #111827; --text-sub: #6b7280;
             --border: #e5e7eb; --red: #e90052;
-            --yellow-bg: #fff3cd; --yellow-text: #856404;
+            --pitch-start: #02894e; --pitch-end: #007341; /* Pitch Gradient */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-
         body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; }
 
-        /* APP CONTAINER */
+        /* APP SHELL */
         .app-container {
             width: 100%; max-width: 600px; background-color: var(--bg-app);
-            min-height: 100vh; position: relative; box-shadow: none;
+            min-height: 100vh; position: relative; box-shadow: none; display: flex; flex-direction: column;
         }
         @media (min-width: 600px) {
             body { padding: 40px 0; }
             .app-container {
                 min-height: auto; border-radius: 24px;
                 box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
-                height: 90vh; overflow: hidden; display: flex; flex-direction: column;
+                height: 90vh; overflow: hidden;
             }
         }
 
         /* HEADER */
         header {
-            background: var(--bg-app); height: 65px; padding: 0 20px;
+            background: var(--bg-app); height: 60px; padding: 0 20px;
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; flex-shrink: 0;
+            border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50;
         }
         .header-left { display: flex; align-items: center; gap: 15px; }
         .menu-btn { font-size: 1.2rem; cursor: pointer; padding: 8px; margin-left: -8px; }
         .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
         .brand i { color: var(--accent); }
         .user-avatar {
-            width: 34px; height: 34px; border-radius: 50%; background: #f3f4f6;
+            width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6;
             border: 1px solid var(--border); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
         .user-avatar.active { background: var(--primary); color: var(--accent); border-color: var(--primary); }
@@ -59,7 +58,7 @@
             box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
         }
         .sidebar.open { transform: translateX(0); }
-        .menu-header { height: 65px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
+        .menu-header { height: 60px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
         .menu-items { flex: 1; padding-top: 10px; }
         .menu-item { display: flex; align-items: center; gap: 16px; padding: 16px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
         .menu-item:hover { background: #f9fafb; color: var(--primary); }
@@ -76,23 +75,78 @@
         input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: white; font-size: 1rem; }
         .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
         
-        /* Dashboard */
-        .demo-alert { background: var(--yellow-bg); color: var(--yellow-text); padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 20px; border: 1px solid #ffeeba; }
-        .manager-header { background: var(--primary); color: white; padding: 25px; border-radius: 16px; text-align: center; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2); }
-        .manager-name { font-size: 1.3rem; font-weight: 700; }
-        .manager-stats { opacity: 0.9; font-size: 0.9rem; margin-top: 5px; }
-        .section-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-sub); margin-bottom: 10px; letter-spacing: 1px; padding-left: 5px; }
-        .list-box { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-        .player-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f3f4f6; }
-        .player-row:last-child { border-bottom: none; }
-        .p-left { display: flex; align-items: center; gap: 12px; }
-        .pos-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .pos-1 { background: #eab308; } .pos-2 { background: #3b82f6; } .pos-3 { background: #22c55e; } .pos-4 { background: #ef4444; }
-        .p-name { font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
-        .p-meta { font-size: 0.75rem; color: var(--text-sub); }
-        .p-price { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
-        .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; margin-left: 5px; background: #fee2e2; color: var(--red); }
+        .demo-alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 10px; border: 1px solid #ffeeba; }
+        .manager-header { text-align: center; margin-bottom: 20px; }
+        .manager-name { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+        .manager-stats { font-size: 0.9rem; color: var(--text-sub); }
+
+        /* --- NEW PITCH CSS --- */
+        .pitch-container {
+            background: linear-gradient(180deg, var(--pitch-start) 0%, var(--pitch-end) 100%);
+            border-radius: 16px;
+            padding: 20px 5px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid #005f36;
+            margin-bottom: 25px;
+        }
+
+        /* Subtle Pitch Markings */
+        .pitch-lines {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+        }
+        .pitch-circle {
+            width: 80px; height: 80px; border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+        .pitch-line { position: absolute; background: rgba(255,255,255,0.1); }
+        .line-mid { top: 50%; left: 0; width: 100%; height: 2px; }
+        .box-top { top: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.1); border-top: none; }
+        .box-bot { bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.1); border-bottom: none; }
+
+        /* Player Rows on Pitch */
+        .field-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 25px; position: relative; z-index: 10; }
+        .field-row:last-child { margin-bottom: 0; }
+
+        /* Player "Pill" Card */
+        .player-pill {
+            background: rgba(255,255,255,0.95);
+            width: 72px; /* Fixed width to fit 5 on mobile */
+            padding: 6px 2px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .player-pill:active { transform: scale(0.95); }
+
+        .shirt-icon { font-size: 1.2rem; margin-bottom: 2px; color: var(--primary); }
+        .shirt-GK { color: #fbbf24; } 
+        .shirt-DEF { color: #3b82f6; } 
+        .shirt-MID { color: #22c55e; } 
+        .shirt-FWD { color: #ef4444; }
+
+        .pill-name { 
+            font-size: 0.65rem; font-weight: 700; color: #111; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            width: 100%; padding: 0 2px;
+        }
+        .pill-info { font-size: 0.6rem; color: #555; font-weight: 500; }
         
+        .chip-small { font-size: 0.5rem; background: #fee2e2; color: red; padding: 1px 3px; border-radius: 3px; position: absolute; top: -5px; right: -5px; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+        /* Bench Section */
+        .bench-container {
+            background: #f8f9fa; border-radius: 12px; padding: 15px;
+            border: 1px solid var(--border);
+        }
+        .bench-label { font-size: 0.7rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
+        .bench-row { display: flex; justify-content: space-around; }
+        .bench-pill {
+            width: 65px; text-align: center; opacity: 0.8;
+        }
+
         .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
@@ -129,19 +183,19 @@
             <div id="welcomeView" class="welcome-card hidden">
                 <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
                 <h2>Link Team</h2>
-                <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your ID. If the network is busy, we will show demo data.</p>
+                <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your ID to unlock the Pro Dashboard.</p>
                 <input type="number" id="teamID" placeholder="e.g. 123456">
                 <button class="btn" onclick="app.load()">Connect</button>
             </div>
 
             <div id="loadingView" class="welcome-card hidden" style="padding: 60px 20px;">
                 <div class="spinner"></div>
-                <p id="loadingMsg" style="color: var(--text-sub);">Connecting...</p>
+                <p id="loadingMsg" style="color: var(--text-sub);">Analysing Squad...</p>
             </div>
 
             <div id="dashboardView" class="hidden">
                 <div id="demoAlert" class="demo-alert hidden">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Network Blocked. Showing <b>Demo Data</b>.
+                    <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
                 </div>
 
                 <div class="manager-header">
@@ -149,25 +203,35 @@
                     <div class="manager-stats" id="dispPoints">...</div>
                 </div>
 
-                <div class="section-label">Starting XI</div>
-                <div id="startingList" class="list-box"></div>
+                <div class="pitch-container">
+                    <div class="pitch-lines">
+                        <div class="box-top"></div>
+                        <div class="line-mid"></div>
+                        <div class="pitch-circle"></div>
+                        <div class="box-bot"></div>
+                    </div>
+                    
+                    <div id="pitchRows"></div>
+                </div>
 
-                <div class="section-label" style="margin-top: 30px;">Bench</div>
-                <div id="benchList" class="list-box"></div>
+                <div class="bench-container">
+                    <div class="bench-label">Bench</div>
+                    <div id="benchRow" class="bench-row"></div>
+                </div>
             </div>
 
             <div id="transfersView" class="hidden">
                 <div class="welcome-card">
                     <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
                     <h2>Transfer Hub</h2>
-                    <p>Coming up next...</p>
+                    <p>Coming next...</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 1. MOCK DATA (FAILSAFE) ---
+        // --- MOCK DATA (FAILSAFE) ---
         const MOCK_DATA = {
             user: { name: "Demo Manager", summary_overall_points: 950, player_first_name: "Test", player_last_name: "User" },
             picks: [
@@ -177,7 +241,7 @@
             ],
             players: {
                 1: { web_name: "Pickford", team: "EVE", now_cost: 45, element_type: 1, form: "3.5" },
-                2: { web_name: "Alexander-Arnold", team: "LIV", now_cost: 80, element_type: 2, form: "1.2" },
+                2: { web_name: "Trent", team: "LIV", now_cost: 80, element_type: 2, form: "1.2" },
                 3: { web_name: "Saliba", team: "ARS", now_cost: 55, element_type: 2, form: "4.0" },
                 4: { web_name: "Porro", team: "TOT", now_cost: 50, element_type: 2, form: "2.8" },
                 5: { web_name: "Salah", team: "LIV", now_cost: 130, element_type: 3, form: "8.5" },
@@ -188,7 +252,7 @@
                 10: { web_name: "Watkins", team: "AVL", now_cost: 85, element_type: 4, form: "1.5" },
                 11: { web_name: "Isak", team: "NEW", now_cost: 75, element_type: 4, form: "4.2" },
                 12: { web_name: "Areola", team: "WHU", now_cost: 40, element_type: 1, form: "2.0" },
-                13: { web_name: "Branthwaite", team: "EVE", now_cost: 40, element_type: 2, form: "3.0" },
+                13: { web_name: "Burn", team: "NEW", now_cost: 40, element_type: 2, form: "3.0" },
                 14: { web_name: "Garnacho", team: "MUN", now_cost: 50, element_type: 3, form: "1.8" },
                 15: { web_name: "Archer", team: "SHU", now_cost: 45, element_type: 4, form: "1.0" }
             }
@@ -225,7 +289,7 @@
                 document.getElementById('nav-' + toolName).classList.add('active');
 
                 if (toolName === 'squad') {
-                    if(document.getElementById('startingList').innerHTML !== '') app.show('dashboardView');
+                    if(document.getElementById('pitchRows').innerHTML !== '') app.show('dashboardView');
                     else app.load(localStorage.getItem('fpl_id_final'));
                 } else if (toolName === 'transfers') {
                     app.show('transfersView');
@@ -233,20 +297,18 @@
             },
 
             fetchUrl: async (targetUrl) => {
-                // Try 2 reliable proxies
                 const proxies = [
                     (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
                     (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
                 ];
-
                 for (let i = 0; i < proxies.length; i++) {
                     try {
                         const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+                        const timeoutId = setTimeout(() => controller.abort(), 8000);
                         const res = await fetch(proxies[i](targetUrl), { signal: controller.signal });
                         clearTimeout(timeoutId);
                         if(res.ok) return await res.json();
-                    } catch (e) { console.warn("Proxy failed"); }
+                    } catch (e) {}
                 }
                 throw new Error("Failed");
             },
@@ -262,7 +324,6 @@
                 try {
                     // Try Real Network
                     document.getElementById('loadingMsg').innerText = "Connecting...";
-                    
                     const staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                     const gw = staticData.events.find(e => e.is_current)?.id || 1;
@@ -274,7 +335,7 @@
                         players[p.id] = {
                             name: p.web_name,
                             team: staticData.teams.find(t => t.id === p.team).short_name,
-                            pos: p.element_type,
+                            pos: p.element_type, // 1=GK, 2=DEF, 3=MID, 4=FWD
                             price: p.now_cost / 10,
                             form: parseFloat(p.form)
                         };
@@ -285,61 +346,75 @@
 
                 } catch (error) {
                     console.warn("Network failed, loading DEMO.");
-                    // FAILSAFE: Load Demo Data
                     document.getElementById('demoAlert').classList.remove('hidden');
-                    
-                    // Create Mock Map
                     const mockPlayers = {};
                     Object.values(MOCK_DATA.players).forEach((p, i) => {
                          mockPlayers[i+1] = { name: p.web_name, team: p.team, pos: p.element_type, price: p.now_cost/10, form: parseFloat(p.form) };
                     });
-                    
-                    setTimeout(() => {
-                        app.render(MOCK_DATA.user, MOCK_DATA.picks, mockPlayers);
-                    }, 1000);
+                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mockPlayers); }, 1000);
                 }
             },
 
+            // --- NEW RENDER LOGIC FOR PITCH ---
             render: (user, picks, players) => {
                 document.getElementById('dispName').innerText = user.name;
                 document.getElementById('dispPoints').innerText = `${user.summary_overall_points} pts`;
 
-                const sList = document.getElementById('startingList');
-                const bList = document.getElementById('benchList');
-                sList.innerHTML = ''; bList.innerHTML = '';
+                const pitchDiv = document.getElementById('pitchRows');
+                const benchDiv = document.getElementById('benchRow');
+                pitchDiv.innerHTML = ''; benchDiv.innerHTML = '';
 
-                picks.forEach((pick, i) => {
-                    // Real or Mock mapping
-                    const p = players[pick.element] || players[i+1]; 
-                    if(!p) return;
+                // buckets for formation
+                const formation = { 1: [], 2: [], 3: [], 4: [] }; // GK, DEF, MID, FWD
 
-                    let badge = '';
-                    if(i < 11 && p.form < 2.5) badge = `<span class="chip chip-cold"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
+                // Loop STARTING XI (first 11)
+                for (let i = 0; i < 11; i++) {
+                    const pick = picks[i];
+                    const p = players[pick.element] || players[i+1]; // Fallback for mock
+                    if (p) formation[p.pos].push(p);
+                }
 
-                    const html = `
-                        <div class="player-row">
-                            <div class="p-left">
-                                <div class="pos-dot pos-${p.pos}"></div>
-                                <div>
-                                    <div class="p-name">${p.name} ${badge}</div>
-                                    <div class="p-meta">${p.team}</div>
-                                </div>
-                            </div>
-                            <div class="p-price">£${p.price}</div>
-                        </div>
-                    `;
-                    if(i < 11) sList.innerHTML += html;
-                    else bList.innerHTML += html;
+                // Render Pitch Rows (GK -> DEF -> MID -> FWD)
+                [1, 2, 3, 4].forEach(posId => {
+                    const row = document.createElement('div');
+                    row.className = 'field-row';
+                    formation[posId].forEach(p => {
+                        row.innerHTML += app.createPill(p);
+                    });
+                    pitchDiv.appendChild(row);
                 });
+
+                // Render Bench (11-14)
+                for (let i = 11; i < picks.length; i++) {
+                    const pick = picks[i];
+                    const p = players[pick.element] || players[i+1];
+                    if(p) benchDiv.innerHTML += app.createPill(p, true);
+                }
+
                 app.show('dashboardView');
+            },
+
+            createPill: (p, isBench = false) => {
+                let badge = '';
+                if (!isBench && p.form < 2.5) badge = `<div class="chip-small">!</div>`;
+                
+                // Color code shirts
+                const posCode = ['GK', 'GK', 'DEF', 'MID', 'FWD'][p.pos];
+                
+                return `
+                    <div class="player-pill ${isBench ? 'bench-pill' : ''}">
+                        ${badge}
+                        <div class="shirt-icon shirt-${posCode}"><i class="fa-solid fa-shirt"></i></div>
+                        <div class="pill-name">${p.name}</div>
+                        <div class="pill-info">£${p.price}</div>
+                    </div>
+                `;
             }
         };
 
         function toggleMenu() { app.toggleMenu(); }
         function switchTool(t) { app.switchTool(t); }
-        function clearData() {
-            if(confirm("Logout?")) { localStorage.removeItem('fpl_id_final'); location.reload(); }
-        }
+        function clearData() { if(confirm("Logout?")) { localStorage.removeItem('fpl_id_final'); location.reload(); } }
 
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
