@@ -4,62 +4,292 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FPL Hub Pro</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="style.css">
+
+    <style>
+        :root {
+            --primary: #37003c; --accent: #00ff85;
+            --bg-body: #f0f2f5; --bg-app: #ffffff;
+            --text-main: #111827; --text-sub: #6b7280;
+            --border: #e5e7eb; --red: #e90052;
+            
+            /* PITCH COLORS */
+            --grass-1: #02894e; --grass-2: #027a45;
+            
+            /* FDR Colors */
+            --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e7e7e7; --fdr-4: #ff1751; --fdr-5: #80072d;
+            --fdr-text-dark: #00381b; --fdr-text-light: white;
+
+            /* STATUS COLORS */
+            --status-warn: #fbbf24; --status-bad: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; }
+
+        /* APP SHELL */
+        .app-container {
+            width: 100%; max-width: 600px; background-color: var(--bg-app);
+            min-height: 100vh; position: relative; display: flex; flex-direction: column;
+        }
+        @media (min-width: 600px) {
+            body { padding: 40px 0; }
+            .app-container {
+                min-height: auto; border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+                height: 90vh; overflow: hidden;
+            }
+        }
+
+        /* HEADER */
+        header {
+            background: var(--bg-app); height: 60px; padding: 0 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .menu-btn { font-size: 1.2rem; cursor: pointer; padding: 8px; margin-left: -8px; }
+        .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .brand i { color: var(--accent); }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6;
+            border: 1px solid var(--border); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .user-avatar.active { background: var(--primary); color: var(--accent); border-color: var(--primary); }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed; top: 0; left: 0; height: 100%; width: 280px;
+            background: var(--bg-app); z-index: 200; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        .sidebar.open { transform: translateX(0); }
+        .menu-header { height: 60px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
+        .menu-items { flex: 1; padding-top: 10px; }
+        .menu-item { display: flex; align-items: center; gap: 16px; padding: 16px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
+        .menu-item:hover { background: #f9fafb; color: var(--primary); }
+        .menu-item.active { color: var(--primary); background: rgba(55, 0, 60, 0.04); border-left-color: var(--primary); }
+        .menu-footer { padding: 24px; border-top: 1px solid var(--border); }
+        .reset-btn { color: var(--red); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
+        .menu-overlay.open { opacity: 1; visibility: visible; }
+
+        /* CONTENT */
+        .content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        
+        .welcome-card { text-align: center; padding: 40px 20px; background: #fafafa; border-radius: 20px; border: 1px solid var(--border); margin-top: 20px; }
+        input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: white; font-size: 1rem; }
+        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
+        
+        .demo-alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 15px; border: 1px solid #ffeeba; }
+
+        /* SCOREBOARD */
+        .scoreboard { background: var(--primary); color: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2); }
+        .manager-name { font-size: 1.1rem; font-weight: 800; text-align: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; }
+        .stat-box { display: flex; flex-direction: column; }
+        .stat-label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; font-weight: 600; letter-spacing: 0.5px; }
+        .stat-val { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
+        .stat-val-small { font-size: 0.9rem; font-weight: 700; color: white; }
+
+        /* PITCH */
+        .pitch-wrapper { background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 20px; }
+        .budget-bar { background: white; padding: 8px 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 0.75rem; font-weight: 600; color: var(--text-sub); }
+        .budget-val { color: var(--primary); font-weight: 800; }
+        .pitch-container { background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 20px, var(--grass-2) 20px, var(--grass-2) 40px); padding: 25px 5px; position: relative; min-height: 480px; }
+        .pitch-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.6; }
+        .pitch-circle { width: 80px; height: 80px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .line-mid { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.4); }
+        .box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-top: none; }
+        .box-bot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-bottom: none; }
+        .field-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 20px; position: relative; z-index: 10; }
+        
+        /* PLAYER PILL */
+        .player-pill {
+            background: rgba(255,255,255,0.95); width: 68px; padding: 6px 2px; border-radius: 6px; text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s;
+        }
+        .player-pill:active { transform: scale(0.95); }
+        
+        .kit-img { width: 36px; height: 46px; object-fit: contain; margin-bottom: -2px; margin-top: 2px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+        .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; background: white; margin-top: 2px; padding: 1px 0; }
+        .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding-bottom: 2px; }
+        .points-badge { background: var(--primary); color: white; padding: 0 4px; border-radius: 3px; font-weight: 700; }
+        .fix-badge { font-size: 0.5rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; }
+        
+        /* FDR Colors */
+        .fdr-1, .fdr-2 { background: var(--fdr-2); color: var(--fdr-text-dark); }
+        .fdr-3 { background: var(--fdr-3); color: #333; }
+        .fdr-4 { background: var(--fdr-4); color: white; }
+        .fdr-5 { background: var(--fdr-5); color: white; }
+
+        /* BADGES */
+        .captain-badge { position: absolute; bottom: 30px; right: -4px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
+        .vice-badge { background: #666; }
+        
+        /* STATUS FLAGS */
+        .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
+        .status-warn { background: var(--status-warn); color: #78350f; }
+        .status-bad { background: var(--status-bad); color: white; }
+
+        /* BENCH */
+        .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        .bench-header { background: #f8f9fa; padding: 8px 15px; font-size: 0.7rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+        .bench-row { display: flex; justify-content: space-around; padding: 15px; background: #fdfdfd; }
+        .bench-pill { opacity: 0.85; }
+        .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
+
+        /* MODAL */
+        .modal-overlay { z-index: 1000; display: flex; justify-content: center; align-items: flex-end; } /* Bottom sheet on mobile */
+        @media (min-width: 600px) { .modal-overlay { align-items: center; } }
+        
+        .modal-card {
+            background: white; width: 100%; max-width: 500px;
+            border-radius: 20px 20px 0 0; padding: 25px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @media (min-width: 600px) { .modal-card { border-radius: 20px; transform: translateY(20px); opacity: 0; } }
+        
+        .modal-overlay.open .modal-card { transform: translateY(0); opacity: 1; }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
+        .m-player-team { font-size: 0.9rem; color: var(--text-sub); }
+        .close-modal { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; color: #666; }
+        
+        .m-stats-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .m-stat-box { background: #f9fafb; padding: 10px; border-radius: 10px; flex: 1; text-align: center; border: 1px solid var(--border); }
+        .m-stat-label { font-size: 0.65rem; text-transform: uppercase; color: #888; font-weight: 700; }
+        .m-stat-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        
+        .m-section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 10px; color: var(--text-main); }
+        .fix-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
+        .fix-item { min-width: 80px; background: #fff; border: 1px solid var(--border); padding: 8px; border-radius: 8px; text-align: center; }
+        .fix-opp { font-weight: 800; font-size: 0.9rem; }
+        .fix-diff-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+        
+        .m-news { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #ffeeba; display: none; }
+
+        .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
 
+    <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
     <div id="sideMenu" class="sidebar">
         <div class="menu-header">FPL Hub</div>
-        <div class="menu-item active" onclick="switchTool('squad')"><i class="fa-solid fa-shirt"></i> Squad</div>
-        <div class="menu-item" onclick="switchTool('transfers')"><i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions</div>
+        <div class="menu-items">
+            <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
+                <i class="fa-solid fa-shirt"></i> Squad
+            </div>
+            <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
+            </div>
+        </div>
         <div class="menu-footer">
-            <div class="reset-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Logout</div>
+            <div class="reset-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Reset App</div>
         </div>
     </div>
-    <div id="menuOverlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div id="playerModalOverlay" class="menu-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <div class="m-player-name" id="modalName">Player Name</div>
+                    <div class="m-player-team" id="modalTeam">Team • Position</div>
+                </div>
+                <button class="close-modal" onclick="closeModal()">×</button>
+            </div>
+            
+            <div id="modalNews" class="m-news"></div>
+
+            <div class="m-stats-row">
+                <div class="m-stat-box">
+                    <div class="m-stat-label">Form</div>
+                    <div class="m-stat-val" id="modalForm">0.0</div>
+                </div>
+                <div class="m-stat-box">
+                    <div class="m-stat-label">Selected</div>
+                    <div class="m-stat-val" id="modalSel">0%</div>
+                </div>
+                <div class="m-stat-box">
+                    <div class="m-stat-label">Points</div>
+                    <div class="m-stat-val" id="modalPts">0</div>
+                </div>
+            </div>
+
+            <div class="m-section-title">Upcoming Fixtures</div>
+            <div id="modalFixtures" class="fix-list">
+                <div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>
+            </div>
+            <div style="height:20px;"></div> </div>
+    </div>
 
     <div class="app-container">
         <header>
             <div class="header-left">
-                <i class="fa-solid fa-bars menu-btn" onclick="toggleMenu()"></i>
-                <div class="brand"><i class="fa-solid fa-bolt" style="color:var(--accent)"></i> Dashboard</div>
+                <div class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></div>
+                <div class="brand"><i class="fa-solid fa-bolt"></i> FPL Hub</div>
             </div>
-            <div class="user-avatar" id="userIcon"><i class="fa-regular fa-user"></i></div>
+            <div class="user-avatar" id="userIcon" onclick="clearData()"><i class="fa-regular fa-user"></i></div>
         </header>
 
         <div class="content">
-            <div id="welcomeView" class="card-center hidden">
+            <div id="welcomeView" class="welcome-card hidden">
                 <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
                 <h2>Link Team</h2>
+                <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your ID to unlock the Pro Dashboard.</p>
                 <input type="number" id="teamID" placeholder="e.g. 123456">
                 <button class="btn" onclick="app.load()">Connect</button>
             </div>
 
-            <div id="loadingView" class="card-center hidden" style="text-align:center;">
+            <div id="loadingView" class="welcome-card hidden" style="padding: 60px 20px;">
                 <div class="spinner"></div>
-                <p id="loadingMsg" style="color: var(--text-sub); margin-top: 15px;">Connecting...</p>
+                <p id="loadingMsg" style="color: var(--text-sub);">Analysing Squad...</p>
             </div>
 
             <div id="dashboardView" class="hidden">
+                <div id="demoAlert" class="demo-alert hidden">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
+                </div>
+
                 <div class="scoreboard">
-                    <div><div class="sb-label">Manager</div><div class="sb-manager" id="dispName">...</div></div>
-                    <div class="sb-stats">
-                        <div><div class="sb-label">GW</div><div class="sb-val" id="dispGW">...</div></div>
-                        <div><div class="sb-label">Total</div><div class="sb-val" style="color:white" id="dispTotal">...</div></div>
-                        <div><div class="sb-label">Rank</div><div class="sb-val" style="color:white; font-size:1.1rem;" id="dispRank">...</div></div>
+                    <div class="manager-name" id="dispName">...</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">GW Points</div>
+                            <div class="stat-val" id="dispGW">...</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Total Pts</div>
+                            <div class="stat-val-small" id="dispTotal">...</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Rank</div>
+                            <div class="stat-val-small" id="dispRank">...</div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="pitch-wrapper">
                     <div class="budget-bar">
-                        <span>Bank: <span style="color:var(--primary); font-weight:800;" id="dispBank">£0.0m</span></span>
-                        <span>Value: <span style="color:var(--primary); font-weight:800;" id="dispValue">£0.0m</span></span>
+                        <span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span>
+                        <span>Value: <span class="budget-val" id="dispValue">£0.0m</span></span>
                     </div>
+
                     <div class="pitch-container">
-                        <div class="pitch-lines"><div class="p-mid"></div><div class="p-circ"></div><div class="p-box-t"></div><div class="p-box-b"></div></div>
+                        <div class="pitch-lines">
+                            <div class="box-top"></div>
+                            <div class="line-mid"></div>
+                            <div class="pitch-circle"></div>
+                            <div class="box-bot"></div>
+                        </div>
                         <div id="pitchRows"></div>
                     </div>
                 </div>
@@ -70,62 +300,63 @@
                 </div>
             </div>
 
-            <div id="transfersView" class="card-center hidden">
-                <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
-                <h2>Transfer Hub</h2>
-                <p>Coming next...</p>
+            <div id="transfersView" class="hidden">
+                <div class="welcome-card">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
+                    <h2>Transfer Hub</h2>
+                    <p>Coming next...</p>
+                </div>
             </div>
         </div>
     </div>
-
-    <div id="playerModalOverlay" class="modal-overlay" onclick="closeModal()">
-        <div class="modal-card" onclick="event.stopPropagation()">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <h3 id="modalName" style="color:var(--primary); font-size:1.3rem; margin:0;">...</h3>
-                <i class="fa-solid fa-xmark" style="font-size:1.2rem; cursor:pointer;" onclick="closeModal()"></i>
-            </div>
-            <div id="modalNews" style="background:#fff3cd; color:#856404; padding:10px; border-radius:8px; font-size:0.85rem; margin-bottom:15px; display:none;"></div>
-            <div style="font-size:0.9rem; color:#666; margin-bottom:15px;" id="modalInfo">...</div>
-            <div style="font-weight:700; color:#888; font-size:0.75rem; text-transform:uppercase; margin-bottom:10px;">Upcoming</div>
-            <div id="modalFixtures" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:10px;"></div>
-        </div>
-    </div>
-
-    <script src="squad.js"></script>
 
     <script>
-        const MOCK={user:{name:"Demo Manager",summary_overall_points:950,summary_event_points:45,summary_overall_rank:125000},bank:5,value:1024,picks:[{element:1,position:1},{element:2,position:2},{element:3,position:3},{element:4,position:4},{element:5,position:5,is_vice_captain:true},{element:6,position:6},{element:7,position:7},{element:8,position:8},{element:9,position:9,is_captain:true},{element:10,position:10},{element:11,position:11},{element:12,position:12},{element:13,position:13},{element:14,position:14},{element:15,position:15}],players:{9:{web_name:"Haaland",team_code:43,pos:4,price:14.0,event_points:13,status:'d',news:"Knock",team:"MCI",sel:70},5:{web_name:"Salah",team_code:14,pos:3,price:13.0,event_points:12,status:'a',team:"LIV",sel:45},1:{web_name:"Pickford",team_code:11,pos:1,price:4.5,event_points:6,status:'a',team:"EVE",sel:15},2:{web_name:"Trent",team_code:14,pos:2,price:8.0,event_points:2,team:"LIV"},3:{web_name:"Saliba",team_code:3,pos:2,price:5.5,event_points:6,team:"ARS"},4:{web_name:"Porro",team_code:6,pos:2,price:5.0,event_points:1,team:"TOT"},6:{web_name:"Saka",team_code:3,pos:3,price:9.0,event_points:8,team:"ARS"},7:{web_name:"Palmer",team_code:8,pos:3,price:6.0,event_points:10,team:"CHE"},8:{web_name:"Gordon",team_code:4,pos:3,price:6.5,event_points:5,team:"NEW"},10:{web_name:"Watkins",team_code:7,pos:4,price:8.5,event_points:2,team:"AVL"},11:{web_name:"Isak",team_code:4,pos:4,price:7.5,event_points:8,team:"NEW"},12:{web_name:"Areola",team_code:21,pos:1,price:4.0,event_points:0,team:"WHU"},13:{web_name:"Burn",team_code:4,pos:2,price:4.5,event_points:0,team:"NEW"},14:{web_name:"Rogers",team_code:7,pos:3,price:5.0,event_points:2,team:"AVL"},15:{web_name:"Archer",team_code:20,pos:4,price:4.5,event_points:1,team:"SOU"}},fixtures:{9:{opp:"LIV",diff:5,is_home:true}}};
+        // --- MOCK DATA ---
+        const MOCK_DATA = {
+            user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
+            bank: 5, value: 1024,
+            picks: [
+                { element: 1, position: 1 }, { element: 2, position: 2 }, { element: 3, position: 3 }, { element: 4, position: 4 }, 
+                { element: 5, position: 5, is_vice_captain: true }, { element: 6, position: 6 }, { element: 7, position: 7 }, { element: 8, position: 8 }, 
+                { element: 9, position: 9, is_captain: true }, { element: 10, position: 10 }, { element: 11, position: 11 }, { element: 12, position: 12 }, 
+                { element: 13, position: 13 }, { element: 14, position: 14 }, { element: 15, position: 15 }
+            ],
+            players: {
+                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock - 75% chance of playing", sel: 70 },
+                5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40 },
+                1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a' }
+            },
+            fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
+        };
 
         const app = {
-            currentTool: 'squad', playersCache: {},
-            
+            currentTool: 'squad',
+            playersCache: {}, // Store full player objects
+
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
-                if(savedId) { document.getElementById('userIcon').classList.add('active'); document.getElementById('teamID').value = savedId; app.load(savedId); } 
-                else app.show('welcomeView');
+                if(savedId) {
+                    document.getElementById('userIcon').classList.add('active');
+                    document.getElementById('teamID').value = savedId;
+                    app.load(savedId);
+                } else { app.show('welcomeView'); }
             },
-
             show: (viewId) => {
                 ['welcomeView', 'loadingView', 'dashboardView', 'transfersView'].forEach(v => document.getElementById(v).classList.add('hidden'));
                 document.getElementById(viewId).classList.remove('hidden');
-                
-                // If switching to dashboard, ensure grid/flex display is set correctly
-                if (viewId === 'dashboardView') {
-                    document.getElementById('dashboardView').style.display = (window.innerWidth >= 1024) ? 'grid' : 'flex';
-                }
             },
-
             toggleMenu: () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); },
-            
             switchTool: (t) => {
-                toggleMenu(); app.currentTool = t;
+                app.toggleMenu(); app.currentTool = t;
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+                document.getElementById('nav-' + t).classList.add('active');
                 if (t === 'squad') {
                     if(Object.keys(app.playersCache).length > 0) app.show('dashboardView');
                     else app.load(localStorage.getItem('fpl_id_final'));
                 } else app.show('transfersView');
             },
-
+            
+            // PROXY ENGINE
             fetchUrl: async (targetUrl) => {
                 const proxies = [(url) => `https://corsproxy.io/?${encodeURIComponent(url)}`, (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`];
                 for (let i = 0; i < proxies.length; i++) {
@@ -151,8 +382,11 @@
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                     const gw = staticData.events.find(e => e.is_current)?.id || 1;
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
-                    const fixtures = await app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`);
                     
+                    document.getElementById('loadingMsg').innerText = "Checking Fixtures...";
+                    const fixtures = await app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`);
+
+                    // Map Fixtures
                     const fixMap = {};
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
@@ -161,62 +395,173 @@
                         fixMap[f.team_a] = { opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false };
                     });
 
+                    // Map Players (Include Status & Chance)
                     const players = {};
                     staticData.elements.forEach(p => {
                         players[p.id] = {
-                            id: p.id, name: p.web_name, team: teamShort[p.team], team_id: p.team,
-                            pos: p.element_type, price: p.now_cost / 10, event_points: p.event_points,
-                            team_code: p.team_code, status: p.status, news: p.news, sel: parseFloat(p.selected_by_percent), form: p.form
+                            id: p.id,
+                            name: p.web_name, team: teamShort[p.team], team_id: p.team,
+                            pos: p.element_type, price: p.now_cost / 10,
+                            event_points: p.event_points, team_code: p.team_code,
+                            status: p.status, // a, d, i, s, u
+                            chance: p.chance_of_playing_next_round,
+                            news: p.news,
+                            sel: parseFloat(p.selected_by_percent),
+                            form: p.form
                         };
                     });
                     
-                    app.playersCache = players;
+                    app.playersCache = players; // Save for modal
+
                     document.getElementById('demoAlert').classList.add('hidden');
-                    
-                    // --- CALL THE SQUAD RENDERER ---
-                    SquadRenderer.render(user, picks.picks, players, fixMap, picks.entry_history);
+                    app.render(user, picks.picks, players, fixMap, picks.entry_history);
 
                 } catch (error) {
                     document.getElementById('demoAlert').classList.remove('hidden');
-                    const mPlayers = {}; 
-                    Object.keys(MOCK.players).forEach(k => mPlayers[k] = {...MOCK.players[k], id:k, team:'MOCK'});
+                    // Mock Data Fallback logic omitted for brevity in this specific update, but keeps app alive
+                    const mPlayers = {}; // Use mock
+                    Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = {...MOCK_DATA.players[k], id:k, team:'MOCK'});
                     app.playersCache = mPlayers;
-                    
-                    setTimeout(() => { 
-                        // --- CALL MOCK RENDER ---
-                        SquadRenderer.render(MOCK.user, MOCK.picks, mPlayers, MOCK.fixtures, {bank:5, value:1000}); 
-                    }, 500);
+                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, MOCK_DATA.fixtures, {bank:5, value:1000}); }, 500);
                 }
             },
 
+            render: (user, picks, players, fixMap, stats) => {
+                document.getElementById('dispName').innerText = user.name;
+                document.getElementById('dispGW').innerText = user.summary_event_points || 0;
+                document.getElementById('dispTotal').innerText = user.summary_overall_points || 0;
+                document.getElementById('dispRank').innerText = (user.summary_overall_rank || 0).toLocaleString();
+                document.getElementById('dispBank').innerText = `£${(stats.bank/10).toFixed(1)}m`;
+                document.getElementById('dispValue').innerText = `£${(stats.value/10).toFixed(1)}m`;
+
+                const pitchDiv = document.getElementById('pitchRows');
+                const benchDiv = document.getElementById('benchRow');
+                pitchDiv.innerHTML = ''; benchDiv.innerHTML = '';
+                const formation = { 1: [], 2: [], 3: [], 4: [] };
+
+                for (let i = 0; i < 11; i++) {
+                    const pick = picks[i];
+                    const p = players[pick.element];
+                    if (p) formation[p.pos].push({ ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain });
+                }
+
+                [1, 2, 3, 4].forEach(posId => {
+                    const row = document.createElement('div'); row.className = 'field-row';
+                    formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap));
+                    pitchDiv.appendChild(row);
+                });
+
+                // Bench with Numbers
+                for (let i = 11; i < picks.length; i++) {
+                    const pick = picks[i];
+                    const p = players[pick.element];
+                    if(p) benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, fixMap, true, i - 10);
+                }
+                app.show('dashboardView');
+            },
+
+            createPill: (p, fixMap, isBench = false, benchNum = 0) => {
+                let capBadge = '';
+                if (p.is_captain) capBadge = `<div class="captain-badge">C</div>`;
+                else if (p.is_vice) capBadge = `<div class="captain-badge vice-badge">V</div>`;
+                
+                // STATUS FLAGS
+                let statusBadge = '';
+                if (p.status === 'd') statusBadge = `<div class="status-flag status-warn">!</div>`;
+                else if (['i', 's'].includes(p.status)) statusBadge = `<div class="status-flag status-bad">×</div>`;
+                
+                // BENCH NUMBER
+                let bNum = isBench ? `<div class="bench-num">${benchNum}</div>` : '';
+
+                const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
+                const fix = fixMap ? (fixMap[p.team_id] || { opp: '-', diff: 3, is_home: true }) : { opp: 'MOCK', diff: 3 };
+                const loc = fix.is_home ? '(H)' : '(A)';
+                
+                // Onclick triggers modal
+                return `
+                    <div class="player-pill ${isBench ? 'bench-pill' : ''}" onclick="app.openModal(${p.id})">
+                        ${bNum} ${capBadge} ${statusBadge}
+                        <div class="fix-badge fdr-${fix.diff}">${fix.opp} ${loc}</div>
+                        <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
+                        <div class="pill-name">${p.name}</div>
+                        <div class="pill-data">
+                            <span>£${p.price}</span>
+                            <span class="points-badge">${p.event_points}</span>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // --- MODAL LOGIC ---
             openModal: async (playerId) => {
                 const p = app.playersCache[playerId];
+                if(!p) return;
+
+                const overlay = document.getElementById('playerModalOverlay');
+                const content = document.getElementById('modalFixtures');
+                
+                // Fill Static Info
                 document.getElementById('modalName').innerText = p.name;
-                document.getElementById('modalInfo').innerText = `${p.team} • £${p.price}m • Sel: ${p.sel}%`;
+                document.getElementById('modalTeam').innerText = `${p.team} • £${p.price}m`;
+                document.getElementById('modalForm').innerText = p.form;
+                document.getElementById('modalSel').innerText = `${p.sel}%`;
+                document.getElementById('modalPts').innerText = p.event_points;
+
                 const newsEl = document.getElementById('modalNews');
-                if(p.news) { newsEl.style.display='block'; newsEl.innerText=p.news; } else newsEl.style.display='none';
-                
-                document.getElementById('modalOverlay').classList.add('open');
-                document.getElementById('playerModal').classList.add('open');
-                
+                if(p.news) {
+                    newsEl.style.display = 'block';
+                    newsEl.innerText = p.news;
+                } else {
+                    newsEl.style.display = 'none';
+                }
+
+                // Show Modal
+                overlay.classList.add('open');
+                content.innerHTML = '<div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>';
+
+                // Fetch Deep Dive Data (Element Summary)
                 try {
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
+                    
+                    // Render Upcoming Fixtures
                     let html = '';
-                    data.fixtures.slice(0,5).forEach(f => {
-                        html += `<div style="min-width:65px; border:1px solid #eee; border-radius:6px; padding:6px; text-align:center;">
-                            <div style="font-size:0.6rem; color:#666;">GW${f.event}</div>
-                            <div style="font-weight:700; color:${f.difficulty>3?'red':'green'}">${f.difficulty}</div>
-                        </div>`;
+                    // First 5 fixtures
+                    data.fixtures.slice(0, 5).forEach(f => {
+                        const diff = f.difficulty;
+                        const oppId = f.is_home ? f.team_a : f.team_h;
+                        // Use basic logic if team map not avail inside modal scope easily, 
+                        // but we have team_h/a IDs. For now, just show difficulty dot.
+                        const isHome = f.is_home;
+                        const colorClass = `fdr-${diff}`;
+                        
+                        html += `
+                            <div class="fix-item">
+                                <div class="fix-opp">GW${f.event}</div>
+                                <div style="font-size:0.7rem; color:#666;">${isHome?'Home':'Away'}</div>
+                                <div style="margin-top:5px;">
+                                    <span class="fix-diff-dot ${colorClass}"></span>
+                                    <span style="font-weight:700; font-size:0.8rem;">${diff}</span>
+                                </div>
+                            </div>
+                        `;
                     });
-                    document.getElementById('modalFixtures').innerHTML = html;
-                } catch(e){}
+                    content.innerHTML = html;
+
+                } catch (e) {
+                    content.innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>';
+                }
             }
         };
 
-        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
-        function switchTool(t) { toggleMenu(); app.switchTool(t); }
+        function toggleMenu() { app.toggleMenu(); }
+        function switchTool(t) { app.switchTool(t); }
         function clearData() { if(confirm("Logout?")) { localStorage.removeItem('fpl_id_final'); location.reload(); } }
-        function closeModal() { document.getElementById('playerModal').classList.remove('open'); document.getElementById('modalOverlay').classList.remove('open'); }
+        function closeModal() { document.getElementById('playerModalOverlay').classList.remove('open'); }
+        
+        // Close modal on background click
+        document.getElementById('playerModalOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'playerModalOverlay') closeModal();
+        });
 
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
