@@ -11,201 +11,155 @@
     <style>
         :root {
             --primary: #37003c; --accent: #00ff85;
-            --bg-body: #f3f4f6; --bg-surface: #ffffff;
-            --text-main: #111827; --text-sub: #6b7280;
-            --border: #e5e7eb; --red: #e90052;
+            --bg: #f8f9fa; --surface: #ffffff;
+            --text: #111827; --text-sub: #6b7280;
+            --border: #e5e7eb;
             --grass-1: #059669; --grass-2: #047857;
             --status-warn: #fbbf24; --status-bad: #ef4444;
-            --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e5e7eb; --fdr-4: #ff1751; --fdr-5: #80072d;
-            --fdr-text-dark: #00381b; --fdr-text-light: white;
+            --fdr-2: #01fc7a; --fdr-3: #e5e7eb; --fdr-4: #ff1751; --fdr-5: #80072d;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
         
-        /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        body { background-color: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 40px; }
 
-        body { 
-            background-color: var(--bg-body); color: var(--text-main); 
-            height: 100vh; width: 100vw; overflow: hidden;
-            display: flex; /* Standard flex layout */
+        /* --- LAYOUT CONTAINER --- */
+        .app-container {
+            max-width: 600px; /* Constrain width on desktop so it doesn't look stretched */
+            margin: 0 auto;
+            background: var(--bg);
+            min-height: 100vh;
+            position: relative;
         }
 
-        /* --- LAYOUT STRUCTURE --- */
-
-        /* 1. SIDEBAR (Fixed Left on Desktop) */
-        .sidebar {
-            width: 260px; background: var(--bg-surface); border-right: 1px solid var(--border);
-            height: 100%; display: flex; flex-direction: column; z-index: 100;
-            flex-shrink: 0; transition: transform 0.3s ease;
-        }
-        
-        /* 2. MAIN CONTENT (Takes remaining space) */
-        .main-content { 
-            flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative; width: 100%;
-        }
-
-        /* MOBILE OVERRIDES (Screen < 1024px) */
-        @media (max-width: 1023px) {
-            .sidebar { 
-                position: fixed; top: 0; left: 0; height: 100%; 
-                transform: translateX(-100%); box-shadow: 4px 0 25px rgba(0,0,0,0.1); 
-            }
-            .sidebar.open { transform: translateX(0); }
-            /* Main content takes full width on mobile */
-            .main-content { width: 100%; margin-left: 0; }
-        }
-
-        /* HEADER */
+        /* --- HEADER --- */
         header {
-            height: 64px; background: var(--bg-surface); border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
-            flex-shrink: 0;
+            background: var(--surface); height: 60px; padding: 0 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
         }
-        
-        /* DASHBOARD VIEW (Grid/Flex) */
-        .dashboard-view {
-            flex: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-direction: column; gap: 20px;
-        }
-
-        /* DESKTOP LAYOUT (Screen > 1024px) */
-        @media (min-width: 1024px) {
-            .dashboard-view {
-                display: grid;
-                grid-template-columns: 1fr 380px; /* Pitch takes Flex, List takes Fixed */
-                grid-template-rows: auto 1fr;
-                gap: 24px;
-                overflow: hidden; /* Lock scroll to panels */
-                padding: 24px;
-                max-width: 1600px; margin: 0 auto; width: 100%;
-            }
-            
-            /* Spanning Header */
-            .scoreboard { grid-column: 1 / -1; }
-
-            /* Desktop Scroll Zones */
-            .left-panel { overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 20px; }
-            .right-panel { 
-                background: white; border-radius: 16px; border: 1px solid var(--border); 
-                overflow: hidden; display: flex; flex-direction: column; height: 100%;
-            }
-            .list-scroll-area { flex: 1; overflow-y: auto; }
-        }
-
-        /* MOBILE LAYOUT RESTORATION */
-        @media (max-width: 1023px) {
-            .right-panel { display: none; } /* Hide list on mobile */
-            .left-panel { display: contents; } /* Remove container wrapper effect */
-        }
-
-        /* --- COMPONENTS --- */
-
-        /* Header Elements */
-        .menu-btn { font-size: 1.2rem; cursor: pointer; display: none; }
-        @media (max-width: 1023px) { .menu-btn { display: block; margin-right: 15px; } }
         .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #f3f4f6; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--primary); }
+        .menu-btn { font-size: 1.3rem; padding: 5px; cursor: pointer; color: var(--text); }
+        .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: #f3f4f6; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--primary); }
         .user-avatar.active { background: var(--primary); color: var(--accent); }
 
-        /* Menu */
-        .menu-header { height: 64px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
-        .menu-items { flex: 1; padding-top: 10px; }
-        .menu-item { display: flex; align-items: center; gap: 12px; padding: 14px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; border-left: 4px solid transparent; transition: 0.2s; }
-        .menu-item:hover, .menu-item.active { background: #f9fafb; color: var(--primary); border-left-color: var(--primary); }
-        .menu-footer { margin-top: auto; padding: 24px; border-top: 1px solid var(--border); }
-        .reset-btn { color: var(--red); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 90; display: none; }
-        .menu-overlay.open { display: block; }
+        /* --- SIDEBAR (Drawer) --- */
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 260px; height: 100%;
+            background: var(--surface); z-index: 200; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        .sidebar.open { transform: translateX(0); }
+        
+        .menu-header { height: 60px; display: flex; align-items: center; padding-left: 20px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
+        .menu-item { padding: 15px 20px; font-weight: 600; color: var(--text-sub); display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 4px solid transparent; }
+        .menu-item.active { background: #f9fafb; color: var(--primary); border-left-color: var(--primary); }
+        .menu-footer { margin-top: auto; padding: 20px; border-top: 1px solid var(--border); }
+        
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(3px); }
+        .overlay.open { opacity: 1; visibility: visible; }
+
+        /* --- CONTENT AREAS --- */
+        .content { padding: 15px; }
 
         /* Scoreboard */
         .scoreboard {
-            background: var(--primary); color: white; padding: 20px 24px; border-radius: 16px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 10px 30px -10px rgba(55,0,60,0.3);
-            background-image: radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 40%);
+            background: var(--primary); color: white; padding: 20px; border-radius: 16px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(55,0,60,0.25);
         }
-        .sb-manager { font-size: 1.2rem; font-weight: 800; }
-        .sb-stats { display: flex; gap: 30px; text-align: right; }
-        .sb-val { font-size: 1.4rem; font-weight: 800; color: var(--accent); line-height: 1; }
-        .sb-label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.8; font-weight: 600; letter-spacing: 0.5px; }
-        @media (max-width: 600px) {
-            .scoreboard { flex-direction: column; text-align: center; gap: 15px; }
-            .sb-stats { width: 100%; justify-content: space-around; text-align: center; gap: 0; }
-        }
+        .sb-stats { display: flex; gap: 20px; text-align: center; }
+        .sb-val { font-size: 1.3rem; font-weight: 800; color: var(--accent); line-height: 1; }
+        .sb-lbl { font-size: 0.6rem; text-transform: uppercase; opacity: 0.8; font-weight: 600; letter-spacing: 0.5px; }
 
-        /* Pitch Card */
-        .pitch-wrapper { background: white; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .budget-bar { padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 600; color: var(--text-sub); }
+        /* Pitch */
         .pitch-container {
-            background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 10%, var(--grass-2) 10%, var(--grass-2) 20%);
-            padding: 20px 5px; position: relative; display: flex; flex-direction: column; justify-content: space-around; min-height: 550px;
+            background: white; border-radius: 16px; overflow: hidden; 
+            border: 1px solid var(--border); margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
         }
-        .pitch-lines div { position: absolute; border: 2px solid rgba(255,255,255,0.4); pointer-events: none; }
-        .p-mid { top: 50%; width: 100%; height: 0; border-top: 2px solid rgba(255,255,255,0.4); }
-        .p-circ { top: 50%; left: 50%; width: 100px; height: 100px; border-radius: 50%; transform: translate(-50%, -50%); }
-        .p-box-t { top: 0; left: 25%; width: 50%; height: 12%; border-top: none; }
-        .p-box-b { bottom: 0; left: 25%; width: 50%; height: 12%; border-bottom: none; }
         
-        .field-row { display: flex; justify-content: center; gap: 2%; position: relative; z-index: 10; margin-bottom: 10px; }
+        .budget-bar { 
+            padding: 10px 15px; display: flex; justify-content: space-between; 
+            background: white; border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 600; color: var(--text-sub); 
+        }
 
-        /* Player Pill */
+        .pitch-field {
+            background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 10%, var(--grass-2) 10%, var(--grass-2) 20%);
+            padding: 25px 5px; min-height: 580px; position: relative;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        /* Pitch Markings */
+        .pitch-lines div { position: absolute; border: 2px solid rgba(255,255,255,0.4); pointer-events: none; }
+        .p-mid { top: 50%; width: 100%; left: 0; height: 0; border-top: 2px solid rgba(255,255,255,0.4); }
+        .p-circ { top: 50%; left: 50%; width: 80px; height: 80px; border-radius: 50%; transform: translate(-50%, -50%); }
+        .p-box-t { top: 0; left: 20%; width: 60%; height: 12%; border-top: none; }
+        .p-box-b { bottom: 0; left: 20%; width: 60%; height: 12%; border-bottom: none; }
+
+        /* Player Rows */
+        .field-row { display: flex; justify-content: center; gap: 2%; position: relative; z-index: 10; margin-bottom: 8px; }
+
+        /* PLAYER CARD (The Fix) */
         .player-pill {
-            background: rgba(255,255,255,0.96); width: 18%; max-width: 80px; min-width: 60px;
-            padding: 4px 2px 6px 2px;
-            border-radius: 8px; text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: relative; cursor: pointer; transition: transform 0.1s;
+            background: rgba(255,255,255,0.96);
+            width: 19%; /* Fits 5 perfectly */
+            padding: 4px 2px; border-radius: 6px; 
+            display: flex; flex-direction: column; align-items: center;
+            position: relative; cursor: pointer; transition: 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .player-pill:active { transform: scale(0.95); }
-        .kit-img { width: 80%; max-width: 42px; height: auto; aspect-ratio: 0.8; object-fit: contain; margin: 2px 0 0 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
-        .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 95%; background: white; margin-top: 1px; padding: 1px 0; border-radius: 2px; }
-        .pill-data { font-size: 0.6rem; color: #555; font-weight: 600; display: flex; gap: 3px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding: 2px 0; margin-top: 2px; }
-        .points-badge { background: var(--primary); color: white; padding: 0 3px; border-radius: 3px; font-weight: 700; }
-        
-        .fix-badge { font-size: 0.5rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 20; max-width: 90%; overflow: hidden; text-overflow: ellipsis; }
-        .fdr-1, .fdr-2 { background: var(--fdr-2); color: var(--fdr-text-dark); }
-        .fdr-3 { background: var(--fdr-3); color: #333; }
-        .fdr-4 { background: var(--fdr-4); color: white; }
-        .fdr-5 { background: var(--fdr-5); color: white; }
 
-        .captain-badge { position: absolute; bottom: 28px; right: -3px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
-        .vice-badge { background: #666; }
-        .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
-        .status-warn { background: var(--status-warn); color: #78350f; }
-        .status-bad { background: var(--status-bad); color: white; }
+        .kit-img { width: 34px; height: 44px; object-fit: contain; margin: 2px 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+        
+        .pill-name { 
+            font-size: 0.65rem; font-weight: 700; color: #111; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            width: 96%; background: white; margin-top: 1px; padding: 1px 0; 
+            text-align: center; border-radius: 2px;
+        }
+        
+        .pill-info { 
+            font-size: 0.6rem; color: #555; font-weight: 600; 
+            display: flex; gap: 3px; justify-content: center; width: 100%; 
+            background: #f0f0f0; border-radius: 0 0 4px 4px; padding: 2px 0; margin-top: 2px; 
+        }
+        .pts-bg { background: var(--primary); color: white; padding: 0 3px; border-radius: 3px; }
+
+        /* Badges */
+        .fix-badge { position: absolute; top: -6px; background: white; padding: 1px 4px; border-radius: 3px; font-size: 0.5rem; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.2); max-width: 90%; white-space: nowrap; overflow: hidden; }
+        .fdr-2 { background: var(--fdr-2); color: #00381b; } .fdr-3 { background: var(--fdr-3); color: #333; } 
+        .fdr-4 { background: var(--fdr-4); color: white; } .fdr-5 { background: var(--fdr-5); color: white; }
+
+        .status-flag { position: absolute; top: -4px; right: -4px; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; }
+        .status-warn { background: var(--status-warn); color: #78350f; } .status-bad { background: var(--status-bad); color: white; }
+        
+        .cap-badge { position: absolute; bottom: 24px; left: -2px; background: #111; color: white; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; font-weight: 700; border: 1px solid white; z-index: 15; }
 
         /* Bench */
-        .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; margin-top: 20px; }
-        .bench-header { background: #f9fafb; padding: 10px 20px; font-size: 0.75rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
-        .bench-row { display: flex; justify-content: center; gap: 3%; padding: 20px; }
+        .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); }
+        .bench-head { background: #fafafa; padding: 8px 15px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; font-size: 0.7rem; border-bottom: 1px solid var(--border); }
+        .bench-row { display: flex; justify-content: center; gap: 3%; padding: 15px 5px; }
         .bench-pill { opacity: 0.9; }
         .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
 
-        /* List View (Desktop) */
-        .list-header { padding: 15px 20px; border-bottom: 1px solid var(--border); font-weight: 800; font-size: 0.9rem; color: var(--primary); display: flex; justify-content: space-between; align-items: center; background: #fdfdfd; }
-        .list-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: 0.2s; }
-        .list-row:hover { background: #f9fafb; }
-        .list-pos { width: 30px; font-size: 0.7rem; font-weight: 700; color: var(--text-sub); }
-        .list-info { flex: 1; }
-        .list-name { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
-        .list-pts { font-weight: 800; font-size: 0.9rem; color: var(--primary); width: 30px; text-align: center; }
-
-        /* Modal */
-        .modal-overlay { z-index: 1000; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); opacity: 0; pointer-events: none; transition: 0.2s; }
-        .modal-overlay.open { opacity: 1; pointer-events: auto; }
-        .modal-card { background: white; width: 90%; max-width: 400px; border-radius: 20px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: translateY(20px); transition: 0.3s; }
-        .modal-overlay.open .modal-card { transform: translateY(0); }
+        /* Modal (Bottom Sheet style for Mobile) */
+        .modal-card {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: white;
+            border-radius: 20px 20px 0 0; padding: 25px 20px 40px 20px; z-index: 1000;
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.2); transition: transform 0.3s ease;
+            transform: translateY(100%);
+        }
+        .modal-card.open { transform: translateY(0); }
         
         /* Utils */
         .hidden { display: none !important; }
-        .center-card { text-align: center; padding: 60px 20px; background: white; border-radius: 20px; border: 1px solid var(--border); margin: 40px auto; max-width: 400px; }
-        input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: #f9fafb; }
-        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
-        .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        .center-card { text-align: center; padding: 50px 20px; background: white; border-radius: 16px; border: 1px solid var(--border); margin-top: 40px; }
+        input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; font-size: 1rem; -webkit-appearance: none; }
+        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; }
+        .spinner { width: 30px; height: 30px; border: 3px solid rgba(0,0,0,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
     </style>
@@ -213,57 +167,62 @@
 <body>
 
     <div id="sideMenu" class="sidebar">
-        <div class="menu-header">
-            <i class="fa-solid fa-bolt" style="color:var(--accent); margin-right:10px;"></i> FPL Hub
-        </div>
-        <div class="menu-items">
-            <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
-                <i class="fa-solid fa-shirt"></i> Squad
-            </div>
-            <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
-                <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
-            </div>
-        </div>
+        <div class="menu-header">FPL Hub Pro</div>
+        <div class="menu-item active" onclick="switchTool('squad')"><i class="fa-solid fa-shirt"></i> Squad</div>
+        <div class="menu-item" onclick="switchTool('transfers')"><i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions</div>
         <div class="menu-footer">
-            <div class="reset-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Logout</div>
+            <div style="color:var(--red); font-weight:600; cursor:pointer;" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Logout</div>
         </div>
     </div>
-    <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
+    <div id="menuOverlay" class="overlay" onclick="toggleMenu()"></div>
 
-    <div class="main-content">
+    <div class="app-container">
         <header>
-            <div style="display:flex; align-items:center; gap:15px;">
+            <div class="brand">
                 <i class="fa-solid fa-bars menu-btn" onclick="toggleMenu()"></i>
-                <div style="font-weight:800; font-size:1.1rem; color:var(--primary);">Dashboard</div>
+                <i class="fa-solid fa-bolt" style="color:var(--accent)"></i> FPL Hub
             </div>
             <div class="user-avatar" id="userIcon"><i class="fa-regular fa-user"></i></div>
         </header>
 
-        <div id="dashboardView" class="dashboard-view hidden">
+        <div class="content">
             
-            <div class="scoreboard">
-                <div>
-                    <div class="sb-lbl">Manager</div>
-                    <div class="sb-manager" id="dispName">...</div>
-                </div>
-                <div class="sb-stats">
-                    <div><div class="sb-lbl">GW</div><div class="sb-val" id="dispGW">...</div></div>
-                    <div><div class="sb-lbl">Total</div><div class="sb-val" style="color:white" id="dispTotal">...</div></div>
-                    <div><div class="sb-lbl">Rank</div><div class="sb-val" style="color:white; font-size:1.1rem;" id="dispRank">...</div></div>
-                </div>
+            <div id="welcomeView" class="center-card hidden">
+                <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
+                <h2>Link Team</h2>
+                <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your FPL ID.</p>
+                <input type="number" id="teamID" placeholder="e.g. 123456">
+                <button class="btn" onclick="app.load()">Connect</button>
             </div>
 
-            <div id="demoAlert" style="grid-column:1/-1; background:#fff3cd; color:#856404; padding:10px; border-radius:8px; text-align:center; border:1px solid #ffeeba;" class="hidden">
-                <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
+            <div id="loadingView" class="center-card hidden">
+                <div class="spinner"></div>
+                <p id="loadingMsg" style="color: var(--text-sub); margin-top: 15px;">Connecting...</p>
             </div>
 
-            <div class="left-panel">
-                <div class="pitch-wrapper">
+            <div id="dashboardView" class="hidden">
+                <div id="demoAlert" style="background:#fff3cd; color:#856404; padding:10px; border-radius:8px; text-align:center; border:1px solid #ffeeba; margin-bottom:20px;" class="hidden">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
+                </div>
+
+                <div class="scoreboard">
+                    <div>
+                        <div class="sb-lbl">Manager</div>
+                        <div style="font-size:1.1rem; font-weight:800;" id="dispName">...</div>
+                    </div>
+                    <div class="sb-stats">
+                        <div><div class="sb-lbl">GW</div><div class="sb-val" id="dispGW">...</div></div>
+                        <div><div class="sb-lbl">Total</div><div class="sb-val" style="color:white" id="dispTotal">...</div></div>
+                        <div><div class="sb-lbl">Rank</div><div class="sb-val" style="color:white; font-size:1rem;" id="dispRank">...</div></div>
+                    </div>
+                </div>
+
+                <div class="pitch-container">
                     <div class="budget-bar">
                         <span>Bank: <span style="color:var(--primary); font-weight:800;" id="dispBank">£0.0m</span></span>
                         <span>Value: <span style="color:var(--primary); font-weight:800;" id="dispValue">£0.0m</span></span>
                     </div>
-                    <div class="pitch-container">
+                    <div class="pitch-field">
                         <div class="pitch-lines">
                             <div class="p-mid"></div><div class="p-circ"></div><div class="p-box-t"></div><div class="p-box-b"></div>
                         </div>
@@ -272,58 +231,35 @@
                 </div>
 
                 <div class="bench-wrapper">
-                    <div class="bench-header">Substitutes</div>
+                    <div class="bench-head">Substitutes</div>
                     <div id="benchRow" class="bench-row"></div>
                 </div>
             </div>
 
-            <div class="right-panel">
-                <div class="list-header">
-                    <span>Squad Analysis</span>
-                    <i class="fa-solid fa-list-ul"></i>
-                </div>
-                <div class="list-scroll-area" id="squadList"></div>
+            <div id="transfersView" class="center-card hidden">
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
+                <h2>Transfer Hub</h2>
+                <p>Coming next...</p>
             </div>
 
         </div>
-
-        <div id="welcomeView" class="center-card hidden" style="margin:60px auto;">
-            <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
-            <h2>Link Team</h2>
-            <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your FPL ID.</p>
-            <input type="number" id="teamID" placeholder="e.g. 123456">
-            <button class="btn" onclick="app.load()">Connect</button>
-        </div>
-
-        <div id="loadingView" class="center-card hidden" style="margin:60px auto;">
-            <div class="spinner"></div>
-            <p id="loadingMsg" style="color: var(--text-sub); margin-top: 15px;">Connecting...</p>
-        </div>
-
-        <div id="transfersView" class="center-card hidden" style="margin:60px auto;">
-            <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
-            <h2>Transfer Hub</h2>
-            <p>Coming next...</p>
-        </div>
-
     </div>
 
-    <div id="playerModalOverlay" class="modal-overlay">
-        <div class="modal-card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <h3 id="modalName" style="color:var(--primary); font-size:1.3rem;">...</h3>
-                <i class="fa-solid fa-xmark" style="font-size:1.2rem; cursor:pointer;" onclick="closeModal()"></i>
-            </div>
-            <div id="modalNews" style="background:#fff3cd; color:#856404; padding:10px; border-radius:8px; font-size:0.85rem; margin-bottom:15px; display:none;"></div>
-            <div style="font-size:0.9rem; color:#666; margin-bottom:15px;" id="modalInfo">...</div>
-            <div style="font-weight:700; color:#888; font-size:0.75rem; text-transform:uppercase; margin-bottom:8px;">Upcoming</div>
-            <div id="modalFixtures" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:5px;">Loading...</div>
+    <div id="modalOverlay" class="overlay" onclick="closeModal()"></div>
+    <div id="playerModal" class="modal-card">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <h3 id="modalName" style="color:var(--primary); font-size:1.3rem; margin:0;">...</h3>
+            <i class="fa-solid fa-xmark" style="font-size:1.4rem; cursor:pointer; color:#666;" onclick="closeModal()"></i>
         </div>
+        <div id="modalNews" style="background:#fff3cd; color:#856404; padding:10px; border-radius:8px; font-size:0.85rem; margin-bottom:15px; display:none;"></div>
+        <div style="font-size:0.9rem; color:#666; margin-bottom:15px;" id="modalInfo">...</div>
+        <div style="font-weight:700; color:#888; font-size:0.75rem; text-transform:uppercase; margin-bottom:10px;">Upcoming Fixtures</div>
+        <div id="modalFixtures" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:10px;"></div>
     </div>
 
     <script>
         // MOCK
-        const MOCK={user:{name:"Demo Manager",summary_overall_points:950,summary_event_points:45,summary_overall_rank:125000},bank:5,value:1024,picks:[{element:1,position:1},{element:2,position:2},{element:3,position:3},{element:4,position:4},{element:5,position:5,is_vice_captain:true},{element:6,position:6},{element:7,position:7},{element:8,position:8},{element:9,position:9,is_captain:true},{element:10,position:10},{element:11,position:11},{element:12,position:12},{element:13,position:13},{element:14,position:14},{element:15,position:15}],players:{9:{web_name:"Haaland",team_code:43,pos:4,price:14.0,event_points:13,status:'d',news:"Knock",team:"MCI",sel:70},5:{web_name:"Salah",team_code:14,pos:3,price:13.0,event_points:12,status:'a',team:"LIV",sel:45},1:{web_name:"Pickford",team_code:11,pos:1,price:4.5,event_points:6,status:'a',team:"EVE",sel:15},2:{web_name:"Trent",team_code:14,pos:2,price:8.0,event_points:2,team:"LIV"},3:{web_name:"Saliba",team_code:3,pos:2,price:5.5,event_points:6,team:"ARS"},4:{web_name:"Porro",team_code:6,pos:2,price:5.0,event_points:1,team:"TOT"},6:{web_name:"Saka",team_code:3,pos:3,price:9.0,event_points:8,team:"ARS"},7:{web_name:"Palmer",team_code:8,pos:3,price:6.0,event_points:10,team:"CHE"},8:{web_name:"Gordon",team_code:4,pos:3,price:6.5,event_points:5,team:"NEW"},10:{web_name:"Watkins",team_code:7,pos:4,price:8.5,event_points:2,team:"AVL"},11:{web_name:"Isak",team_code:4,pos:4,price:7.5,event_points:8,team:"NEW"},12:{web_name:"Areola",team_code:21,pos:1,price:4.0,event_points:0,team:"WHU"},13:{web_name:"Burn",team_code:4,pos:2,price:4.5,event_points:0,team:"NEW"},14:{web_name:"Rogers",team_code:7,pos:3,price:5.0,event_points:2,team:"AVL"},15:{web_name:"Archer",team_code:20,pos:4,price:4.5,event_points:1,team:"SOU"}},fixtures:{9:{opp:"LIV",diff:5,is_home:true}}};
+        const MOCK={user:{name:"Demo Manager",summary_overall_points:950,summary_event_points:45,summary_overall_rank:125000},bank:5,value:1024,picks:[{element:1,position:1},{element:2,position:2},{element:3,position:3},{element:4,position:4},{element:5,position:5,is_vice_captain:true},{element:6,position:6},{element:7,position:7},{element:8,position:8},{element:9,position:9,is_captain:true},{element:10,position:10},{element:11,position:11},{element:12,position:12},{element:13,position:13},{element:14,position:14},{element:15,position:15}],players:{9:{web_name:"Haaland",team_code:43,pos:4,price:14.0,event_points:13,status:'d',news:"Knock - 75%",team:"MCI",sel:70},5:{web_name:"Salah",team_code:14,pos:3,price:13.0,event_points:12,status:'a',team:"LIV",sel:45},1:{web_name:"Pickford",team_code:11,pos:1,price:4.5,event_points:6,status:'a',team:"EVE",sel:15},2:{web_name:"Trent",team_code:14,pos:2,price:8.0,event_points:2,team:"LIV"},3:{web_name:"Saliba",team_code:3,pos:2,price:5.5,event_points:6,team:"ARS"},4:{web_name:"Porro",team_code:6,pos:2,price:5.0,event_points:1,team:"TOT"},6:{web_name:"Saka",team_code:3,pos:3,price:9.0,event_points:8,team:"ARS"},7:{web_name:"Palmer",team_code:8,pos:3,price:6.0,event_points:10,team:"CHE"},8:{web_name:"Gordon",team_code:4,pos:3,price:6.5,event_points:5,team:"NEW"},10:{web_name:"Watkins",team_code:7,pos:4,price:8.5,event_points:2,team:"AVL"},11:{web_name:"Isak",team_code:4,pos:4,price:7.5,event_points:8,team:"NEW"},12:{web_name:"Areola",team_code:21,pos:1,price:4.0,event_points:0,team:"WHU"},13:{web_name:"Burn",team_code:4,pos:2,price:4.5,event_points:0,team:"NEW"},14:{web_name:"Rogers",team_code:7,pos:3,price:5.0,event_points:2,team:"AVL"},15:{web_name:"Archer",team_code:20,pos:4,price:4.5,event_points:1,team:"SOU"}},fixtures:{9:{opp:"LIV",diff:5,is_home:true}}};
 
         const app = {
             currentTool: 'squad', playersCache: {},
@@ -338,14 +274,9 @@
             },
             toggleMenu: () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); },
             switchTool: (t) => {
-                if(window.innerWidth < 1024) app.toggleMenu();
-                app.currentTool = t;
+                app.toggleMenu(); app.currentTool = t;
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
-                document.getElementById('nav-' + t).classList.add('active');
-                if (t === 'squad') {
-                    if(Object.keys(app.playersCache).length > 0) app.show('dashboardView');
-                    else app.load(localStorage.getItem('fpl_id_final'));
-                } else app.show('transfersView');
+                if(t==='squad'){ if(Object.keys(app.playersCache).length>0) app.show('dashboardView'); else app.load(localStorage.getItem('fpl_id_final')); } else app.show('transfersView');
             },
             fetchUrl: async (targetUrl) => {
                 const proxies = [(url) => `https://corsproxy.io/?${encodeURIComponent(url)}`, (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`];
@@ -407,17 +338,14 @@
 
                 const pitchDiv = document.getElementById('pitchRows');
                 const benchDiv = document.getElementById('benchRow');
-                const listDiv = document.getElementById('squadList');
-                pitchDiv.innerHTML = ''; benchDiv.innerHTML = ''; listDiv.innerHTML = '';
+                pitchDiv.innerHTML = ''; benchDiv.innerHTML = '';
                 
                 const formation = { 1: [], 2: [], 3: [], 4: [] };
-                const squadList = [];
 
                 picks.forEach((pick, i) => {
                     const p = players[pick.element];
                     if(!p) return;
                     const pFull = { ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain, is_bench: i > 10, sub_order: i-10 };
-                    squadList.push(pFull);
                     if (i < 11) formation[p.pos].push(pFull);
                     else benchDiv.innerHTML += app.createPill(pFull, fixMap, true);
                 });
@@ -427,15 +355,12 @@
                     formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap));
                     pitchDiv.appendChild(row);
                 });
-
-                squadList.sort((a,b) => a.pos - b.pos || a.is_bench - b.is_bench);
-                squadList.forEach(p => listDiv.innerHTML += app.createListRow(p, fixMap));
                 app.show('dashboardView');
             },
             createPill: (p, fixMap, isBench) => {
-                let capBadge = p.is_captain ? `<div class="captain-badge">C</div>` : (p.is_vice ? `<div class="vice-badge captain-badge">V</div>` : '');
+                let capBadge = p.is_captain ? `<div class="cap-badge">C</div>` : (p.is_vice ? `<div class="cap-badge vice-badge">V</div>` : '');
                 let statusBadge = p.status === 'd' ? `<div class="status-flag status-warn">!</div>` : (['i', 's'].includes(p.status) ? `<div class="status-flag status-bad">×</div>` : '');
-                let bNum = p.is_bench ? `<div class="bench-num">${p.sub_order}</div>` : '';
+                let bNum = isBench ? `<div class="bench-num">${p.sub_order}</div>` : '';
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
                 const fix = fixMap ? (fixMap[p.team_id] || { opp: '-', diff: 3, is_home: true }) : { opp: '-', diff: 3 };
                 const loc = fix.is_home ? '(H)' : '(A)';
@@ -445,20 +370,7 @@
                         <div class="fix-badge fdr-${fix.diff}">${fix.opp} ${loc}</div>
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
-                        <div class="pill-data"><span>£${p.price}</span><span class="points-badge">${p.event_points}</span></div>
-                    </div>
-                `;
-            },
-            createListRow: (p, fixMap) => {
-                const fix = fixMap ? (fixMap[p.team_id] || { opp: '-', diff: 3 }) : { opp: '-', diff: 3 };
-                return `
-                    <div class="list-row" onclick="app.openModal(${p.id})">
-                        <div class="list-pos">${['?','GK','DEF','MID','FWD'][p.pos]}</div>
-                        <div class="list-info">
-                            <div style="font-weight:700;">${p.name} ${p.status!=='a'?'<span style="color:red">!</span>':''}</div>
-                            <div style="font-size:0.7rem; color:#666;">${p.team} • <span class="fdr-${fix.diff}" style="padding:0 3px; border-radius:3px;">${fix.opp}</span></div>
-                        </div>
-                        <div class="list-pts">${p.event_points}</div>
+                        <div class="pill-info"><span>£${p.price}</span><span class="pts-bg">${p.event_points}</span></div>
                     </div>
                 `;
             },
@@ -468,12 +380,15 @@
                 document.getElementById('modalInfo').innerText = `${p.team} • £${p.price}m • Sel: ${p.sel}%`;
                 const newsEl = document.getElementById('modalNews');
                 if(p.news) { newsEl.style.display='block'; newsEl.innerText=p.news; } else newsEl.style.display='none';
-                document.getElementById('playerModalOverlay').classList.add('open');
+                
+                document.getElementById('modalOverlay').classList.add('open');
+                document.getElementById('playerModal').classList.add('open');
+                
                 try {
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
                     let html = '';
                     data.fixtures.slice(0,5).forEach(f => {
-                        html += `<div style="min-width:60px; border:1px solid #eee; border-radius:6px; padding:6px; text-align:center;"><div style="font-size:0.65rem; color:#666;">GW${f.event}</div><div style="font-weight:700; color:${f.difficulty>3?'red':'green'}">${f.difficulty}</div></div>`;
+                        html += `<div style="min-width:65px; border:1px solid #eee; border-radius:6px; padding:6px; text-align:center;"><div style="font-size:0.6rem; color:#666;">GW${f.event}</div><div style="font-weight:700; color:${f.difficulty>3?'red':'green'}">${f.difficulty}</div></div>`;
                     });
                     document.getElementById('modalFixtures').innerHTML = html;
                 } catch(e){}
@@ -481,10 +396,9 @@
         };
 
         function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
-        function switchTool(t) { if(window.innerWidth<1024) toggleMenu(); app.switchTool(t); }
+        function switchTool(t) { toggleMenu(); app.switchTool(t); }
         function clearData() { if(confirm("Logout?")) { localStorage.removeItem('fpl_id_final'); location.reload(); } }
-        function closeModal() { document.getElementById('playerModalOverlay').classList.remove('open'); }
-        document.getElementById('playerModalOverlay').addEventListener('click', (e) => { if(e.target.id==='playerModalOverlay') closeModal(); });
+        function closeModal() { document.getElementById('playerModal').classList.remove('open'); document.getElementById('modalOverlay').classList.remove('open'); }
 
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
