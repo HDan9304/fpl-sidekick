@@ -339,6 +339,63 @@
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
+const TransferBot = {
+    analyze: (myPicks, allPlayers, bank) => {
+        // 1. Find Weakest Link (Lowest Form)
+        let worstPlayer = null;
+        let minScore = 100.0;
+
+        myPicks.forEach(pick => {
+            const p = allPlayers[pick.element];
+            if (p.pos === 1) return; // Skip Goalkeepers for simplicity
+            
+            // Score = Form + (ICT Index / 10)
+            // ICT Index helps find players who are playing well but unlucky
+            let score = parseFloat(p.form) + (parseFloat(p.ict_index || 0) / 10);
+            
+            // Heavily penalize injured players
+            if (p.status !== 'a' && p.chance < 100) score = -50; 
+
+            if (score < minScore) {
+                minScore = score;
+                worstPlayer = p;
+            }
+        });
+
+        if (!worstPlayer) return null;
+
+        // 2. Find Best Replacement
+        let bestTarget = null;
+        let maxScore = -100.0;
+        const maxBudget = bank + worstPlayer.price;
+
+        Object.values(allPlayers).forEach(target => {
+            // Constraints
+            if (target.pos !== worstPlayer.pos) return; // Same position
+            if (target.price > maxBudget) return; // Can afford
+            if (target.id === worstPlayer.id) return; // Not same player
+            if (target.status !== 'a' || target.chance < 75) return; // Must be fit
+            
+            // Skip players already in team
+            const isOwned = myPicks.some(pick => pick.element === target.id);
+            if (isOwned) return;
+
+            // Score Calculation
+            let targetScore = parseFloat(target.form) + (parseFloat(target.ict_index || 0) / 10);
+
+            if (targetScore > maxScore) {
+                maxScore = targetScore;
+                bestTarget = target;
+            }
+        });
+
+        if (bestTarget && maxScore > minScore) {
+            return { out: worstPlayer, in: bestTarget, diff: (maxScore - minScore).toFixed(1) };
+        }
+        return null;
+    }
+};
+
         const app = {
             currentTool: 'squad',
             playersCache: {}, // Store full player objects
@@ -363,7 +420,53 @@
                 if (t === 'squad') {
                     if(Object.keys(app.playersCache).length > 0) app.show('dashboardView');
                     else app.load(localStorage.getItem('fpl_id_final'));
-                } else app.show('transfersView');
+                } else {
+                    // --- TRANSFER VIEW LOGIC ---
+                    app.show('transfersView');
+                    const container = document.getElementById('transfersView');
+                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analysing Market...</p></div>';
+                    
+                    setTimeout(() => {
+                        const result = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank);
+                        
+                        if (result) {
+                            container.innerHTML = `
+                                <div class="welcome-card" style="margin-top:0; border:none; box-shadow:none; background:transparent;">
+                                    <div style="font-size:3rem; margin-bottom:10px;">💡</div>
+                                    <h2 style="color:var(--primary); margin-bottom:5px;">AI Suggestion</h2>
+                                    <p style="color:var(--text-sub); font-size:0.9rem;">Optimized for Form & Fixtures</p>
+                                </div>
+
+                                <div style="display:flex; gap:15px; align-items:center; margin-top:10px;">
+                                    <div style="flex:1; background:#fff5f5; border:1px solid #fed7d7; border-radius:16px; padding:15px; text-align:center;">
+                                        <div style="font-size:0.7rem; font-weight:800; color:#e53e3e; margin-bottom:5px;">SELL</div>
+                                        <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${result.out.team_code}-66.png" style="width:40px; height:auto; margin-bottom:5px;">
+                                        <div style="font-weight:700; font-size:0.9rem;">${result.out.name}</div>
+                                        <div style="font-size:0.8rem; color:#666;">£${result.out.price}m</div>
+                                        <div style="font-size:0.7rem; color:#e53e3e; margin-top:5px;">Form: ${result.out.form}</div>
+                                    </div>
+
+                                    <i class="fa-solid fa-arrow-right" style="color:#cbd5e1;"></i>
+
+                                    <div style="flex:1; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:16px; padding:15px; text-align:center;">
+                                        <div style="font-size:0.7rem; font-weight:800; color:#16a34a; margin-bottom:5px;">BUY</div>
+                                        <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${result.in.team_code}-66.png" style="width:40px; height:auto; margin-bottom:5px;">
+                                        <div style="font-weight:700; font-size:0.9rem;">${result.in.name}</div>
+                                        <div style="font-size:0.8rem; color:#666;">£${result.in.price}m</div>
+                                        <div style="font-size:0.7rem; color:#16a34a; margin-top:5px;">Form: ${result.in.form}</div>
+                                    </div>
+                                </div>
+
+                                <div style="background:white; border:1px solid var(--border); border-radius:12px; padding:15px; margin-top:20px; text-align:center;">
+                                    <div style="font-size:0.75rem; color:#666; text-transform:uppercase; font-weight:700;">Projected Impact</div>
+                                    <div style="font-size:1.4rem; font-weight:800; color:var(--accent); text-shadow:0 1px 2px rgba(0,0,0,0.1);">+${result.diff} <span style="font-size:0.8rem; color:#888; font-weight:500;">Pts Potential</span></div>
+                                </div>
+                            `;
+                        } else {
+                            container.innerHTML = '<div class="welcome-card"><p>Your squad is optimal. No high-value transfers found.</p></div>';
+                        }
+                    }, 500);
+                }
             },
             
             // PROXY ENGINE
@@ -418,12 +521,16 @@
                             chance: p.chance_of_playing_next_round,
                             news: p.news,
                             sel: parseFloat(p.selected_by_percent),
-                            form: p.form
+                            form: p.form,
+                            ict_index: p.ict_index
                         };
                     });
                     
                     app.playersCache = players; // Save for modal
 
+                    app.currentPicks = picks.picks;
+                    app.currentBank = picks.entry_history.bank / 10;
+                    
                     document.getElementById('demoAlert').classList.add('hidden');
                     app.render(user, picks.picks, players, fixMap, picks.entry_history);
 
