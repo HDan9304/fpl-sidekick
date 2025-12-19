@@ -26,8 +26,7 @@
             min-height: 100vh; display: flex; justify-content: center;
         }
 
-        /* --- THE APP CONTAINER --- */
-        /* Keeps it looking like a phone app on all screens */
+        /* APP CONTAINER */
         .app-container {
             width: 100%; max-width: 600px; 
             background-color: var(--bg-app);
@@ -45,11 +44,11 @@
         }
         .header-left { display: flex; align-items: center; gap: 15px; }
         .menu-btn { font-size: 1.2rem; cursor: pointer; color: var(--text-main); }
-        .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
         .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: #f3f4f6; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--primary); }
         .user-avatar.active { background: var(--primary); color: var(--accent); }
 
-        /* SIDEBAR (Drawer) */
+        /* SIDEBAR */
         .sidebar {
             position: fixed; top: 0; left: 0; height: 100%; width: 260px;
             background: var(--bg-app); z-index: 200; transform: translateX(-100%);
@@ -57,17 +56,17 @@
             box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
         }
         .sidebar.open { transform: translateX(0); }
-        .menu-header { height: 60px; display: flex; align-items: center; padding-left: 20px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
+        .menu-header { height: 60px; display: flex; align-items: center; padding-left: 20px; font-weight: 800; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); }
         .menu-item { padding: 15px 20px; font-weight: 600; color: var(--text-sub); display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 4px solid transparent; }
         .menu-item.active { background: #f9fafb; color: var(--primary); border-left-color: var(--primary); }
         .menu-footer { margin-top: auto; padding: 20px; border-top: 1px solid var(--border); }
         .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; display: none; }
         .menu-overlay.open { display: block; }
 
-        /* SCROLL CONTENT */
+        /* CONTENT */
         .content { padding: 15px; overflow-y: auto; flex: 1; background: #fafafa; }
 
-        /* CARDS */
+        /* LOADING & WELCOME */
         .card-center { 
             text-align: center; padding: 50px 20px; background: white; 
             border-radius: 16px; border: 1px solid var(--border); margin: 20px 0; 
@@ -86,32 +85,46 @@
         .sb-val { font-size: 1.3rem; font-weight: 800; color: var(--accent); line-height: 1; }
         .sb-label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.8; font-weight: 600; }
 
-        /* PITCH */
-        .pitch-wrapper { background: white; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; }
-        .budget-bar { padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 600; color: var(--text-sub); }
+        /* --- PITCH FIXES START --- */
+        .pitch-wrapper { 
+            background: white; border-radius: 16px; overflow: hidden; 
+            border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+            margin-bottom: 20px; 
+        }
+        .budget-bar { 
+            padding: 10px 20px; display: flex; justify-content: space-between; 
+            border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 600; color: var(--text-sub); 
+        }
         
         .pitch-container {
             background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 10%, var(--grass-2) 10%, var(--grass-2) 20%);
             position: relative; 
-            display: flex; flex-direction: column; 
-            justify-content: space-between; /* FIXED: Spreads rows nicely */
-            min-height: 600px; 
-            padding: 25px 5px 35px 5px; 
+            /* This is the key spacing fix: */
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-around; /* Distribute rows evenly with space around them */
+            min-height: 640px; /* Tall enough to prevent bunching */
+            padding: 20px 0;
         }
         
-        /* Markings */
+        /* Pitch Lines */
         .pitch-lines div { position: absolute; border: 2px solid rgba(255,255,255,0.4); pointer-events: none; }
         .p-mid { top: 50%; width: 100%; height: 0; border-top: 2px solid rgba(255,255,255,0.4); }
         .p-circ { top: 50%; left: 50%; width: 100px; height: 100px; border-radius: 50%; transform: translate(-50%, -50%); }
         .p-box-t { top: 0; left: 20%; width: 60%; height: 12%; border-top: none; }
         .p-box-b { bottom: 0; left: 20%; width: 60%; height: 12%; border-bottom: none; }
         
+        /* Row Alignment Fix */
         .field-row { 
-            display: flex; justify-content: center; gap: 2%; 
-            width: 100%; position: relative; z-index: 10; 
+            display: flex; 
+            justify-content: center; /* Center players horizontally */
+            gap: 2%; /* Gap between players */
+            width: 100%; 
+            position: relative; z-index: 10; 
         }
+        /* --- PITCH FIXES END --- */
 
-        /* PLAYER CARD (Basic & Clean) */
+        /* PLAYER PILL */
         .player-pill {
             background: rgba(255,255,255,0.96); width: 19%; max-width: 80px; min-width: 60px;
             padding: 4px 2px; border-radius: 6px; text-align: center;
@@ -368,9 +381,7 @@
                 document.getElementById('modalInfo').innerText = `${p.team} • £${p.price}m • Sel: ${p.sel}%`;
                 const newsEl = document.getElementById('modalNews');
                 if(p.news) { newsEl.style.display='block'; newsEl.innerText=p.news; } else newsEl.style.display='none';
-                
                 document.getElementById('playerModalOverlay').classList.add('open');
-                
                 try {
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
                     let html = '';
