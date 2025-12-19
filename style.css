@@ -1,0 +1,216 @@
+/* --- Variables: PL Color Palette --- */
+:root {
+    --pl-purple: #38003c;
+    --pl-green: #00ff85;
+    --pl-dark: #1f1f1f;
+    --pl-light-grey: #f4f4f4;
+    --pl-red: #d9534f;
+    --text-white: #ffffff;
+}
+
+/* --- Global Reset --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--pl-light-grey);
+    color: var(--pl-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Header --- */
+header {
+    background-color: var(--pl-purple);
+    color: var(--text-white);
+    padding: 25px 20px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    border-bottom: 4px solid var(--pl-green);
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+header p {
+    font-size: 0.9rem;
+    opacity: 0.85;
+}
+
+/* --- Main Layout --- */
+main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 30px 20px;
+}
+
+.card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 500px;
+    height: fit-content;
+}
+
+/* --- Input & Buttons --- */
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--pl-purple);
+}
+
+input[type="number"] {
+    width: 100%;
+    padding: 15px;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: var(--pl-purple);
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--pl-purple);
+    color: var(--text-white);
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background-color: #500055;
+}
+
+button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* --- Results & Typography --- */
+.hidden {
+    display: none !important;
+}
+
+.result-header {
+    margin-top: 30px;
+    border-bottom: 2px solid var(--pl-green);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.manager-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--pl-purple);
+}
+
+.meta-info {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* --- Player List Styles --- */
+.section-title {
+    margin-top: 25px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.player-list {
+    list-style: none;
+}
+
+.player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 5px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.p-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.p-team {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.p-cost {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* --- Chips / Suggestions --- */
+.chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 8px;
+    text-transform: uppercase;
+}
+
+.chip-cold {
+    background-color: var(--pl-red);
+    color: white;
+}
+
+/* --- Loading Spinner --- */
+.loading-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(56, 0, 60, 0.2);
+    border-radius: 50%;
+    border-top-color: var(--pl-purple);
+    animation: spin 0.8s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.8rem;
+    color: #999;
+}
