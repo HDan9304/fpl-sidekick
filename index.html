@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FPL Hub Fast</title>
+    <title>FPL Hub Pro</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,9 +22,9 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
-        body { background: var(--bg); color: var(--text-main); padding-bottom: 80px; }
+        body { background: var(--bg); color: var(--text-main); padding-bottom: 80px; overflow-x: hidden; }
 
-        /* --- NAV --- */
+        /* --- NAV BAR --- */
         nav {
             background: var(--surface);
             padding: 15px 20px;
@@ -35,6 +35,16 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            height: 60px;
+        }
+
+        .nav-left { display: flex; align-items: center; gap: 15px; }
+
+        .menu-btn {
+            font-size: 1.2rem;
+            color: var(--text-main);
+            cursor: pointer;
+            padding: 5px;
         }
 
         .logo { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
@@ -42,11 +52,57 @@
 
         .user-btn {
             background: var(--bg); border: 1px solid var(--border);
-            width: 40px; height: 40px; border-radius: 50%;
+            width: 35px; height: 35px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; color: var(--primary); transition: 0.2s;
         }
         .user-btn.linked { background: var(--primary); color: var(--accent); border: none; }
+
+        /* --- SIDEBAR MENU --- */
+        .sidebar {
+            position: fixed; top: 0; left: 0; height: 100%; width: 250px;
+            background: var(--surface); z-index: 200;
+            transform: translateX(-100%); /* Hidden by default */
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding-top: 60px;
+        }
+        .sidebar.open { transform: translateX(0); }
+
+        .menu-header {
+            position: absolute; top: 0; left: 0; width: 100%; height: 60px;
+            display: flex; align-items: center; padding-left: 20px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 800; color: var(--primary);
+        }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 15px 20px;
+            color: var(--text-sub);
+            font-weight: 500;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: 0.2s;
+        }
+        .menu-item:hover { background: var(--bg); color: var(--primary); }
+        .menu-item.active {
+            color: var(--primary);
+            background: rgba(55, 0, 60, 0.05);
+            border-left-color: var(--primary);
+            font-weight: 700;
+        }
+        .menu-item i { width: 20px; text-align: center; }
+
+        /* Overlay (Darkens background when menu is open) */
+        .menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 150;
+            opacity: 0; visibility: hidden; transition: 0.3s;
+            backdrop-filter: blur(2px);
+        }
+        .menu-overlay.open { opacity: 1; visibility: visible; }
+
 
         /* --- LAYOUT --- */
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -120,11 +176,30 @@
 <body>
 
     <nav>
-        <div class="logo"><i class="fa-solid fa-bolt"></i> FPL Hub</div>
+        <div class="nav-left">
+            <div class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></div>
+            <div class="logo"><i class="fa-solid fa-bolt"></i> FPL Hub</div>
+        </div>
         <div class="user-btn" id="userIcon" onclick="toggleUserModal()">
             <i class="fa-regular fa-user"></i>
         </div>
     </nav>
+
+    <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
+    <div id="sideMenu" class="sidebar">
+        <div class="menu-header">FPL Hub Tools</div>
+        
+        <div class="menu-item active" onclick="switchTool('squad')">
+            <i class="fa-solid fa-shirt"></i> Squad
+        </div>
+
+        <div class="menu-item" style="opacity:0.5; cursor: default;">
+            <i class="fa-solid fa-arrow-right-arrow-left"></i> Transfers (Soon)
+        </div>
+        <div class="menu-item" style="opacity:0.5; cursor: default;">
+            <i class="fa-solid fa-chart-line"></i> Price Changes (Soon)
+        </div>
+    </div>
 
     <div class="container">
         
@@ -172,7 +247,7 @@
     <script>
         const CACHE_KEY = 'fpl_static_data_v2';
         const CACHE_TIME_KEY = 'fpl_static_ts_v2';
-        const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+        const CACHE_DURATION = 30 * 60 * 1000; 
 
         const App = {
             id: null,
@@ -209,7 +284,6 @@
                 }
             },
 
-            // --- THE OPTIMIZED DATA FETCHING ---
             fetchData: async (id) => {
                 App.showView('loading');
 
@@ -217,26 +291,21 @@
                     let staticData = null;
                     const now = new Date().getTime();
 
-                    // 1. Check Local Cache for "Heavy" Data (Players)
+                    // 1. Cache Check
                     const cachedData = localStorage.getItem(CACHE_KEY);
                     const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
 
                     if (cachedData && cachedTime && (now - cachedTime < CACHE_DURATION)) {
-                        console.log("Using Cached Data (Fast Mode)");
                         staticData = JSON.parse(cachedData);
                     } else {
-                        console.log("Downloading Fresh Data (Slow Mode)");
-                        // If no cache, we fetch it
                         const staticRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/')}`);
                         const staticRaw = await staticRes.json();
                         staticData = JSON.parse(staticRaw.contents);
-                        
-                        // Save to cache
                         localStorage.setItem(CACHE_KEY, JSON.stringify(staticData));
                         localStorage.setItem(CACHE_TIME_KEY, now);
                     }
 
-                    // 2. Prepare Maps (Instant)
+                    // 2. Maps
                     const playerMap = {};
                     staticData.elements.forEach(p => {
                         playerMap[p.id] = {
@@ -249,8 +318,7 @@
                     });
                     const gw = staticData.events.find(e => e.is_current)?.id || 1;
 
-                    // 3. Fetch User Specifics (Parallel Request)
-                    // We run these two requests at the same time using Promise.all
+                    // 3. User Data (Parallel)
                     const [entryRaw, picksRaw] = await Promise.all([
                         fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/`)}`).then(r => r.json()),
                         fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`)}`).then(r => r.json())
@@ -312,6 +380,36 @@
             }
         };
 
+        // --- MENU LOGIC ---
+        function toggleMenu() {
+            const menu = document.getElementById('sideMenu');
+            const overlay = document.getElementById('menuOverlay');
+            
+            // Toggle classes
+            if (menu.classList.contains('open')) {
+                menu.classList.remove('open');
+                overlay.classList.remove('open');
+            } else {
+                menu.classList.add('open');
+                overlay.classList.add('open');
+            }
+        }
+
+        function switchTool(toolName) {
+            // Close menu first
+            toggleMenu();
+            
+            if (toolName === 'squad') {
+                // If we are linked, show dashboard
+                if (App.id) {
+                    App.showView('dashboard');
+                } else {
+                    App.showView('welcome');
+                }
+            }
+        }
+
+        // --- USER MODAL LOGIC ---
         function toggleUserModal() { document.getElementById('linkModal').classList.toggle('hidden'); }
         function saveId() {
             const id = document.getElementById('idInput').value;
