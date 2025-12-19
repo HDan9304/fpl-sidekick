@@ -142,19 +142,30 @@
         .bench-pill { opacity: 0.85; }
         .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
 
-        /* MODAL */
-        .modal-overlay { z-index: 1000; display: flex; justify-content: center; align-items: flex-end; } /* Bottom sheet on mobile */
+        /* --- FIXED MODAL CARD --- */
+        .modal-overlay { z-index: 1000; display: flex; justify-content: center; align-items: flex-end; } 
         @media (min-width: 600px) { .modal-overlay { align-items: center; } }
         
         .modal-card {
-            background: white; width: 100%; max-width: 500px;
-            border-radius: 20px 20px 0 0; padding: 25px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
-            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: fixed;
+            bottom: 15px; /* Lift from bottom */
+            left: 50%;    /* Center Horizontal */
+            width: 94%;   /* Space on sides */
+            max-width: 500px;
+            background: white;
+            border-radius: 24px; /* Round all corners */
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            /* Logic: X=-50% to center, Y=110% to hide down */
+            transform: translate(-50%, 110%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
         }
-        @media (min-width: 600px) { .modal-card { border-radius: 20px; transform: translateY(20px); opacity: 0; } }
         
-        .modal-overlay.open .modal-card { transform: translateY(0); opacity: 1; }
+        .modal-overlay.open .modal-card { 
+            /* Logic: X=-50% to center, Y=0 to show */
+            transform: translate(-50%, 0); 
+        }
 
         .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
