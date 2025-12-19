@@ -3,118 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FPL Mobile Hub</title>
+    <title>FPL Hub</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* --- MOBILE FIRST DESIGN --- */
+        /* --- 1. DESIGN SYSTEM --- */
         :root {
-            --primary: #37003c;
-            --accent: #00ff85;
-            --bg: #f8f9fa;
-            --surface: #ffffff;
-            --text: #111;
-            --gray: #666;
+            /* FPL Brand Colors */
+            --primary: #37003c;   /* Dark Purple */
+            --accent: #00ff85;    /* Neon Green */
+            --secondary: #e90052; /* Pink/Red */
+            
+            /* UI Colors */
+            --bg-body: #f0f2f5;   /* Light Grey Background for Desktop */
+            --bg-app: #ffffff;    /* White Background for App Card */
+            --text-main: #111827;
+            --text-sub: #6b7280;
             --border: #e5e7eb;
-            --red: #e90052;
         }
 
+        /* --- 2. GLOBAL RESET --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
 
-        /* HEADER */
-        header {
-            background: var(--surface); height: 60px; padding: 0 20px;
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border);
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center; /* Centers app on Desktop */
+            padding-bottom: 50px;    /* Space at bottom */
         }
-        .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+
+        /* --- 3. APP CONTAINER (Responsive Magic) --- */
+        .app-container {
+            width: 100%;
+            max-width: 600px; /* Limits width on desktop */
+            background-color: var(--bg-app);
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 0; /* No shadow on mobile */
+        }
+
+        /* Desktop Adjustments */
+        @media (min-width: 600px) {
+            body { padding-top: 40px; } /* Add top space on desktop */
+            .app-container {
+                min-height: auto;
+                border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); /* Nice shadow */
+                overflow: hidden; /* Clips content to corners */
+                margin-bottom: 40px;
+            }
+        }
+
+        /* --- 4. HEADER --- */
+        header {
+            background: var(--bg-app);
+            height: 70px;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.5px;
+        }
         .brand i { color: var(--accent); }
 
-        /* MENU BUTTON */
-        .menu-btn { font-size: 1.2rem; padding: 8px; cursor: pointer; }
-
-        /* USER ICON */
         .user-avatar {
-            width: 32px; height: 32px; border-radius: 50%; background: #f0f0f0;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            border: 1px solid var(--border);
+            color: var(--primary);
             display: flex; align-items: center; justify-content: center;
-            color: var(--primary); font-size: 0.9rem; border: 1px solid var(--border);
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .user-avatar.active { background: var(--primary); color: var(--accent); border: none; }
-
-        /* CONTAINER */
-        .main { max-width: 600px; margin: 0 auto; padding: 20px; }
-
-        /* STATUS LOG (Visible for debugging) */
-        .status-log {
-            font-size: 0.75rem; color: var(--gray); text-align: center;
-            margin-bottom: 15px; background: #eee; padding: 5px; border-radius: 4px;
-            display: none; /* Hidden unless active */
+        .user-avatar.active {
+            background: var(--primary);
+            color: var(--accent);
+            border-color: var(--primary);
         }
 
-        /* WELCOME CARD */
-        .card {
-            background: var(--surface); padding: 30px 20px; border-radius: 16px;
-            text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-top: 20px;
-        }
-        .card h2 { margin: 10px 0 5px; font-size: 1.3rem; }
-        .card p { color: var(--gray); font-size: 0.9rem; margin-bottom: 20px; }
-        
-        input {
-            width: 100%; padding: 14px; border: 1px solid var(--border);
-            border-radius: 10px; font-size: 1rem; text-align: center; margin-bottom: 15px;
+        /* --- 5. CONTENT AREAS --- */
+        .content { padding: 24px; }
+
+        /* Welcome Card */
+        .welcome-card {
+            text-align: center;
+            padding: 40px 20px;
             background: #fafafa;
+            border-radius: 20px;
+            border: 1px solid var(--border);
         }
-        input:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+        input {
+            width: 100%;
+            padding: 16px;
+            font-size: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+            margin: 20px 0;
+            outline: none;
+            transition: 0.3s;
+            background: white;
+        }
+        input:focus { border-color: var(--primary); }
 
         .btn {
-            background: var(--primary); color: white; border: none; padding: 14px;
-            border-radius: 10px; width: 100%; font-weight: 600; font-size: 1rem;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
         }
+        .btn:hover { background: #4a0050; }
         .btn:active { transform: scale(0.98); }
 
-        /* DASHBOARD */
-        .manager-info { text-align: center; margin-bottom: 25px; padding: 20px; background: var(--primary); color: white; border-radius: 16px; }
-        .manager-name { font-size: 1.2rem; font-weight: 700; }
-        .manager-rank { font-size: 0.85rem; opacity: 0.8; margin-top: 5px; }
+        /* Dashboard Header */
+        .manager-header {
+            background: var(--primary);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(55, 0, 60, 0.2);
+        }
+        .manager-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; }
+        .manager-stats { opacity: 0.8; font-size: 0.9rem; font-weight: 500; }
 
-        .list-header {
-            font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-            color: var(--gray); margin-bottom: 8px; padding-left: 5px; letter-spacing: 0.5px;
+        /* Player Lists */
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-sub);
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            padding-left: 5px;
         }
 
         .player-row {
-            background: var(--surface); padding: 12px 15px; border-radius: 12px;
-            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            border-bottom: 1px solid #f3f4f6;
+            transition: 0.2s;
         }
+        .player-row:last-child { border-bottom: none; }
+        .player-row:hover { background-color: #f9fafb; }
 
         .p-left { display: flex; align-items: center; gap: 12px; }
-        .pos-badge { width: 6px; height: 6px; border-radius: 50%; }
-        .pos-1 { background: #fbbf24; } /* GK */
+        
+        .pos-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .pos-1 { background: #eab308; } /* GK */
         .pos-2 { background: #3b82f6; } /* DEF */
         .pos-3 { background: #22c55e; } /* MID */
         .pos-4 { background: #ef4444; } /* FWD */
 
-        .p-name { font-weight: 600; font-size: 0.95rem; }
-        .p-meta { font-size: 0.75rem; color: var(--gray); }
+        .p-name { font-weight: 600; font-size: 0.95rem; color: var(--text-main); }
+        .p-meta { font-size: 0.75rem; color: var(--text-sub); margin-top: 2px; }
         .p-price { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
 
-        .chip { 
-            display: inline-flex; align-items: center; gap: 3px; 
-            padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; 
-            background: #fee2e2; color: var(--red); font-weight: 700; margin-left: 5px; 
+        /* Chips */
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .chip-cold { background: #fee2e2; color: #dc2626; }
+
+        /* Status Logs */
+        .status-log {
+            font-size: 0.75rem;
+            text-align: center;
+            color: var(--text-sub);
+            padding: 10px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
         }
 
-        /* LOADING SPINNER */
+        /* Loading Spinner */
         .spinner {
-            width: 24px; height: 24px; border: 3px solid rgba(0,0,0,0.1);
-            border-top-color: var(--primary); border-radius: 50%;
+            width: 30px; height: 30px;
+            border: 3px solid rgba(55, 0, 60, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
             animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px auto;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -123,68 +228,67 @@
 </head>
 <body>
 
-    <header>
-        <div class="brand"><i class="fa-solid fa-layer-group"></i> FPL Hub</div>
-        <div class="user-avatar" id="userIcon" onclick="clearData()">
-            <i class="fa-regular fa-user"></i>
-        </div>
-    </header>
-
-    <div class="main">
+    <div class="app-container">
         
-        <div id="statusLog" class="status-log">Initializing...</div>
+        <header>
+            <div class="brand"><i class="fa-solid fa-bolt"></i> FPL Hub</div>
+            <div class="user-avatar" id="userIcon" onclick="clearData()">
+                <i class="fa-regular fa-user"></i>
+            </div>
+        </header>
 
-        <div id="welcomeScreen" class="card hidden">
-            <div style="font-size: 2.5rem; margin-bottom: 10px;">📱</div>
-            <h2>FPL Mobile</h2>
-            <p>Connect your Team ID to start.</p>
-            <input type="number" id="teamID" placeholder="Team ID (e.g. 123456)">
-            <button class="btn" onclick="app.load()">
-                <span>Connect Team</span>
-            </button>
-        </div>
+        <div class="content">
 
-        <div id="loadingScreen" class="card hidden">
-            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+            <div id="statusLog" class="status-log"></div>
+
+            <div id="welcomeView" class="welcome-card hidden">
+                <div style="font-size: 3rem; margin-bottom: 15px;">🚀</div>
+                <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--primary);">Link Your Team</h2>
+                <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your FPL ID to unlock powerful stats.</p>
+                <input type="number" id="teamID" placeholder="e.g. 123456">
+                <button class="btn" onclick="app.load()">Connect Team</button>
+            </div>
+
+            <div id="loadingView" class="welcome-card hidden" style="padding: 60px 20px;">
                 <div class="spinner"></div>
-            </div>
-            <p id="loadingMsg">Connecting...</p>
-        </div>
-
-        <div id="dashboardScreen" class="hidden">
-            <div class="manager-info">
-                <div class="manager-name" id="dispName">...</div>
-                <div class="manager-rank" id="dispPoints">...</div>
+                <h3 style="color: var(--primary); margin-bottom: 5px;">Scouting Database</h3>
+                <p id="loadingMsg" style="color: var(--text-sub); font-size: 0.9rem;">Connecting to Premier League...</p>
             </div>
 
-            <div class="list-header">Starting XI</div>
-            <div id="startingList"></div>
+            <div id="dashboardView" class="hidden">
+                <div class="manager-header">
+                    <div class="manager-name" id="dispName">...</div>
+                    <div class="manager-stats" id="dispPoints">...</div>
+                </div>
 
-            <div class="list-header" style="margin-top: 25px;">Bench</div>
-            <div id="benchList"></div>
+                <div class="section-label">Starting XI</div>
+                <div id="startingList" style="background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden;"></div>
+
+                <div class="section-label" style="margin-top: 30px;">Bench</div>
+                <div id="benchList" style="background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden;"></div>
+            </div>
+
         </div>
-
     </div>
 
     <script>
         const app = {
-            // CACHE SETTINGS
-            cacheKey: 'fpl_db_v4',
-            cacheTime: 'fpl_ts_v4',
+            cacheKey: 'fpl_db_univ', // Unique key for this version
+            cacheTime: 'fpl_ts_univ',
 
             init: () => {
-                const savedId = localStorage.getItem('fpl_id');
+                const savedId = localStorage.getItem('fpl_id_univ');
                 if(savedId) {
                     document.getElementById('userIcon').classList.add('active');
                     document.getElementById('teamID').value = savedId;
                     app.load(savedId);
                 } else {
-                    app.show('welcomeScreen');
+                    app.show('welcomeView');
                 }
             },
 
             show: (id) => {
-                ['welcomeScreen', 'loadingScreen', 'dashboardScreen'].forEach(s => document.getElementById(s).classList.add('hidden'));
+                ['welcomeView', 'loadingView', 'dashboardView'].forEach(v => document.getElementById(v).classList.add('hidden'));
                 document.getElementById(id).classList.remove('hidden');
             },
 
@@ -192,12 +296,11 @@
                 const el = document.getElementById('statusLog');
                 el.style.display = 'block';
                 el.innerText = msg;
-                console.log(msg);
+                console.log("[App]", msg);
             },
 
-            // --- THE MULTI-PROXY FETCH SYSTEM ---
+            // --- THE MULTI-PROXY ENGINE ---
             fetchUrl: async (targetUrl) => {
-                // List of proxies to try in order
                 const proxies = [
                     (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
                     (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
@@ -206,57 +309,53 @@
 
                 for (let i = 0; i < proxies.length; i++) {
                     const proxyUrl = proxies[i](targetUrl);
-                    app.log(`Trying connection ${i + 1}/${proxies.length}...`);
+                    if(i > 0) app.log(`Retrying connection (${i+1}/${proxies.length})...`);
                     
                     try {
                         const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout per proxy
-
+                        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+                        
                         const response = await fetch(proxyUrl, { signal: controller.signal });
                         clearTimeout(timeoutId);
-
-                        if (response.ok) {
-                            return await response.json();
-                        }
+                        
+                        if (response.ok) return await response.json();
                     } catch (err) {
-                        console.warn(`Proxy ${i+1} failed:`, err);
+                        console.warn(`Proxy ${i} failed`);
                     }
                 }
-                throw new Error("All connections failed. FPL is blocking requests.");
+                throw new Error("Connection blocked. Try again later.");
             },
 
             load: async (savedId = null) => {
                 const id = savedId || document.getElementById('teamID').value;
                 if(!id) return alert("Please enter an ID");
 
-                // Save ID
-                localStorage.setItem('fpl_id', id);
+                // Save State
+                localStorage.setItem('fpl_id_univ', id);
                 document.getElementById('userIcon').classList.add('active');
                 
-                app.show('loadingScreen');
+                app.show('loadingView');
 
                 try {
-                    // 1. CHECK CACHE FOR BIG DATABASE
-                    // The player list is heavy. We only want to download it once every 30 mins.
+                    // 1. DATABASE (Cached)
                     let staticData = null;
                     const cachedDb = localStorage.getItem(app.cacheKey);
                     const cachedTime = localStorage.getItem(app.cacheTime);
                     const now = Date.now();
 
                     if(cachedDb && cachedTime && (now - cachedTime < 1800000)) { // 30 mins
-                        app.log("Loading players from phone memory...");
+                        app.log("Loading database from memory...");
                         staticData = JSON.parse(cachedDb);
                     } else {
-                        app.log("Downloading Player Database...");
-                        document.getElementById('loadingMsg').innerText = "Downloading Database (this happens once)...";
+                        app.log("Downloading database...");
+                        document.getElementById('loadingMsg').innerText = "Updating Player Database...";
                         staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
                         
-                        // Save to phone memory
                         localStorage.setItem(app.cacheKey, JSON.stringify(staticData));
                         localStorage.setItem(app.cacheTime, now);
                     }
 
-                    // 2. PROCESS PLAYER MAP
+                    // 2. PROCESS MAPS
                     const players = {};
                     staticData.elements.forEach(p => {
                         players[p.id] = {
@@ -269,23 +368,21 @@
                     });
                     const gw = staticData.events.find(e => e.is_current)?.id || 1;
 
-                    // 3. GET USER TEAM (Small request)
-                    app.log("Fetching your squad...");
-                    document.getElementById('loadingMsg').innerText = "Scouting Team...";
+                    // 3. FETCH USER DATA
+                    app.log("Scouting your team...");
+                    document.getElementById('loadingMsg').innerText = "Analyzing Squad...";
                     
-                    // We run these in sequence to be safer on mobile connections
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
 
                     app.render(user, picks, players);
-                    app.log(""); // Clear log
-                    document.getElementById('statusLog').style.display = 'none';
+                    document.getElementById('statusLog').style.display = 'none'; // Hide logs on success
 
                 } catch (error) {
-                    app.log("Connection Error");
-                    alert("Network Error: " + error.message + "\n\nTry refreshing the page.");
-                    localStorage.removeItem(app.cacheKey); // Clear cache if it failed
-                    app.show('welcomeScreen');
+                    app.log("Network Error");
+                    alert("Error: " + error.message + "\n\nTry refreshing the page.");
+                    localStorage.removeItem(app.cacheKey); // Clear broken cache
+                    app.show('welcomeView');
                 }
             },
 
@@ -302,14 +399,15 @@
                     if(!p) return;
 
                     let badge = '';
+                    // Logic: Cold Form (< 2.5)
                     if(i < 11 && p.form < 2.5) {
-                        badge = `<span class="chip"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
+                        badge = `<span class="chip chip-cold"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
                     }
 
                     const html = `
                         <div class="player-row">
                             <div class="p-left">
-                                <div class="pos-badge pos-${p.pos}"></div>
+                                <div class="pos-dot pos-${p.pos}"></div>
                                 <div>
                                     <div class="p-name">${p.name} ${badge}</div>
                                     <div class="p-meta">${p.team}</div>
@@ -323,18 +421,18 @@
                     else bList.innerHTML += html;
                 });
 
-                app.show('dashboardScreen');
+                app.show('dashboardView');
             }
         };
 
         function clearData() {
-            if(confirm("Unlink ID and reset data?")) {
-                localStorage.clear();
+            if(confirm("Disconnect team ID?")) {
+                localStorage.removeItem('fpl_id_univ');
                 location.reload();
             }
         }
 
-        // Start
+        // Initialize App
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
 </body>
