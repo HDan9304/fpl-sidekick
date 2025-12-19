@@ -340,21 +340,26 @@
         };
 
 const TransferBot = {
-    analyze: (myPicks, allPlayers, bank) => {
-        // 1. Find Weakest Link (Lowest Form)
+    analyze: (myPicks, allPlayers, bank, fixtures) => {
+        // 1. IDENTIFY WEAKEST LINK
+        // We look for: Low Form + Hard Next Game
         let worstPlayer = null;
-        let minScore = 100.0;
+        let minScore = 999.0;
 
         myPicks.forEach(pick => {
             const p = allPlayers[pick.element];
-            if (p.pos === 1) return; // Skip Goalkeepers for simplicity
+            if (p.pos === 1) return; // Skip GK
+
+            // Get next fixture difficulty for this player's team
+            // (If not found, assume average difficulty of 3)
+            const nextFix = fixtures[p.team_id] || { diff: 3 };
             
-            // Score = Form + (ICT Index / 10)
-            // ICT Index helps find players who are playing well but unlucky
-            let score = parseFloat(p.form) + (parseFloat(p.ict_index || 0) / 10);
-            
-            // Heavily penalize injured players
-            if (p.status !== 'a' && p.chance < 100) score = -50; 
+            // LOGIC: Form is important, but if they have a hard game (Diff 5), score drops.
+            // Formula: Form - (Fixture Difficulty * 2)
+            let score = parseFloat(p.form) - (nextFix.diff * 2);
+
+            // Force sell if injured
+            if (p.status !== 'a' && p.chance < 75) score = -100;
 
             if (score < minScore) {
                 minScore = score;
@@ -364,24 +369,29 @@ const TransferBot = {
 
         if (!worstPlayer) return null;
 
-        // 2. Find Best Replacement
+        // 2. FIND BEST REPLACEMENT
+        // We look for: High Form + Easy Next Game
         let bestTarget = null;
-        let maxScore = -100.0;
+        let maxScore = -999.0;
         const maxBudget = bank + worstPlayer.price;
 
         Object.values(allPlayers).forEach(target => {
-            // Constraints
-            if (target.pos !== worstPlayer.pos) return; // Same position
-            if (target.price > maxBudget) return; // Can afford
-            if (target.id === worstPlayer.id) return; // Not same player
-            if (target.status !== 'a' || target.chance < 75) return; // Must be fit
+            // Basic Rules
+            if (target.pos !== worstPlayer.pos) return;
+            if (target.price > maxBudget) return;
+            if (target.id === worstPlayer.id) return;
+            if (target.status !== 'a' || target.chance < 75) return;
             
-            // Skip players already in team
-            const isOwned = myPicks.some(pick => pick.element === target.id);
-            if (isOwned) return;
+            // Don't buy players we already own
+            if (myPicks.some(pick => pick.element === target.id)) return;
 
-            // Score Calculation
-            let targetScore = parseFloat(target.form) + (parseFloat(target.ict_index || 0) / 10);
+            // Get target's next fixture
+            const targetFix = fixtures[target.team_id] || { diff: 3 };
+
+            // LOGIC: High Form + Easy Game (Diff 2)
+            // Formula: Form + (10 - (Fixture Difficulty * 2))
+            // Example: Diff 2 adds 6 points. Diff 5 adds 0 points.
+            let targetScore = parseFloat(target.form) + (10 - (targetFix.diff * 2));
 
             if (targetScore > maxScore) {
                 maxScore = targetScore;
@@ -389,8 +399,11 @@ const TransferBot = {
             }
         });
 
-        if (bestTarget && maxScore > minScore) {
-            return { out: worstPlayer, in: bestTarget, diff: (maxScore - minScore).toFixed(1) };
+        // 3. GENERATE REASONING
+        if (bestTarget) {
+            // Calculate a "Projected Delta" to show the user
+            const diff = (maxScore - minScore).toFixed(1);
+            return { out: worstPlayer, in: bestTarget, diff: diff };
         }
         return null;
     }
@@ -427,7 +440,7 @@ const TransferBot = {
                     container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analysing Market...</p></div>';
                     
                     setTimeout(() => {
-                        const result = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank);
+                        const result = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
                         
                         if (result) {
                             container.innerHTML = `
@@ -501,6 +514,7 @@ const TransferBot = {
 
                     // Map Fixtures
                     const fixMap = {};
+                    app.fixMap = fixMap;
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
                     app.teams = teamShort; 
