@@ -15,6 +15,12 @@
             --text-main: #111827; --text-sub: #6b7280;
             --border: #e5e7eb; --red: #e90052;
             --pitch-start: #02894e; --pitch-end: #007341;
+            
+            /* FDR Colors */
+            --fdr-2: #01fc7a; --fdr-2-text: #00381b;
+            --fdr-3: #e7e7e7; --fdr-3-text: #333;
+            --fdr-4: #ff1751; --fdr-4-text: white;
+            --fdr-5: #80072d; --fdr-5-text: white;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -99,7 +105,7 @@
         .field-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 20px; position: relative; z-index: 10; }
         .field-row:last-child { margin-bottom: 0; }
 
-        /* PLAYER CARD WITH IMAGE */
+        /* PLAYER CARD */
         .player-pill {
             background: rgba(255,255,255,0.95);
             width: 70px; 
@@ -113,12 +119,8 @@
         }
         .player-pill:active { transform: scale(0.95); }
 
-        /* KIT IMAGE STYLING */
         .kit-img {
-            width: 32px;
-            height: 42px;
-            object-fit: contain;
-            margin-bottom: 2px;
+            width: 32px; height: 42px; object-fit: contain; margin-bottom: 2px;
             filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
         }
 
@@ -131,7 +133,25 @@
         .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; }
         .points-val { font-weight: 800; color: var(--primary); }
 
-        /* Captain Badge */
+        /* FIXTURE BADGE */
+        .fix-badge {
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 2px;
+            width: 90%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* FDR Colors */
+        .fdr-1, .fdr-2 { background: var(--fdr-2); color: var(--fdr-2-text); }
+        .fdr-3 { background: var(--fdr-3); color: var(--fdr-3-text); }
+        .fdr-4 { background: var(--fdr-4); color: var(--fdr-4-text); }
+        .fdr-5 { background: var(--fdr-5); color: var(--fdr-5-text); }
+
+        /* CAPTAINCY */
         .captain-badge {
             position: absolute; top: -5px; right: -5px;
             background: #111; color: white; border-radius: 50%;
@@ -233,21 +253,14 @@
         const MOCK_DATA = {
             user: { name: "Demo Manager", summary_overall_points: 950 },
             picks: [
-                { element: 1, position: 1, is_captain: false, is_vice_captain: false }, 
-                { element: 2, position: 2, is_captain: false, is_vice_captain: false }, 
-                { element: 3, position: 3, is_captain: false, is_vice_captain: false }, 
-                { element: 4, position: 4, is_captain: false, is_vice_captain: false }, 
-                { element: 5, position: 5, is_captain: false, is_vice_captain: true }, 
-                { element: 6, position: 6, is_captain: false, is_vice_captain: false }, 
-                { element: 7, position: 7, is_captain: false, is_vice_captain: false }, 
-                { element: 8, position: 8, is_captain: false, is_vice_captain: false }, 
-                { element: 9, position: 9, is_captain: true, is_vice_captain: false }, 
-                { element: 10, position: 10, is_captain: false, is_vice_captain: false },
-                { element: 11, position: 11, is_captain: false, is_vice_captain: false },
-                { element: 12, position: 12, is_captain: false, is_vice_captain: false },
-                { element: 13, position: 13, is_captain: false, is_vice_captain: false },
-                { element: 14, position: 14, is_captain: false, is_vice_captain: false },
-                { element: 15, position: 15, is_captain: false, is_vice_captain: false }
+                { element: 1, position: 1, is_captain: false }, { element: 2, position: 2, is_captain: false }, 
+                { element: 3, position: 3, is_captain: false }, { element: 4, position: 4, is_captain: false }, 
+                { element: 5, position: 5, is_captain: false, is_vice_captain: true }, { element: 6, position: 6, is_captain: false }, 
+                { element: 7, position: 7, is_captain: false }, { element: 8, position: 8, is_captain: false }, 
+                { element: 9, position: 9, is_captain: true }, { element: 10, position: 10, is_captain: false },
+                { element: 11, position: 11, is_captain: false }, { element: 12, position: 12, is_captain: false }, 
+                { element: 13, position: 13, is_captain: false }, { element: 14, position: 14, is_captain: false }, 
+                { element: 15, position: 15, is_captain: false }
             ],
             players: {
                 1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6 },
@@ -265,6 +278,10 @@
                 13: { web_name: "Burn", team_code: 4, pos: 2, price: 4.0, event_points: 0 },
                 14: { web_name: "Garnacho", team_code: 1, pos: 3, price: 5.0, event_points: 1 },
                 15: { web_name: "Archer", team_code: 49, pos: 4, price: 4.5, event_points: 2 }
+            },
+            fixtures: {
+                3: { opp: "MUN", diff: 4, is_home: true }, 14: { opp: "MCI", diff: 5, is_home: false },
+                6: { opp: "CRY", diff: 2, is_home: true }, 43: { opp: "LIV", diff: 5, is_home: true }
             }
         };
 
@@ -316,30 +333,50 @@
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                     const gw = staticData.events.find(e => e.is_current)?.id || 1;
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
+                    
+                    // NEW: Fetch Fixtures
+                    document.getElementById('loadingMsg').innerText = "Checking Fixtures...";
+                    const fixtures = await app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`);
+
+                    // Create Fixture Map: TeamID -> {opp: 'ARS', diff: 3}
+                    const fixMap = {};
+                    const teamShort = {};
+                    staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
+                    
+                    fixtures.forEach(f => {
+                        // Home Team Info
+                        fixMap[f.team_h] = { opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true };
+                        // Away Team Info
+                        fixMap[f.team_a] = { opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false };
+                    });
 
                     const players = {};
                     staticData.elements.forEach(p => {
                         players[p.id] = {
-                            name: p.web_name, 
-                            team: staticData.teams.find(t => t.id === p.team).short_name,
-                            pos: p.element_type, 
-                            price: p.now_cost / 10,
-                            event_points: p.event_points,
-                            team_code: p.team_code // Required for kit image
+                            name: p.web_name, team: teamShort[p.team], team_id: p.team,
+                            pos: p.element_type, price: p.now_cost / 10,
+                            event_points: p.event_points, team_code: p.team_code
                         };
                     });
+
                     document.getElementById('demoAlert').classList.add('hidden');
-                    app.render(user, picks.picks, players);
+                    app.render(user, picks.picks, players, fixMap);
+
                 } catch (error) {
                     document.getElementById('demoAlert').classList.remove('hidden');
                     const mockPlayers = {};
                     Object.values(MOCK_DATA.players).forEach((p, i) => {
-                         mockPlayers[i+1] = { name: p.web_name, team: "MOCK", pos: p.pos, price: p.price, event_points: p.event_points, team_code: p.team_code };
+                         mockPlayers[i+1] = { ...p, team: "MOCK", team_id: 3 }; 
                     });
-                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mockPlayers); }, 1000);
+                    // Fallback to mock fixtures if demo
+                    const mockFix = MOCK_DATA.fixtures;
+                    // Default missing mock fixes
+                    for(let i=1; i<20; i++) { if(!mockFix[i]) mockFix[i] = { opp: "AVL", diff: 3, is_home: true }; }
+                    
+                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mockPlayers, mockFix); }, 1000);
                 }
             },
-            render: (user, picks, players) => {
+            render: (user, picks, players, fixMap) => {
                 document.getElementById('dispName').innerText = user.name;
                 document.getElementById('dispPoints').innerText = `${user.summary_overall_points} pts`;
 
@@ -356,26 +393,29 @@
 
                 [1, 2, 3, 4].forEach(posId => {
                     const row = document.createElement('div'); row.className = 'field-row';
-                    formation[posId].forEach(p => row.innerHTML += app.createPill(p));
+                    formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap));
                     pitchDiv.appendChild(row);
                 });
 
                 for (let i = 11; i < picks.length; i++) {
                     const pick = picks[i];
                     const p = players[pick.element] || players[i+1];
-                    if(p) benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, true);
+                    if(p) benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, fixMap, true);
                 }
                 app.show('dashboardView');
             },
-            createPill: (p, isBench = false) => {
-                // Captain Badge
+            createPill: (p, fixMap, isBench = false) => {
                 let capBadge = '';
                 if (p.is_captain) capBadge = `<div class="captain-badge">C</div>`;
                 else if (p.is_vice) capBadge = `<div class="captain-badge vice-badge">V</div>`;
                 
-                // KIT IMAGE URL - Falls back to a default if unavailable
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
-
+                
+                // FIXTURE BADGE LOGIC
+                const fix = fixMap[p.team_id] || { opp: '-', diff: 3, is_home: true };
+                const loc = fix.is_home ? '(H)' : '(A)';
+                const fixClass = `fdr-${fix.diff}`;
+                
                 return `
                     <div class="player-pill ${isBench ? 'bench-pill' : ''}">
                         ${capBadge}
@@ -385,6 +425,7 @@
                             <span>£${p.price}</span>
                             <span class="points-val">${p.event_points}</span>
                         </div>
+                        <div class="fix-badge ${fixClass}">${fix.opp} ${loc}</div>
                     </div>
                 `;
             }
