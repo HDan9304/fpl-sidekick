@@ -11,17 +11,14 @@
     <style>
         /* --- 1. DESIGN SYSTEM --- */
         :root {
-            /* FPL Brand Colors */
             --primary: #37003c;   /* Dark Purple */
             --accent: #00ff85;    /* Neon Green */
-            --secondary: #e90052; /* Pink/Red */
-            
-            /* UI Colors */
-            --bg-body: #f0f2f5;   /* Light Grey Background for Desktop */
-            --bg-app: #ffffff;    /* White Background for App Card */
+            --bg-body: #f0f2f5;   /* Desktop Background */
+            --bg-app: #ffffff;    /* App Card Background */
             --text-main: #111827;
             --text-sub: #6b7280;
             --border: #e5e7eb;
+            --red: #e90052;
         }
 
         /* --- 2. GLOBAL RESET --- */
@@ -32,206 +29,224 @@
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
-            justify-content: center; /* Centers app on Desktop */
-            padding-bottom: 50px;    /* Space at bottom */
+            justify-content: center;
         }
 
-        /* --- 3. APP CONTAINER (Responsive Magic) --- */
+        /* --- 3. APP CONTAINER --- */
         .app-container {
             width: 100%;
-            max-width: 600px; /* Limits width on desktop */
+            max-width: 600px;
             background-color: var(--bg-app);
             min-height: 100vh;
             position: relative;
-            box-shadow: 0 0 0; /* No shadow on mobile */
+            box-shadow: none;
         }
 
-        /* Desktop Adjustments */
         @media (min-width: 600px) {
-            body { padding-top: 40px; } /* Add top space on desktop */
+            body { padding-top: 40px; padding-bottom: 40px; }
             .app-container {
                 min-height: auto;
                 border-radius: 24px;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); /* Nice shadow */
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
                 overflow: hidden; /* Clips content to corners */
-                margin-bottom: 40px;
+                height: 90vh; /* Fixed height on desktop for scrolling */
+                overflow-y: auto; /* Scroll inside the card */
             }
         }
 
         /* --- 4. HEADER --- */
         header {
             background: var(--bg-app);
-            height: 70px;
-            padding: 0 24px;
+            height: 65px;
+            padding: 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 50;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 15px; }
+
+        .menu-btn {
+            font-size: 1.2rem;
+            color: var(--text-main);
+            cursor: pointer;
+            padding: 8px;
+            margin-left: -8px; /* Alignment fix */
         }
 
         .brand {
             font-weight: 800;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px;
             letter-spacing: -0.5px;
         }
         .brand i { color: var(--accent); }
 
         .user-avatar {
-            width: 36px; height: 36px;
+            width: 34px; height: 34px;
             border-radius: 50%;
             background: #f3f4f6;
             border: 1px solid var(--border);
             color: var(--primary);
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
-            transition: 0.2s;
         }
         .user-avatar.active {
-            background: var(--primary);
-            color: var(--accent);
-            border-color: var(--primary);
+            background: var(--primary); color: var(--accent); border-color: var(--primary);
         }
 
-        /* --- 5. CONTENT AREAS --- */
-        .content { padding: 24px; }
+        /* --- 5. SIDEBAR MENU --- */
+        .sidebar {
+            position: fixed; top: 0; left: 0; height: 100%; width: 280px;
+            background: var(--bg-app); z-index: 200;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 25px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column;
+        }
+        .sidebar.open { transform: translateX(0); }
+
+        .menu-header {
+            height: 65px; display: flex; align-items: center; padding-left: 24px;
+            font-weight: 800; color: var(--primary); font-size: 1.2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .menu-items { flex: 1; padding-top: 10px; }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 16px;
+            padding: 16px 24px;
+            color: var(--text-sub); font-weight: 600; cursor: pointer;
+            border-left: 4px solid transparent; transition: 0.2s;
+        }
+        .menu-item:hover { background: #f9fafb; color: var(--primary); }
+        .menu-item.active {
+            color: var(--primary); background: rgba(55, 0, 60, 0.04);
+            border-left-color: var(--primary);
+        }
+        .menu-item i { width: 20px; text-align: center; font-size: 1.1rem; }
+
+        .menu-footer { padding: 24px; border-top: 1px solid var(--border); }
+        .reset-btn {
+            color: var(--red); font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        }
+
+        /* Overlay */
+        .menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 150;
+            opacity: 0; visibility: hidden; transition: 0.3s;
+            backdrop-filter: blur(2px);
+        }
+        .menu-overlay.open { opacity: 1; visibility: visible; }
+
+
+        /* --- 6. CONTENT VIEWS --- */
+        .content { padding: 20px; padding-bottom: 80px; }
 
         /* Welcome Card */
         .welcome-card {
-            text-align: center;
-            padding: 40px 20px;
-            background: #fafafa;
-            border-radius: 20px;
-            border: 1px solid var(--border);
+            text-align: center; padding: 40px 20px; background: #fafafa;
+            border-radius: 20px; border: 1px solid var(--border); margin-top: 20px;
         }
-
         input {
-            width: 100%;
-            padding: 16px;
-            font-size: 1rem;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            text-align: center;
-            margin: 20px 0;
-            outline: none;
-            transition: 0.3s;
-            background: white;
+            width: 100%; padding: 14px; border: 2px solid var(--border);
+            border-radius: 12px; text-align: center; margin: 20px 0; outline: none;
+            background: white; font-size: 1rem;
         }
         input:focus { border-color: var(--primary); }
-
         .btn {
-            width: 100%;
-            padding: 16px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 12px;
+            width: 100%; padding: 14px; background: var(--primary); color: white;
+            border: none; border-radius: 12px; font-weight: 700; cursor: pointer;
             font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
         }
-        .btn:hover { background: #4a0050; }
-        .btn:active { transform: scale(0.98); }
 
-        /* Dashboard Header */
+        /* Dashboard */
         .manager-header {
-            background: var(--primary);
-            color: white;
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 25px rgba(55, 0, 60, 0.2);
+            background: var(--primary); color: white; padding: 25px;
+            border-radius: 16px; text-align: center; margin-bottom: 25px;
+            box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2);
         }
-        .manager-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; }
-        .manager-stats { opacity: 0.8; font-size: 0.9rem; font-weight: 500; }
+        .manager-name { font-size: 1.3rem; font-weight: 700; }
+        .manager-stats { opacity: 0.9; font-size: 0.9rem; margin-top: 5px; }
 
-        /* Player Lists */
         .section-label {
-            font-size: 0.75rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--text-sub);
-            margin-bottom: 12px;
-            letter-spacing: 1px;
-            padding-left: 5px;
+            font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+            color: var(--text-sub); margin-bottom: 10px; letter-spacing: 1px; padding-left: 5px;
         }
+
+        .list-box { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
 
         .player-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px;
-            border-bottom: 1px solid #f3f4f6;
-            transition: 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 15px; border-bottom: 1px solid #f3f4f6;
         }
         .player-row:last-child { border-bottom: none; }
-        .player-row:hover { background-color: #f9fafb; }
 
         .p-left { display: flex; align-items: center; gap: 12px; }
-        
         .pos-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .pos-1 { background: #eab308; } /* GK */
-        .pos-2 { background: #3b82f6; } /* DEF */
-        .pos-3 { background: #22c55e; } /* MID */
-        .pos-4 { background: #ef4444; } /* FWD */
+        .pos-1 { background: #eab308; } .pos-2 { background: #3b82f6; }
+        .pos-3 { background: #22c55e; } .pos-4 { background: #ef4444; }
 
-        .p-name { font-weight: 600; font-size: 0.95rem; color: var(--text-main); }
-        .p-meta { font-size: 0.75rem; color: var(--text-sub); margin-top: 2px; }
+        .p-name { font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
+        .p-meta { font-size: 0.75rem; color: var(--text-sub); }
         .p-price { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
 
-        /* Chips */
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            margin-left: 6px;
-        }
-        .chip-cold { background: #fee2e2; color: #dc2626; }
+        .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; margin-left: 5px; background: #fee2e2; color: var(--red); }
 
-        /* Status Logs */
-        .status-log {
-            font-size: 0.75rem;
-            text-align: center;
-            color: var(--text-sub);
-            padding: 10px;
-            background: #f3f4f6;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        /* Loading Spinner */
+        /* Spinner & Status */
         .spinner {
-            width: 30px; height: 30px;
-            border: 3px solid rgba(55, 0, 60, 0.1);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 15px auto;
+            width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 15px auto;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .status-log {
+            font-size: 0.75rem; text-align: center; color: var(--text-sub);
+            padding: 8px; background: #f3f4f6; border-radius: 8px; margin-bottom: 15px; display: none;
+        }
 
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
+    <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
+    <div id="sideMenu" class="sidebar">
+        <div class="menu-header">FPL Hub</div>
+        
+        <div class="menu-items">
+            <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
+                <i class="fa-solid fa-shirt"></i> Squad
+            </div>
+
+            <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
+            </div>
+        </div>
+
+        <div class="menu-footer">
+            <div class="reset-btn" onclick="clearData()">
+                <i class="fa-solid fa-power-off"></i> Reset App
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
         
         <header>
-            <div class="brand"><i class="fa-solid fa-bolt"></i> FPL Hub</div>
+            <div class="header-left">
+                <div class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></div>
+                <div class="brand"><i class="fa-solid fa-bolt"></i> FPL Hub</div>
+            </div>
             <div class="user-avatar" id="userIcon" onclick="clearData()">
                 <i class="fa-regular fa-user"></i>
             </div>
@@ -242,17 +257,16 @@
             <div id="statusLog" class="status-log"></div>
 
             <div id="welcomeView" class="welcome-card hidden">
-                <div style="font-size: 3rem; margin-bottom: 15px;">🚀</div>
-                <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--primary);">Link Your Team</h2>
-                <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your FPL ID to unlock powerful stats.</p>
+                <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
+                <h2 style="font-size: 1.4rem; margin-bottom: 10px; color: var(--primary);">Link Team</h2>
+                <p style="color: var(--text-sub); margin-bottom: 20px;">Enter your FPL ID to start.</p>
                 <input type="number" id="teamID" placeholder="e.g. 123456">
-                <button class="btn" onclick="app.load()">Connect Team</button>
+                <button class="btn" onclick="app.load()">Connect</button>
             </div>
 
             <div id="loadingView" class="welcome-card hidden" style="padding: 60px 20px;">
                 <div class="spinner"></div>
-                <h3 style="color: var(--primary); margin-bottom: 5px;">Scouting Database</h3>
-                <p id="loadingMsg" style="color: var(--text-sub); font-size: 0.9rem;">Connecting to Premier League...</p>
+                <p id="loadingMsg" style="color: var(--text-sub); font-weight: 500;">Connecting...</p>
             </div>
 
             <div id="dashboardView" class="hidden">
@@ -262,10 +276,18 @@
                 </div>
 
                 <div class="section-label">Starting XI</div>
-                <div id="startingList" style="background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden;"></div>
+                <div id="startingList" class="list-box"></div>
 
                 <div class="section-label" style="margin-top: 30px;">Bench</div>
-                <div id="benchList" style="background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden;"></div>
+                <div id="benchList" class="list-box"></div>
+            </div>
+
+            <div id="transfersView" class="hidden">
+                <div class="welcome-card">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
+                    <h2>Transfer Hub</h2>
+                    <p>This tool will be built in the next step.</p>
+                </div>
             </div>
 
         </div>
@@ -273,8 +295,9 @@
 
     <script>
         const app = {
-            cacheKey: 'fpl_db_univ', // Unique key for this version
-            cacheTime: 'fpl_ts_univ',
+            cacheKey: 'fpl_db_univ_v2',
+            cacheTime: 'fpl_ts_univ_v2',
+            currentTool: 'squad',
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_univ');
@@ -287,19 +310,54 @@
                 }
             },
 
-            show: (id) => {
-                ['welcomeView', 'loadingView', 'dashboardView'].forEach(v => document.getElementById(v).classList.add('hidden'));
-                document.getElementById(id).classList.remove('hidden');
+            show: (viewId) => {
+                // Hide all views
+                ['welcomeView', 'loadingView', 'dashboardView', 'transfersView'].forEach(v => {
+                    document.getElementById(v).classList.add('hidden');
+                });
+                // Show requested view
+                document.getElementById(viewId).classList.remove('hidden');
             },
 
             log: (msg) => {
                 const el = document.getElementById('statusLog');
                 el.style.display = 'block';
                 el.innerText = msg;
-                console.log("[App]", msg);
             },
 
-            // --- THE MULTI-PROXY ENGINE ---
+            // --- NAVIGATION ---
+            toggleMenu: () => {
+                const menu = document.getElementById('sideMenu');
+                const overlay = document.getElementById('menuOverlay');
+                menu.classList.toggle('open');
+                overlay.classList.toggle('open');
+            },
+
+            switchTool: (toolName) => {
+                app.toggleMenu(); // Close menu
+                app.currentTool = toolName;
+
+                // Update Menu Styling
+                document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+                document.getElementById('nav-' + toolName).classList.add('active');
+
+                // Route Logic
+                if (toolName === 'squad') {
+                    const savedId = localStorage.getItem('fpl_id_univ');
+                    if(savedId && document.getElementById('startingList').innerHTML !== '') {
+                        app.show('dashboardView');
+                    } else if (savedId) {
+                        app.load(savedId); // Reload if empty
+                    } else {
+                        app.show('welcomeView');
+                    }
+                } 
+                else if (toolName === 'transfers') {
+                    app.show('transfersView');
+                }
+            },
+
+            // --- DATA ENGINE ---
             fetchUrl: async (targetUrl) => {
                 const proxies = [
                     (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -309,53 +367,45 @@
 
                 for (let i = 0; i < proxies.length; i++) {
                     const proxyUrl = proxies[i](targetUrl);
-                    if(i > 0) app.log(`Retrying connection (${i+1}/${proxies.length})...`);
-                    
+                    if(i > 0) app.log(`Retrying (${i+1}/${proxies.length})...`);
                     try {
                         const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-                        
+                        const timeoutId = setTimeout(() => controller.abort(), 8000);
                         const response = await fetch(proxyUrl, { signal: controller.signal });
                         clearTimeout(timeoutId);
-                        
                         if (response.ok) return await response.json();
-                    } catch (err) {
-                        console.warn(`Proxy ${i} failed`);
-                    }
+                    } catch (err) {}
                 }
-                throw new Error("Connection blocked. Try again later.");
+                throw new Error("Connection failed.");
             },
 
             load: async (savedId = null) => {
                 const id = savedId || document.getElementById('teamID').value;
-                if(!id) return alert("Please enter an ID");
+                if(!id) return alert("Enter ID");
 
-                // Save State
                 localStorage.setItem('fpl_id_univ', id);
                 document.getElementById('userIcon').classList.add('active');
                 
                 app.show('loadingView');
 
                 try {
-                    // 1. DATABASE (Cached)
+                    // 1. Database
                     let staticData = null;
                     const cachedDb = localStorage.getItem(app.cacheKey);
-                    const cachedTime = localStorage.getItem(app.cacheTime);
                     const now = Date.now();
 
-                    if(cachedDb && cachedTime && (now - cachedTime < 1800000)) { // 30 mins
-                        app.log("Loading database from memory...");
+                    if(cachedDb && localStorage.getItem(app.cacheTime) && (now - localStorage.getItem(app.cacheTime) < 1800000)) {
+                        app.log("Loading cache...");
                         staticData = JSON.parse(cachedDb);
                     } else {
-                        app.log("Downloading database...");
-                        document.getElementById('loadingMsg').innerText = "Updating Player Database...";
+                        app.log("Downloading DB...");
+                        document.getElementById('loadingMsg').innerText = "Updating Database...";
                         staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
-                        
                         localStorage.setItem(app.cacheKey, JSON.stringify(staticData));
                         localStorage.setItem(app.cacheTime, now);
                     }
 
-                    // 2. PROCESS MAPS
+                    // 2. Maps
                     const players = {};
                     staticData.elements.forEach(p => {
                         players[p.id] = {
@@ -368,20 +418,19 @@
                     });
                     const gw = staticData.events.find(e => e.is_current)?.id || 1;
 
-                    // 3. FETCH USER DATA
-                    app.log("Scouting your team...");
+                    // 3. User Data
+                    app.log("Scouting team...");
                     document.getElementById('loadingMsg').innerText = "Analyzing Squad...";
                     
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
 
                     app.render(user, picks, players);
-                    document.getElementById('statusLog').style.display = 'none'; // Hide logs on success
+                    document.getElementById('statusLog').style.display = 'none';
 
                 } catch (error) {
-                    app.log("Network Error");
-                    alert("Error: " + error.message + "\n\nTry refreshing the page.");
-                    localStorage.removeItem(app.cacheKey); // Clear broken cache
+                    app.log("Error");
+                    alert("Network Error. Please refresh.");
                     app.show('welcomeView');
                 }
             },
@@ -399,7 +448,6 @@
                     if(!p) return;
 
                     let badge = '';
-                    // Logic: Cold Form (< 2.5)
                     if(i < 11 && p.form < 2.5) {
                         badge = `<span class="chip chip-cold"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
                     }
@@ -425,14 +473,16 @@
             }
         };
 
+        // Global functions for HTML access
+        function toggleMenu() { app.toggleMenu(); }
+        function switchTool(t) { app.switchTool(t); }
         function clearData() {
-            if(confirm("Disconnect team ID?")) {
+            if(confirm("Logout?")) {
                 localStorage.removeItem('fpl_id_univ');
                 location.reload();
             }
         }
 
-        // Initialize App
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
 </body>
