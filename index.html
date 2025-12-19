@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My FPL Helper</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f0f0f0; }
+        .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input { padding: 10px; width: 70%; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px; background: #37003c; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #00ff85; color: black; }
+        #result { margin-top: 20px; padding: 10px; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>FPL Team Finder</h2>
+    <p>Enter your Team ID below:</p>
+    
+    <input type="number" id="teamID" placeholder="e.g. 123456">
+    <button onclick="getTeam()">Search</button>
+
+    <div id="result">Waiting for input...</div>
+</div>
+
+<script>
+    async function getTeam() {
+        // 1. Get the ID from the input box
+        const id = document.getElementById('teamID').value;
+        const resultDiv = document.getElementById('result');
+
+        if (!id) {
+            alert("Please enter an ID!");
+            return;
+        }
+
+        resultDiv.innerHTML = "Loading...";
+
+        // 2. The API URL (Using a Proxy to bypass CORS blocks)
+        // We wrap the FPL url inside 'api.allorigins.win' so browsers allow it.
+        const fplUrl = `https://fantasy.premierleague.com/api/entry/${id}/`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(fplUrl)}`;
+
+        try {
+            // 3. Fetch the data
+            const response = await fetch(proxyUrl);
+            const data = await response.json();
+            
+            // The actual FPL data is inside 'contents' because of the proxy
+            const teamData = JSON.parse(data.contents);
+
+            // 4. Show the data on the screen
+            resultDiv.innerHTML = `
+                <h3>${teamData.name}</h3>
+                <p><strong>Manager:</strong> ${teamData.player_first_name} ${teamData.player_last_name}</p>
+                <p><strong>Total Points:</strong> ${teamData.summary_overall_points}</p>
+                <p><strong>Overall Rank:</strong> ${teamData.summary_overall_rank}</p>
+            `;
+
+        } catch (error) {
+            console.error(error);
+            resultDiv.innerHTML = "<p style='color:red'>Error finding team. Check the ID.</p>";
+        }
+    }
+</script>
+
+</body>
+</html>
