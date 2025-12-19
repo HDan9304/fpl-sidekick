@@ -3,317 +3,392 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FPL Connect</title>
+    <title>FPL Manager Hub</title>
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* --- DESIGN SYSTEM --- */
         :root {
-            --bg-color: #ffffff;
-            --surface-color: #f3f4f6;
-            --pl-purple: #37003c;
-            --pl-green: #00ff85;
-            --pl-red: #e90052;
-            --text-main: #1f2937;
-            --text-sub: #6b7280;
+            --primary: #37003c;
+            --accent: #00ff85;
+            --bg: #f8f9fa;
+            --surface: #ffffff;
+            --text-main: #111;
+            --text-sub: #666;
+            --border: #eee;
+            --red: #e90052;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
-        body {
-            font-family: 'Inter', sans-serif; /* Clean, modern font */
-            background-color: var(--surface-color);
-            color: var(--text-main);
-            -webkit-font-smoothing: antialiased;
-        }
+        body { background: var(--bg); color: var(--text-main); padding-bottom: 80px; }
 
-        /* --- HEADER --- */
-        header {
-            background-color: var(--pl-purple);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-bottom: 4px solid var(--pl-green);
+        /* --- HEADER & NAV --- */
+        nav {
+            background: var(--surface);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        .app-logo { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; }
-        .app-logo i { color: var(--pl-green); margin-right: 8px; }
+        .logo { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .logo i { color: var(--accent); }
 
-        /* --- MAIN CONTAINER --- */
-        .container {
-            max-width: 600px; /* Limits width on desktop */
-            margin: 0 auto;
-            background: var(--bg-color);
-            min-height: 100vh;
-            padding: 20px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.05);
-        }
-
-        /* --- INPUT AREA --- */
-        .search-box {
-            display: flex;
-            gap: 10px;
-            background: var(--surface-color);
-            padding: 8px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            border: 1px solid #e5e7eb;
-        }
-
-        input {
-            border: none;
-            background: transparent;
-            flex-grow: 1;
-            padding: 10px;
-            font-size: 16px;
-            font-family: inherit;
-            outline: none;
-            color: var(--pl-purple);
-            font-weight: 500;
-        }
-
-        button {
-            background: var(--pl-purple);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        button:active { opacity: 0.8; }
-        button:disabled { background: #9ca3af; }
-
-        /* --- MANAGER INFO CARD --- */
-        .manager-card {
-            text-align: center;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .manager-name { font-size: 1.25rem; font-weight: 700; color: var(--pl-purple); }
-        .manager-stats { 
-            font-size: 0.9rem; 
-            color: var(--text-sub); 
-            margin-top: 5px; 
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-        .stat-badge {
-            background: var(--surface-color);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: 500;
-        }
-
-        /* --- PLAYER LIST --- */
-        .list-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-            color: var(--text-sub);
-            margin-bottom: 10px;
-            padding-left: 5px;
-        }
-
-        .player-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 5px;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        
-        .player-left { display: flex; align-items: center; gap: 12px; }
-        
-        .position-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--surface-color);
+        .user-btn {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-sub);
-            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--primary);
+            transition: 0.2s;
         }
+        .user-btn.linked { background: var(--primary); color: var(--accent); border: none; }
 
-        .p-info { display: flex; flex-direction: column; }
-        .p-name { font-weight: 600; font-size: 0.95rem; color: var(--text-main); }
-        .p-team { font-size: 0.75rem; color: var(--text-sub); }
+        /* --- MAIN CONTENT --- */
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+
+        /* Welcome State */
+        .welcome-box {
+            text-align: center;
+            padding: 40px 20px;
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            margin-top: 20px;
+        }
+        .welcome-box h2 { margin-bottom: 10px; color: var(--primary); }
+        .welcome-box p { color: var(--text-sub); margin-bottom: 20px; font-size: 0.9rem; }
         
-        .p-price { font-weight: 600; font-size: 0.9rem; color: var(--pl-purple); }
+        .cta-btn {
+            background: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
 
-        /* --- CHIPS / ALERTS --- */
-        .chip {
-            font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-left: 6px;
-            display: inline-flex;
+        /* Dashboard State */
+        .dashboard-header {
+            background: var(--primary);
+            color: white;
+            padding: 25px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(55, 0, 60, 0.2);
+        }
+        
+        .manager-rank {
+            display: inline-block;
+            background: rgba(255,255,255,0.1);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        /* Player List */
+        .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-sub); margin-bottom: 10px; letter-spacing: 1px; }
+        
+        .player-card {
+            background: var(--surface);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 3px;
-        }
-        .chip-cold {
-            background: rgba(233, 0, 82, 0.1);
-            color: var(--pl-red);
+            border: 1px solid var(--border);
         }
 
-        /* --- UTILS --- */
-        .hidden { display: none; }
-        .loading { text-align: center; padding: 40px; color: var(--text-sub); }
-        .fa-spin { margin-right: 8px; }
+        .p-left { display: flex; align-items: center; gap: 12px; }
+        .pos-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+        .pos-GK { background: #eab308; }
+        .pos-DEF { background: #3b82f6; }
+        .pos-MID { background: #22c55e; }
+        .pos-FWD { background: #ef4444; }
 
+        .p-name { font-weight: 600; font-size: 0.95rem; }
+        .p-team { font-size: 0.75rem; color: var(--text-sub); }
+        .p-price { font-weight: 600; color: var(--primary); font-size: 0.9rem; }
+
+        /* Chips */
+        .chip { padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; margin-left: 8px; }
+        .chip-cold { background: #fee2e2; color: #dc2626; }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .modal {
+            background: var(--surface);
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        .modal input {
+            width: 100%; padding: 12px; margin: 15px 0;
+            border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;
+        }
+        .link-actions { display: flex; gap: 10px; }
+        .btn-secondary { background: transparent; color: var(--text-sub); border: 1px solid var(--border); }
+
+        .hidden { display: none !important; }
+        
+        /* Loading */
+        .loading-spinner {
+            border: 3px solid rgba(0,0,0,0.1); border-top: 3px solid var(--primary);
+            border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="app-logo"><i class="fa-solid fa-futbol"></i> FPL Connect</div>
-    </header>
+    <nav>
+        <div class="logo"><i class="fa-solid fa-layer-group"></i> FPL Hub</div>
+        <div class="user-btn" id="userIcon" onclick="toggleUserModal()">
+            <i class="fa-regular fa-user"></i>
+        </div>
+    </nav>
 
     <div class="container">
         
-        <div class="search-box">
-            <input type="number" id="teamID" placeholder="Enter Team ID (e.g. 123456)">
-            <button id="searchBtn"><i class="fa-solid fa-search"></i></button>
+        <div id="welcomeView" class="welcome-box hidden">
+            <div style="font-size: 3rem; margin-bottom: 20px;">👋</div>
+            <h2>Link your Team</h2>
+            <p>Enter your ID once to unlock transfer suggestions and team analysis.</p>
+            <button class="cta-btn" onclick="toggleUserModal()">Link Team ID</button>
         </div>
 
-        <div id="loading" class="loading hidden">
-            <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i><br><br>
-            Scanning Premier League Database...
+        <div id="loadingView" class="welcome-box hidden">
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 15px;">Analyzing your squad...</p>
         </div>
 
-        <div id="result" class="hidden">
+        <div id="dashboardView" class="hidden">
+            <div class="dashboard-header">
+                <h1 id="managerName">...</h1>
+                <div class="manager-rank" id="managerPoints">...</div>
             </div>
+
+            <div class="section-label">Starting XI</div>
+            <div id="startingList"></div>
+
+            <div class="section-label" style="margin-top: 25px;">Bench</div>
+            <div id="benchList"></div>
+        </div>
 
     </div>
 
+    <div id="linkModal" class="modal-overlay hidden">
+        <div class="modal">
+            <h3>FPL Setup</h3>
+            <p style="font-size:0.85rem; color:#666; margin-top:5px;">Enter your Team ID found in the URL of the Points page.</p>
+            
+            <input type="number" id="idInput" placeholder="e.g. 123456">
+            
+            <div class="link-actions">
+                <button class="cta-btn btn-secondary" style="flex:1" onclick="toggleUserModal()">Cancel</button>
+                <button class="cta-btn" style="flex:1" onclick="saveId()">Save</button>
+            </div>
+            
+            <div id="unlinkArea" class="hidden" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                <button onclick="unlinkTeam()" style="color: var(--red); background: none; border: none; font-weight: 600; cursor: pointer;">
+                    Unlink / Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const searchBtn = document.getElementById('searchBtn');
-            const inputField = document.getElementById('teamID');
+        // --- APP STATE MANAGEMENT ---
+        const App = {
+            id: null,
+            init: () => {
+                // Check LocalStorage on load
+                const savedId = localStorage.getItem('fpl_team_id');
+                if (savedId) {
+                    App.id = savedId;
+                    App.renderUserIcon(true);
+                    App.fetchData(savedId);
+                } else {
+                    App.showView('welcome');
+                    App.renderUserIcon(false);
+                }
+            },
 
-            // Trigger search on click or Enter key
-            searchBtn.addEventListener('click', fetchData);
-            inputField.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') fetchData();
-            });
-        });
+            // --- UI FUNCTIONS ---
+            showView: (viewName) => {
+                document.getElementById('welcomeView').classList.add('hidden');
+                document.getElementById('loadingView').classList.add('hidden');
+                document.getElementById('dashboardView').classList.add('hidden');
+                
+                if (viewName === 'welcome') document.getElementById('welcomeView').classList.remove('hidden');
+                if (viewName === 'loading') document.getElementById('loadingView').classList.remove('hidden');
+                if (viewName === 'dashboard') document.getElementById('dashboardView').classList.remove('hidden');
+            },
 
-        async function fetchData() {
-            const id = document.getElementById('teamID').value;
-            const resultDiv = document.getElementById('result');
-            const loadingDiv = document.getElementById('loading');
-            const searchBtn = document.getElementById('searchBtn');
+            renderUserIcon: (isLinked) => {
+                const btn = document.getElementById('userIcon');
+                const unlinkArea = document.getElementById('unlinkArea');
+                
+                if (isLinked) {
+                    btn.classList.add('linked');
+                    btn.innerHTML = '<i class="fa-solid fa-user-check"></i>';
+                    unlinkArea.classList.remove('hidden');
+                    document.getElementById('idInput').value = App.id; // Pre-fill ID
+                } else {
+                    btn.classList.remove('linked');
+                    btn.innerHTML = '<i class="fa-regular fa-user"></i>';
+                    unlinkArea.classList.add('hidden');
+                    document.getElementById('idInput').value = '';
+                }
+            },
 
-            if (!id) return;
+            // --- DATA LOGIC ---
+            fetchData: async (id) => {
+                App.showView('loading');
 
-            // UI Loading
-            searchBtn.disabled = true;
-            resultDiv.classList.add('hidden');
-            loadingDiv.classList.remove('hidden');
+                try {
+                    // Added timestamp to prevent caching old data
+                    const ts = new Date().getTime();
+                    
+                    // 1. Get Static Data (Players)
+                    const staticProxy = `https://api.allorigins.win/get?url=${encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/')}&ts=${ts}`;
+                    const staticRes = await fetch(staticProxy);
+                    const staticRaw = await staticRes.json();
+                    
+                    if (!staticRaw.contents) throw new Error("API Proxy Error");
+                    const staticData = JSON.parse(staticRaw.contents);
 
-            try {
-                // 1. Get Static Data (Players & Teams)
-                const staticRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/')}`);
-                const staticData = JSON.parse((await staticRes.json()).contents);
+                    // Maps
+                    const playerMap = {};
+                    staticData.elements.forEach(p => {
+                        playerMap[p.id] = {
+                            name: p.web_name,
+                            team: staticData.teams.find(t => t.id === p.team).short_name,
+                            pos: p.element_type,
+                            price: p.now_cost / 10,
+                            form: parseFloat(p.form)
+                        };
+                    });
 
-                // Create Lookups
-                const playerMap = {};
-                staticData.elements.forEach(p => {
-                    playerMap[p.id] = {
-                        name: p.web_name,
-                        team: staticData.teams.find(t => t.id === p.team).short_name,
-                        cost: p.now_cost / 10,
-                        form: parseFloat(p.form),
-                        pos: p.element_type // 1=GK, 2=DEF, 3=MID, 4=FWD
-                    };
-                });
+                    // 2. Get User History
+                    const entryProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/`)}&ts=${ts}`;
+                    const entryRes = await fetch(entryProxy);
+                    const entryRaw = await entryRes.json();
+                    const entryData = JSON.parse(entryRaw.contents);
 
-                // Get Current GW
-                const gw = staticData.events.find(e => e.is_current)?.id || 1;
+                    // 3. Get User Picks
+                    const gw = staticData.events.find(e => e.is_current)?.id || 1;
+                    const picksProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`)}&ts=${ts}`;
+                    const picksRes = await fetch(picksProxy);
+                    const picksRaw = await picksRes.json();
+                    const picksData = JSON.parse(picksRaw.contents);
 
-                // 2. Get User Picks
-                const picksRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`)}`);
-                const picksData = JSON.parse((await picksRes.json()).contents);
+                    App.renderDashboard(entryData, picksData, playerMap);
 
-                // 3. Get User Profile
-                const entryRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/`)}`);
-                const entryData = JSON.parse((await entryRes.json()).contents);
+                } catch (error) {
+                    console.error(error);
+                    alert("Could not load team. Check ID or try again later.");
+                    App.unlinkTeam(); // Reset if failed
+                }
+            },
 
-                // 4. Build HTML
-                let html = `
-                    <div class="manager-card">
-                        <div class="manager-name">${entryData.name}</div>
-                        <div class="manager-stats">
-                            <div class="stat-badge"><i class="fa-solid fa-user"></i> ${entryData.player_first_name}</div>
-                            <div class="stat-badge"><i class="fa-solid fa-star"></i> ${picksData.entry_history.points} pts</div>
-                        </div>
-                    </div>
-                    <div class="list-label">Starting XI</div>
-                `;
+            renderDashboard: (user, picks, players) => {
+                // Header
+                document.getElementById('managerName').innerText = user.name;
+                document.getElementById('managerPoints').innerText = `${user.player_first_name} • ${user.summary_overall_points} pts`;
 
-                // Helper to get icon for position
-                const getPosIcon = (type) => {
-                    if(type === 1) return '<i class="fa-solid fa-hand"></i>'; // GK
-                    if(type === 2) return '<i class="fa-solid fa-shield"></i>'; // DEF
-                    if(type === 3) return '<i class="fa-solid fa-shoe-prints"></i>'; // MID
-                    return '<i class="fa-solid fa-bullseye"></i>'; // FWD
+                // Lists
+                const startList = document.getElementById('startingList');
+                const benchList = document.getElementById('benchList');
+                startList.innerHTML = '';
+                benchList.innerHTML = '';
+
+                const getPosClass = (type) => {
+                    if (type === 1) return 'pos-GK';
+                    if (type === 2) return 'pos-DEF';
+                    if (type === 3) return 'pos-MID';
+                    return 'pos-FWD';
                 };
 
-                picksData.picks.forEach((pick, index) => {
-                    const p = playerMap[pick.element];
+                picks.picks.forEach((pick, index) => {
+                    const p = players[pick.element];
                     
                     // Logic: Cold Form (< 2.0)
-                    let alertHtml = '';
-                    if (index < 11 && p.form < 2.0) {
-                        alertHtml = `<span class="chip chip-cold"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
+                    let badge = '';
+                    if (index < 11 && p.form < 2.5) {
+                        badge = `<span class="chip chip-cold"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
                     }
 
-                    // Bench Splitter
-                    if (index === 11) {
-                        html += `<div class="list-label" style="margin-top:20px;">Bench</div>`;
-                    }
-
-                    html += `
-                        <div class="player-row" style="opacity: ${index > 10 ? '0.7' : '1'}">
-                            <div class="player-left">
-                                <div class="position-icon">${getPosIcon(p.pos)}</div>
-                                <div class="p-info">
-                                    <div class="p-name">${p.name} ${alertHtml}</div>
+                    const html = `
+                        <div class="player-card">
+                            <div class="p-left">
+                                <div class="pos-dot ${getPosClass(p.pos)}"></div>
+                                <div>
+                                    <div class="p-name">${p.name} ${badge}</div>
                                     <div class="p-team">${p.team}</div>
                                 </div>
                             </div>
-                            <div class="p-price">£${p.cost}</div>
+                            <div class="p-price">£${p.price}</div>
                         </div>
                     `;
+
+                    if (index < 11) startList.innerHTML += html;
+                    else benchList.innerHTML += html;
                 });
 
-                resultDiv.innerHTML = html;
-                resultDiv.classList.remove('hidden');
+                App.showView('dashboard');
+            }
+        };
 
-            } catch (err) {
-                console.error(err);
-                resultDiv.innerHTML = `<div style="text-align:center; color:var(--pl-red); padding:20px;"><b>Error:</b> Could not find Team ID ${id}</div>`;
-                resultDiv.classList.remove('hidden');
-            } finally {
-                loadingDiv.classList.add('hidden');
-                searchBtn.disabled = false;
+        // --- GLOBAL FUNCTIONS (Attached to HTML) ---
+        function toggleUserModal() {
+            const modal = document.getElementById('linkModal');
+            modal.classList.toggle('hidden');
+        }
+
+        function saveId() {
+            const id = document.getElementById('idInput').value;
+            if (id) {
+                localStorage.setItem('fpl_team_id', id);
+                toggleUserModal();
+                App.init(); // Reload app with new ID
             }
         }
+
+        function unlinkTeam() {
+            localStorage.removeItem('fpl_team_id');
+            App.id = null;
+            toggleUserModal();
+            App.init(); // Reset to welcome screen
+        }
+
+        // Start App
+        document.addEventListener('DOMContentLoaded', App.init);
+
     </script>
 </body>
 </html>
