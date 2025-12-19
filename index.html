@@ -3,291 +3,339 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FPL Hub Pro (Failsafe)</title>
+    <title>FPL Mobile Hub</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        /* --- MOBILE FIRST DESIGN --- */
         :root {
             --primary: #37003c;
             --accent: #00ff85;
             --bg: #f8f9fa;
             --surface: #ffffff;
-            --text-main: #111;
-            --text-sub: #666;
+            --text: #111;
+            --gray: #666;
             --border: #e5e7eb;
             --red: #e90052;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        body { background: var(--bg); color: var(--text-main); padding-bottom: 80px; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
 
-        /* NAV */
-        nav {
-            background: var(--surface); padding: 0 20px; height: 60px;
+        /* HEADER */
+        header {
+            background: var(--surface); height: 60px; padding: 0 20px;
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+            position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border);
         }
-        .logo { font-weight: 800; color: var(--primary); font-size: 1.1rem; }
-        .logo i { color: var(--accent); margin-right: 5px; }
+        .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+        .brand i { color: var(--accent); }
+
+        /* MENU BUTTON */
+        .menu-btn { font-size: 1.2rem; padding: 8px; cursor: pointer; }
+
+        /* USER ICON */
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: #f0f0f0;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary); font-size: 0.9rem; border: 1px solid var(--border);
+        }
+        .user-avatar.active { background: var(--primary); color: var(--accent); border: none; }
 
         /* CONTAINER */
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .main { max-width: 600px; margin: 0 auto; padding: 20px; }
 
-        /* STATUS BAR */
-        .status-bar {
-            background: #fff3cd; color: #856404; padding: 10px; font-size: 0.8rem;
-            text-align: center; border-radius: 8px; margin-bottom: 15px; display: none;
+        /* STATUS LOG (Visible for debugging) */
+        .status-log {
+            font-size: 0.75rem; color: var(--gray); text-align: center;
+            margin-bottom: 15px; background: #eee; padding: 5px; border-radius: 4px;
+            display: none; /* Hidden unless active */
         }
 
-        /* WELCOME */
-        .box {
-            background: var(--surface); padding: 40px 20px; text-align: center;
-            border-radius: 16px; border: 1px solid var(--border); margin-top: 20px;
+        /* WELCOME CARD */
+        .card {
+            background: var(--surface); padding: 30px 20px; border-radius: 16px;
+            text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-top: 20px;
         }
-        .cta-btn {
-            background: var(--primary); color: white; border: none; padding: 12px 24px;
-            border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 15px;
+        .card h2 { margin: 10px 0 5px; font-size: 1.3rem; }
+        .card p { color: var(--gray); font-size: 0.9rem; margin-bottom: 20px; }
+        
+        input {
+            width: 100%; padding: 14px; border: 1px solid var(--border);
+            border-radius: 10px; font-size: 1rem; text-align: center; margin-bottom: 15px;
+            background: #fafafa;
         }
+        input:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+        .btn {
+            background: var(--primary); color: white; border: none; padding: 14px;
+            border-radius: 10px; width: 100%; font-weight: 600; font-size: 1rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn:active { transform: scale(0.98); }
 
         /* DASHBOARD */
-        .dashboard-header {
-            background: var(--primary); color: white; padding: 25px;
-            border-radius: 16px; text-align: center; margin-bottom: 25px;
-            box-shadow: 0 10px 20px rgba(55,0,60,0.15);
-        }
-        
-        .section-title {
+        .manager-info { text-align: center; margin-bottom: 25px; padding: 20px; background: var(--primary); color: white; border-radius: 16px; }
+        .manager-name { font-size: 1.2rem; font-weight: 700; }
+        .manager-rank { font-size: 0.85rem; opacity: 0.8; margin-top: 5px; }
+
+        .list-header {
             font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-            color: var(--text-sub); margin-bottom: 10px; letter-spacing: 1px;
+            color: var(--gray); margin-bottom: 8px; padding-left: 5px; letter-spacing: 0.5px;
         }
 
-        .player-card {
-            background: var(--surface); padding: 12px 15px; border-radius: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid var(--border); margin-bottom: 8px;
+        .player-row {
+            background: var(--surface); padding: 12px 15px; border-radius: 12px;
+            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid #f0f0f0;
         }
-        .p-info { display: flex; align-items: center; gap: 10px; }
-        .pos-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
-        .pos-GK { background: #eab308; } .pos-DEF { background: #3b82f6; }
-        .pos-MID { background: #22c55e; } .pos-FWD { background: #ef4444; }
-        
-        .p-name { font-weight: 600; font-size: 0.9rem; }
-        .p-team { font-size: 0.75rem; color: var(--text-sub); }
+
+        .p-left { display: flex; align-items: center; gap: 12px; }
+        .pos-badge { width: 6px; height: 6px; border-radius: 50%; }
+        .pos-1 { background: #fbbf24; } /* GK */
+        .pos-2 { background: #3b82f6; } /* DEF */
+        .pos-3 { background: #22c55e; } /* MID */
+        .pos-4 { background: #ef4444; } /* FWD */
+
+        .p-name { font-weight: 600; font-size: 0.95rem; }
+        .p-meta { font-size: 0.75rem; color: var(--gray); }
         .p-price { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
 
         .chip { 
-            display: inline-block; padding: 2px 6px; border-radius: 4px; 
-            font-size: 0.65rem; font-weight: 700; margin-left: 5px; 
-            background: #fee2e2; color: var(--red);
+            display: inline-flex; align-items: center; gap: 3px; 
+            padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; 
+            background: #fee2e2; color: var(--red); font-weight: 700; margin-left: 5px; 
         }
 
-        /* LOADING */
-        .loader {
-            border: 3px solid #f3f3f3; border-top: 3px solid var(--primary);
-            border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite;
-            margin: 0 auto 15px auto;
+        /* LOADING SPINNER */
+        .spinner {
+            width: 24px; height: 24px; border: 3px solid rgba(0,0,0,0.1);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <nav>
-        <div class="logo"><i class="fa-solid fa-bolt"></i> FPL Hub</div>
-        <div style="cursor: pointer;" onclick="clearData()"><i class="fa-solid fa-rotate-right"></i></div>
-    </nav>
+    <header>
+        <div class="brand"><i class="fa-solid fa-layer-group"></i> FPL Hub</div>
+        <div class="user-avatar" id="userIcon" onclick="clearData()">
+            <i class="fa-regular fa-user"></i>
+        </div>
+    </header>
 
-    <div class="container">
+    <div class="main">
         
-        <div id="statusAlert" class="status-bar"></div>
+        <div id="statusLog" class="status-log">Initializing...</div>
 
-        <div id="welcomeView" class="box hidden">
-            <div style="font-size: 3rem;">👋</div>
-            <h2 style="margin: 10px 0;">FPL Connect</h2>
-            <p style="color: #666; font-size: 0.9rem;">Enter your Team ID to view your squad.</p>
-            <input type="number" id="teamIdInput" placeholder="e.g. 123456" style="width: 100%; padding: 12px; margin-top: 15px; border: 1px solid #ddd; border-radius: 8px;">
-            <button class="cta-btn" onclick="startApp()">Load Team</button>
+        <div id="welcomeScreen" class="card hidden">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">📱</div>
+            <h2>FPL Mobile</h2>
+            <p>Connect your Team ID to start.</p>
+            <input type="number" id="teamID" placeholder="Team ID (e.g. 123456)">
+            <button class="btn" onclick="app.load()">
+                <span>Connect Team</span>
+            </button>
         </div>
 
-        <div id="loadingView" class="box hidden">
-            <div class="loader"></div>
-            <p id="loadingText">Connecting to FPL...</p>
+        <div id="loadingScreen" class="card hidden">
+            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                <div class="spinner"></div>
+            </div>
+            <p id="loadingMsg">Connecting...</p>
         </div>
 
-        <div id="dashboardView" class="hidden">
-            <div class="dashboard-header">
-                <h1 id="managerName">...</h1>
-                <div id="managerPoints" style="opacity: 0.8; font-size: 0.9rem; margin-top: 5px;">...</div>
+        <div id="dashboardScreen" class="hidden">
+            <div class="manager-info">
+                <div class="manager-name" id="dispName">...</div>
+                <div class="manager-rank" id="dispPoints">...</div>
             </div>
 
-            <div class="section-title">Starting XI</div>
-            <div id="startList"></div>
+            <div class="list-header">Starting XI</div>
+            <div id="startingList"></div>
 
-            <div class="section-title" style="margin-top: 25px;">Bench</div>
+            <div class="list-header" style="margin-top: 25px;">Bench</div>
             <div id="benchList"></div>
         </div>
 
     </div>
 
     <script>
-        // --- 1. MOCK DATA (The Failsafe) ---
-        // If the internet/proxy fails, we load this automatically so the screen isn't blank.
-        const MOCK_DATA = {
-            user: { name: "Demo Manager", summary_overall_points: 950, player_first_name: "Test", player_last_name: "User" },
-            picks: [
-                { element: 1, position: 1 }, { element: 2, position: 2 }, { element: 3, position: 3 }, 
-                { element: 4, position: 4 }, { element: 5, position: 5 }, { element: 6, position: 6 }, 
-                { element: 7, position: 7 }, { element: 8, position: 8 }, { element: 9, position: 9 }, 
-                { element: 10, position: 10 }, { element: 11, position: 11 }, { element: 12, position: 12 }, 
-                { element: 13, position: 13 }, { element: 14, position: 14 }, { element: 15, position: 15 }
-            ],
-            players: {
-                1: { web_name: "Pickford", team: "EVE", now_cost: 45, element_type: 1, form: "3.5" },
-                2: { web_name: "Alexander-Arnold", team: "LIV", now_cost: 80, element_type: 2, form: "1.2" },
-                3: { web_name: "Saliba", team: "ARS", now_cost: 55, element_type: 2, form: "4.0" },
-                4: { web_name: "Porro", team: "TOT", now_cost: 50, element_type: 2, form: "2.8" },
-                5: { web_name: "Salah", team: "LIV", now_cost: 130, element_type: 3, form: "8.5" },
-                6: { web_name: "Saka", team: "ARS", now_cost: 90, element_type: 3, form: "6.2" },
-                7: { web_name: "Palmer", team: "CHE", now_cost: 60, element_type: 3, form: "5.5" },
-                8: { web_name: "Gordon", team: "NEW", now_cost: 65, element_type: 3, form: "3.1" },
-                9: { web_name: "Haaland", team: "MCI", now_cost: 140, element_type: 4, form: "9.0" },
-                10: { web_name: "Watkins", team: "AVL", now_cost: 85, element_type: 4, form: "1.5" },
-                11: { web_name: "Isak", team: "NEW", now_cost: 75, element_type: 4, form: "4.2" },
-                12: { web_name: "Areola", team: "WHU", now_cost: 40, element_type: 1, form: "2.0" },
-                13: { web_name: "Branthwaite", team: "EVE", now_cost: 40, element_type: 2, form: "3.0" },
-                14: { web_name: "Garnacho", team: "MUN", now_cost: 50, element_type: 3, form: "1.8" },
-                15: { web_name: "Archer", team: "SHU", now_cost: 45, element_type: 4, form: "1.0" }
+        const app = {
+            // CACHE SETTINGS
+            cacheKey: 'fpl_db_v4',
+            cacheTime: 'fpl_ts_v4',
+
+            init: () => {
+                const savedId = localStorage.getItem('fpl_id');
+                if(savedId) {
+                    document.getElementById('userIcon').classList.add('active');
+                    document.getElementById('teamID').value = savedId;
+                    app.load(savedId);
+                } else {
+                    app.show('welcomeScreen');
+                }
+            },
+
+            show: (id) => {
+                ['welcomeScreen', 'loadingScreen', 'dashboardScreen'].forEach(s => document.getElementById(s).classList.add('hidden'));
+                document.getElementById(id).classList.remove('hidden');
+            },
+
+            log: (msg) => {
+                const el = document.getElementById('statusLog');
+                el.style.display = 'block';
+                el.innerText = msg;
+                console.log(msg);
+            },
+
+            // --- THE MULTI-PROXY FETCH SYSTEM ---
+            fetchUrl: async (targetUrl) => {
+                // List of proxies to try in order
+                const proxies = [
+                    (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                    (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    (url) => `https://thingproxy.freeboard.io/fetch/${url}`
+                ];
+
+                for (let i = 0; i < proxies.length; i++) {
+                    const proxyUrl = proxies[i](targetUrl);
+                    app.log(`Trying connection ${i + 1}/${proxies.length}...`);
+                    
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout per proxy
+
+                        const response = await fetch(proxyUrl, { signal: controller.signal });
+                        clearTimeout(timeoutId);
+
+                        if (response.ok) {
+                            return await response.json();
+                        }
+                    } catch (err) {
+                        console.warn(`Proxy ${i+1} failed:`, err);
+                    }
+                }
+                throw new Error("All connections failed. FPL is blocking requests.");
+            },
+
+            load: async (savedId = null) => {
+                const id = savedId || document.getElementById('teamID').value;
+                if(!id) return alert("Please enter an ID");
+
+                // Save ID
+                localStorage.setItem('fpl_id', id);
+                document.getElementById('userIcon').classList.add('active');
+                
+                app.show('loadingScreen');
+
+                try {
+                    // 1. CHECK CACHE FOR BIG DATABASE
+                    // The player list is heavy. We only want to download it once every 30 mins.
+                    let staticData = null;
+                    const cachedDb = localStorage.getItem(app.cacheKey);
+                    const cachedTime = localStorage.getItem(app.cacheTime);
+                    const now = Date.now();
+
+                    if(cachedDb && cachedTime && (now - cachedTime < 1800000)) { // 30 mins
+                        app.log("Loading players from phone memory...");
+                        staticData = JSON.parse(cachedDb);
+                    } else {
+                        app.log("Downloading Player Database...");
+                        document.getElementById('loadingMsg').innerText = "Downloading Database (this happens once)...";
+                        staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
+                        
+                        // Save to phone memory
+                        localStorage.setItem(app.cacheKey, JSON.stringify(staticData));
+                        localStorage.setItem(app.cacheTime, now);
+                    }
+
+                    // 2. PROCESS PLAYER MAP
+                    const players = {};
+                    staticData.elements.forEach(p => {
+                        players[p.id] = {
+                            name: p.web_name,
+                            team: staticData.teams.find(t => t.id === p.team).short_name,
+                            pos: p.element_type,
+                            price: p.now_cost / 10,
+                            form: parseFloat(p.form)
+                        };
+                    });
+                    const gw = staticData.events.find(e => e.is_current)?.id || 1;
+
+                    // 3. GET USER TEAM (Small request)
+                    app.log("Fetching your squad...");
+                    document.getElementById('loadingMsg').innerText = "Scouting Team...";
+                    
+                    // We run these in sequence to be safer on mobile connections
+                    const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
+                    const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
+
+                    app.render(user, picks, players);
+                    app.log(""); // Clear log
+                    document.getElementById('statusLog').style.display = 'none';
+
+                } catch (error) {
+                    app.log("Connection Error");
+                    alert("Network Error: " + error.message + "\n\nTry refreshing the page.");
+                    localStorage.removeItem(app.cacheKey); // Clear cache if it failed
+                    app.show('welcomeScreen');
+                }
+            },
+
+            render: (user, picks, players) => {
+                document.getElementById('dispName').innerText = user.name;
+                document.getElementById('dispPoints').innerText = `${user.summary_overall_points} pts • GW${picks.entry_history.event}`;
+
+                const sList = document.getElementById('startingList');
+                const bList = document.getElementById('benchList');
+                sList.innerHTML = ''; bList.innerHTML = '';
+
+                picks.picks.forEach((pick, i) => {
+                    const p = players[pick.element];
+                    if(!p) return;
+
+                    let badge = '';
+                    if(i < 11 && p.form < 2.5) {
+                        badge = `<span class="chip"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
+                    }
+
+                    const html = `
+                        <div class="player-row">
+                            <div class="p-left">
+                                <div class="pos-badge pos-${p.pos}"></div>
+                                <div>
+                                    <div class="p-name">${p.name} ${badge}</div>
+                                    <div class="p-meta">${p.team}</div>
+                                </div>
+                            </div>
+                            <div class="p-price">£${p.price}</div>
+                        </div>
+                    `;
+
+                    if(i < 11) sList.innerHTML += html;
+                    else bList.innerHTML += html;
+                });
+
+                app.show('dashboardScreen');
             }
         };
 
-        // --- 2. MAIN LOGIC ---
-        
-        function show(id) {
-            ['welcomeView', 'loadingView', 'dashboardView'].forEach(v => document.getElementById(v).classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-
         function clearData() {
-            localStorage.clear();
-            location.reload();
-        }
-
-        async function startApp() {
-            const id = document.getElementById('teamIdInput').value;
-            if(!id) return alert("Enter an ID");
-
-            show('loadingView');
-            document.getElementById('loadingText').innerText = "Attempting connection...";
-
-            try {
-                // TRY REAL CONNECTION
-                const proxy = 'https://api.allorigins.win/get?url=';
-                
-                // 1. Fetch User Data
-                const userRes = await fetch(proxy + encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/`));
-                const userJson = await userRes.json();
-                if(!userJson.contents) throw new Error("Blocked");
-                const userData = JSON.parse(userJson.contents);
-
-                // 2. Fetch Picks
-                const picksRes = await fetch(proxy + encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/event/${userData.current_event}/picks/`));
-                const picksJson = await picksRes.json();
-                const picksData = JSON.parse(picksJson.contents);
-
-                // 3. Fetch Static Data (Heavy file)
-                document.getElementById('loadingText').innerText = "Downloading database...";
-                const staticRes = await fetch(proxy + encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/'));
-                const staticJson = await staticRes.json();
-                const staticData = JSON.parse(staticJson.contents);
-
-                // Map Real Data
-                const playerMap = {};
-                staticData.elements.forEach(p => playerMap[p.id] = p);
-                
-                renderDashboard(userData, picksData.picks, playerMap);
-
-            } catch (error) {
-                console.warn("Connection failed, loading DEMO mode", error);
-                
-                // SHOW ALERT
-                const alertBox = document.getElementById('statusAlert');
-                alertBox.style.display = 'block';
-                alertBox.innerHTML = `<strong>⚠️ Network Blocked</strong><br>Showing DEMO data to prove the UI works.`;
-
-                // LOAD MOCK DATA
-                // We map mock data to look like real data
-                const mockPicks = MOCK_DATA.picks;
-                const mockMap = {};
-                Object.values(MOCK_DATA.players).forEach((p, i) => {
-                    // Create a fake ID map for the demo
-                    mockMap[i+1] = p; 
-                });
-
-                // Simulate a delay so it feels like loading
-                setTimeout(() => {
-                    renderDashboard(MOCK_DATA.user, mockPicks, mockMap);
-                }, 1000);
+            if(confirm("Unlink ID and reset data?")) {
+                localStorage.clear();
+                location.reload();
             }
         }
 
-        function renderDashboard(user, picks, playerMap) {
-            document.getElementById('managerName').innerText = user.name;
-            document.getElementById('managerPoints').innerText = `${user.player_first_name} • ${user.summary_overall_points} pts`;
-
-            const startEl = document.getElementById('startList');
-            const benchEl = document.getElementById('benchList');
-            startEl.innerHTML = '';
-            benchEl.innerHTML = '';
-
-            const getPosClass = (type) => {
-                if(type === 1) return 'pos-GK';
-                if(type === 2) return 'pos-DEF';
-                if(type === 3) return 'pos-MID';
-                return 'pos-FWD';
-            };
-
-            picks.forEach((pick, index) => {
-                // If real data, use ID. If demo, use simple mapping.
-                const p = playerMap[pick.element] || MOCK_DATA.players[pick.element];
-                
-                if(!p) return; // Skip if player not found
-
-                let formBadge = '';
-                if(index < 11 && parseFloat(p.form) < 2.5) {
-                    formBadge = `<span class="chip"><i class="fa-regular fa-snowflake"></i> ${p.form}</span>`;
-                }
-
-                // If real data has 'team' as ID, we need to map it (omitted for simplicity in this failsafe version)
-                // In demo data, team is already "LIV" or "ARS"
-                const teamName = typeof p.team === 'number' ? 'Team ' + p.team : p.team; 
-
-                const html = `
-                    <div class="player-card">
-                        <div class="p-info">
-                            <div class="pos-dot ${getPosClass(p.element_type)}"></div>
-                            <div>
-                                <div class="p-name">${p.web_name} ${formBadge}</div>
-                                <div class="p-team">${teamName}</div>
-                            </div>
-                        </div>
-                        <div class="p-price">£${p.now_cost / 10}</div>
-                    </div>
-                `;
-
-                if(index < 11) startEl.innerHTML += html;
-                else benchEl.innerHTML += html;
-            });
-
-            show('dashboardView');
-        }
-
-        // Init
-        show('welcomeView');
+        // Start
+        document.addEventListener('DOMContentLoaded', app.init);
     </script>
 </body>
 </html>
