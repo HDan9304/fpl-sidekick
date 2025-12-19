@@ -11,145 +11,115 @@
     <style>
         :root {
             --primary: #37003c; --accent: #00ff85;
-            --bg-body: #f3f4f6; --bg-surface: #ffffff;
+            --bg-body: #e5e7eb; --bg-app: #ffffff; /* Darker body for desktop contrast */
             --text-main: #111827; --text-sub: #6b7280;
             --border: #e5e7eb; --red: #e90052;
             
             /* PITCH COLORS */
             --grass-1: #059669; --grass-2: #047857;
             
-            /* FDR Colors */
+            /* FDR & STATUS */
             --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e5e7eb; --fdr-4: #ff1751; --fdr-5: #80072d;
             --fdr-text-dark: #00381b; --fdr-text-light: white;
-
-            /* STATUS COLORS */
             --status-warn: #fbbf24; --status-bad: #ef4444;
         }
 
-        /* RESET & BASE */
+        /* RESET */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
+        /* SCROLLBAR (Desktop only) */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
         body { 
             background-color: var(--bg-body); color: var(--text-main); 
-            height: 100vh; overflow: hidden; /* Prevent body scroll, handle inside containers */
-            display: flex;
+            height: 100vh; width: 100vw;
+            display: flex; justify-content: center; align-items: center; /* Center on Desktop */
         }
 
-        /* --- SIDEBAR (Responsive) --- */
-        .sidebar {
-            position: fixed; top: 0; left: 0; height: 100%; width: 280px;
-            background: var(--bg-surface); z-index: 200; transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
-            border-right: 1px solid var(--border);
-        }
-        .sidebar.open { transform: translateX(0); }
-
-        /* DESKTOP SIDEBAR OVERRIDE */
-        @media (min-width: 1024px) {
-            .sidebar {
-                position: relative; /* Sit next to content */
-                transform: translateX(0); /* Always visible */
-                box-shadow: none;
-                width: 260px;
-                flex-shrink: 0;
-            }
-            .menu-overlay { display: none !important; } /* No overlay on desktop */
-            .menu-btn { display: none !important; } /* Hide hamburger */
-        }
-
-        .menu-header { height: 64px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
-        .menu-items { flex: 1; padding-top: 20px; }
-        .menu-item { display: flex; align-items: center; gap: 16px; padding: 14px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
-        .menu-item:hover { background: #f9fafb; color: var(--primary); }
-        .menu-item.active { color: var(--primary); background: rgba(55, 0, 60, 0.04); border-left-color: var(--primary); }
-        .menu-footer { padding: 24px; border-top: 1px solid var(--border); }
-        .reset-btn { color: var(--red); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
-        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
-        .menu-overlay.open { opacity: 1; visibility: visible; }
-
-        /* --- MAIN CONTENT AREA --- */
+        /* --- THE APP SHELL --- */
         .app-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+            background-color: var(--bg-app);
+            width: 100%;
             height: 100%;
+            position: relative;
+            display: flex; flex-direction: column;
             overflow: hidden;
-            background-color: var(--bg-body);
+        }
+
+        /* DESKTOP MODE (The "Fix") */
+        @media (min-width: 550px) {
+            .app-container {
+                width: 480px; /* Perfect width for the pitch */
+                height: 92vh;
+                max-height: 900px;
+                border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+                border: 1px solid rgba(255,255,255,0.5);
+            }
         }
 
         /* HEADER */
         header {
-            background: var(--bg-surface); height: 64px; padding: 0 20px;
+            background: var(--bg-app); height: 60px; padding: 0 20px;
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); flex-shrink: 0;
+            border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50;
         }
         .header-left { display: flex; align-items: center; gap: 16px; }
-        .menu-btn { font-size: 1.25rem; cursor: pointer; padding: 8px; margin-left: -8px; color: var(--text-main); }
-        .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
+        .menu-btn { font-size: 1.2rem; cursor: pointer; color: var(--text-main); }
+        .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
         .brand i { color: var(--accent); }
         .user-avatar {
-            width: 36px; height: 36px; border-radius: 50%; background: #f3f4f6;
+            width: 34px; height: 34px; border-radius: 50%; background: #f3f4f6;
             border: 1px solid var(--border); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
         }
         .user-avatar:hover { background: #e5e7eb; }
         .user-avatar.active { background: var(--primary); color: var(--accent); border-color: var(--primary); }
 
-        /* SCROLLABLE VIEWPORT */
+        /* SIDEBAR (Drawer) */
+        .sidebar {
+            position: absolute; top: 0; left: 0; height: 100%; width: 260px;
+            background: var(--bg-app); z-index: 200; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+            border-right: 1px solid var(--border);
+        }
+        .sidebar.open { transform: translateX(0); }
+        .menu-header { height: 60px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); }
+        .menu-items { flex: 1; padding-top: 10px; }
+        .menu-item { display: flex; align-items: center; gap: 16px; padding: 14px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
+        .menu-item:hover { background: #f9fafb; color: var(--primary); }
+        .menu-item.active { color: var(--primary); background: rgba(55, 0, 60, 0.04); border-left-color: var(--primary); }
+        .menu-footer { padding: 24px; border-top: 1px solid var(--border); }
+        .reset-btn { color: var(--red); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+        .menu-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
+        .menu-overlay.open { opacity: 1; visibility: visible; }
+
+        /* SCROLL CONTENT */
         .content { 
-            padding: 20px; 
+            padding: 16px; 
             overflow-y: auto; 
             flex: 1; 
             -webkit-overflow-scrolling: touch; 
+            background: #fafafa;
         }
 
-        /* DASHBOARD GRID LAYOUT (The Desktop Magic) */
-        .dashboard-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            max-width: 500px; /* Mobile constraint */
-            margin: 0 auto;
-        }
-
-        /* Desktop Layout Override */
-        @media (min-width: 1024px) {
-            .dashboard-grid {
-                display: grid;
-                grid-template-columns: 1fr 350px; /* Pitch takes space, Sidebar fixed */
-                grid-template-areas: 
-                    "pitch stats"
-                    "pitch bench";
-                max-width: 1200px;
-                gap: 24px;
-                align-items: start;
-            }
-            /* Assign Areas */
-            .grid-area-pitch { grid-area: pitch; }
-            .grid-area-stats { grid-area: stats; }
-            .grid-area-bench { grid-area: bench; }
-            
-            /* Adjust Pitch container for Desktop to prevent scroll */
-            .pitch-container { min-height: 600px; }
-        }
-
-        /* COMPONENTS */
-        
-        /* Welcome & Loading */
+        /* WELCOME & LOADING */
         .card-center { 
-            text-align: center; padding: 60px 20px; background: white; 
-            border-radius: 20px; border: 1px solid var(--border); margin: 40px auto; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02); max-width: 400px;
+            text-align: center; padding: 50px 20px; background: white; 
+            border-radius: 16px; border: 1px solid var(--border); margin: 20px 0; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
-        input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: #f9fafb; font-size: 1rem; transition: 0.2s; }
-        input:focus { border-color: var(--primary); background: white; }
+        input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: #fff; font-size: 1rem; transition: 0.2s; }
+        input:focus { border-color: var(--primary); }
         .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; transition: 0.2s; }
         .btn:active { transform: scale(0.98); }
 
-        /* Scoreboard */
+        /* DASHBOARD ELEMENTS */
         .scoreboard {
             background: var(--primary); color: white; padding: 20px 15px;
-            border-radius: 16px; margin-bottom: 0; /* Margin handled by grid gap now */
+            border-radius: 16px; margin-bottom: 16px;
             box-shadow: 0 10px 25px -5px rgba(55, 0, 60, 0.3);
             background-image: radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 40%);
         }
@@ -157,13 +127,13 @@
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center; }
         .stat-box { display: flex; flex-direction: column; }
         .stat-label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; font-weight: 600; letter-spacing: 0.5px; }
-        .stat-val { font-size: 1.25rem; font-weight: 800; color: var(--accent); line-height: 1.2; }
-        .stat-val-small { font-size: 1rem; font-weight: 700; color: white; line-height: 1.2; }
+        .stat-val { font-size: 1.2rem; font-weight: 800; color: var(--accent); line-height: 1.2; }
+        .stat-val-small { font-size: 0.95rem; font-weight: 700; color: white; line-height: 1.2; }
 
-        /* Pitch Wrapper */
+        /* PITCH WRAPPER */
         .pitch-wrapper {
             background: white; border-radius: 16px; overflow: hidden;
-            border: 1px solid var(--border);
+            border: 1px solid var(--border); margin-bottom: 16px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         .budget-bar {
@@ -172,10 +142,10 @@
         }
         .budget-val { color: var(--primary); font-weight: 800; }
 
-        /* The Pitch */
+        /* PITCH GRAPHIC */
         .pitch-container {
             background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 10%, var(--grass-2) 10%, var(--grass-2) 20%);
-            padding: 20px 5px; 
+            padding: 25px 5px; 
             position: relative; 
             display: flex; flex-direction: column; justify-content: space-around;
             min-height: 520px;
@@ -186,12 +156,12 @@
         .box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 50%; height: 12%; border: 2px solid rgba(255,255,255,0.5); border-top: none; }
         .box-bot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50%; height: 12%; border: 2px solid rgba(255,255,255,0.5); border-bottom: none; }
 
-        .field-row { display: flex; justify-content: center; gap: 2%; position: relative; z-index: 10; margin-bottom: 10px; }
+        .field-row { display: flex; justify-content: center; gap: 2%; position: relative; z-index: 10; margin-bottom: 15px; }
 
-        /* Player Pill */
+        /* PLAYER CARD */
         .player-pill {
             background: rgba(255,255,255,0.96);
-            width: 18.5%; max-width: 80px; min-width: 62px;
+            width: 18.5%; max-width: 75px; min-width: 62px;
             padding: 4px 2px 6px 2px;
             border-radius: 8px; text-align: center;
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -200,7 +170,8 @@
             transition: transform 0.1s;
         }
         .player-pill:active { transform: scale(0.95); }
-        .kit-img { width: 80%; max-width: 45px; height: auto; aspect-ratio: 0.8; object-fit: contain; margin: 2px 0 0 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+
+        .kit-img { width: 80%; max-width: 42px; height: auto; aspect-ratio: 0.8; object-fit: contain; margin: 2px 0 0 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
         .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 95%; background: white; margin-top: 1px; padding: 1px 0; border-radius: 2px; }
         .pill-data { font-size: 0.6rem; color: #555; font-weight: 600; display: flex; gap: 3px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding: 2px 0; margin-top: 2px; }
         .points-badge { background: var(--primary); color: white; padding: 0 3px; border-radius: 3px; font-weight: 700; }
@@ -213,24 +184,29 @@
 
         .captain-badge { position: absolute; bottom: 28px; right: -3px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
         .vice-badge { background: #666; }
-        
         .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
         .status-warn { background: var(--status-warn); color: #78350f; }
         .status-bad { background: var(--status-bad); color: white; }
 
-        /* Bench */
+        /* BENCH */
         .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .bench-header { background: #f9fafb; padding: 10px 15px; font-size: 0.75rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
         .bench-row { display: flex; justify-content: center; gap: 3%; padding: 15px 5px; }
         .bench-pill { opacity: 0.9; }
         .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
 
-        /* Modal */
+        /* MODAL */
         .modal-overlay { z-index: 1000; display: flex; justify-content: center; align-items: flex-end; }
-        @media (min-width: 600px) { .modal-overlay { align-items: center; } }
-        .modal-card { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 25px; box-shadow: 0 -10px 40px rgba(0,0,0,0.2); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        @media (min-width: 600px) { .modal-card { border-radius: 20px; transform: translateY(20px); opacity: 0; width: 90%; } }
         .modal-overlay.open .modal-card { transform: translateY(0); opacity: 1; }
+        
+        .modal-card { 
+            background: white; width: 100%; max-width: 480px; 
+            border-radius: 20px 20px 0 0; padding: 25px; 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2); 
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        @media (min-width: 550px) { .modal-card { border-radius: 20px; width: 440px; transform: translateY(20px); opacity: 0; align-self: center; } }
+
         .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .m-player-name { font-size: 1.4rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
         .m-player-team { font-size: 0.9rem; color: var(--text-sub); }
@@ -256,22 +232,6 @@
 </head>
 <body>
 
-    <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
-    <div id="sideMenu" class="sidebar">
-        <div class="menu-header">FPL Hub</div>
-        <div class="menu-items">
-            <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
-                <i class="fa-solid fa-shirt"></i> Squad
-            </div>
-            <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
-                <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
-            </div>
-        </div>
-        <div class="menu-footer">
-            <div class="reset-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Reset App</div>
-        </div>
-    </div>
-
     <div class="app-container">
         
         <header>
@@ -281,6 +241,22 @@
             </div>
             <div class="user-avatar" id="userIcon" onclick="clearData()"><i class="fa-regular fa-user"></i></div>
         </header>
+
+        <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
+        <div id="sideMenu" class="sidebar">
+            <div class="menu-header">FPL Hub</div>
+            <div class="menu-items">
+                <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
+                    <i class="fa-solid fa-shirt"></i> Squad
+                </div>
+                <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
+                </div>
+            </div>
+            <div class="menu-footer">
+                <div class="reset-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Reset App</div>
+            </div>
+        </div>
 
         <div class="content">
             
@@ -302,54 +278,44 @@
                     <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
                 </div>
 
-                <div class="dashboard-grid">
-                    
-                    <div class="grid-area-pitch">
-                        <div class="pitch-wrapper">
-                            <div class="budget-bar">
-                                <span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span>
-                                <span>Value: <span class="budget-val" id="dispValue">£0.0m</span></span>
-                            </div>
-
-                            <div class="pitch-container">
-                                <div class="pitch-lines">
-                                    <div class="box-top"></div>
-                                    <div class="line-mid"></div>
-                                    <div class="pitch-circle"></div>
-                                    <div class="box-bot"></div>
-                                </div>
-                                <div id="pitchRows"></div>
-                            </div>
+                <div class="scoreboard">
+                    <div class="manager-name" id="dispName">...</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">GW Points</div>
+                            <div class="stat-val" id="dispGW">...</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Total Pts</div>
+                            <div class="stat-val-small" id="dispTotal">...</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Rank</div>
+                            <div class="stat-val-small" id="dispRank">...</div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="grid-area-stats">
-                        <div class="scoreboard">
-                            <div class="manager-name" id="dispName">...</div>
-                            <div class="stats-grid">
-                                <div class="stat-box">
-                                    <div class="stat-label">GW Points</div>
-                                    <div class="stat-val" id="dispGW">...</div>
-                                </div>
-                                <div class="stat-box">
-                                    <div class="stat-label">Total Pts</div>
-                                    <div class="stat-val-small" id="dispTotal">...</div>
-                                </div>
-                                <div class="stat-box">
-                                    <div class="stat-label">Rank</div>
-                                    <div class="stat-val-small" id="dispRank">...</div>
-                                </div>
-                            </div>
-                        </div>
+                <div class="pitch-wrapper">
+                    <div class="budget-bar">
+                        <span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span>
+                        <span>Value: <span class="budget-val" id="dispValue">£0.0m</span></span>
                     </div>
 
-                    <div class="grid-area-bench">
-                        <div class="bench-wrapper">
-                            <div class="bench-header">Substitutes</div>
-                            <div id="benchRow" class="bench-row"></div>
+                    <div class="pitch-container">
+                        <div class="pitch-lines">
+                            <div class="box-top"></div>
+                            <div class="line-mid"></div>
+                            <div class="pitch-circle"></div>
+                            <div class="box-bot"></div>
                         </div>
+                        <div id="pitchRows"></div>
                     </div>
+                </div>
 
+                <div class="bench-wrapper">
+                    <div class="bench-header">Substitutes</div>
+                    <div id="benchRow" class="bench-row"></div>
                 </div>
             </div>
 
@@ -443,10 +409,7 @@
             },
             toggleMenu: () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); },
             switchTool: (t) => {
-                // On mobile, toggle menu. On desktop, menu is fixed so no toggle needed (but doesn't hurt)
-                if(window.innerWidth < 1024) app.toggleMenu(); 
-                
-                app.currentTool = t;
+                app.toggleMenu(); app.currentTool = t;
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-' + t).classList.add('active');
                 if (t === 'squad') {
