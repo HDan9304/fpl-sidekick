@@ -1,11 +1,7 @@
-// Wait for the page to load
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // Get references to HTML elements
     const searchBtn = document.getElementById('searchBtn');
     const inputField = document.getElementById('teamID');
-    
-    // Add Event Listeners
+
     searchBtn.addEventListener('click', getTeam);
     inputField.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') getTeam();
@@ -18,29 +14,26 @@ async function getTeam() {
     const loadingDiv = document.getElementById('loading');
     const searchBtn = document.getElementById('searchBtn');
 
-    // Validation
     if (!id) {
-        alert("Please enter a valid Team ID");
+        // Add a temporary red border to input if empty
+        document.getElementById('teamID').style.borderColor = 'var(--pl-red)';
+        setTimeout(() => document.getElementById('teamID').style.borderColor = '#eee', 1000);
         return;
     }
 
-    // UI State: Loading
+    // UI Loading State
     searchBtn.disabled = true;
-    searchBtn.innerText = 'Scouting...';
+    searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scouting...'; // Icon spins!
     resultDiv.classList.add('hidden');
     loadingDiv.classList.remove('hidden');
 
     try {
-        // --- API STEP 1: Get Global Data (Players/Teams) ---
-        const staticUrl = `https://fantasy.premierleague.com/api/bootstrap-static/`;
-        // We use 'allorigins' proxy to bypass CORS restrictions
-        const staticProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(staticUrl)}`;
-        
+        // 1. Get Global Data
+        const staticProxy = `https://api.allorigins.win/get?url=${encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/')}`;
         const staticRes = await fetch(staticProxy);
-        const staticRaw = await staticRes.json();
-        const staticData = JSON.parse(staticRaw.contents);
+        const staticData = JSON.parse((await staticRes.json()).contents);
 
-        // Map data for easy lookup
+        // Map Players and Teams
         const playerMap = {};
         staticData.elements.forEach(p => {
             playerMap[p.id] = {
@@ -48,78 +41,58 @@ async function getTeam() {
                 team_code: p.team,
                 form: parseFloat(p.form),
                 now_cost: p.now_cost / 10,
-                status: p.status // 'a' = available, 'd' = doubt, 'i' = injured
             };
         });
 
-        // Get Team Short Names (e.g., ARS, LIV)
         const teamMap = {};
-        staticData.teams.forEach(t => {
-            teamMap[t.id] = t.short_name;
-        });
+        staticData.teams.forEach(t => teamMap[t.id] = t.short_name);
 
-        // Find Current Gameweek
-        const currentEvent = staticData.events.find(e => e.is_current) || { id: 1 };
-        const gw = currentEvent.id;
+        // Get Current Gameweek
+        const gw = staticData.events.find(e => e.is_current)?.id || 1;
 
-
-        // --- API STEP 2: Get User's Picks ---
-        const picksUrl = `https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`;
-        const picksProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(picksUrl)}`;
-        
+        // 2. Get User Picks
+        const picksProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`)}`;
         const picksRes = await fetch(picksProxy);
-        const picksRaw = await picksRes.json();
-        const picksData = JSON.parse(picksRaw.contents);
+        const picksData = JSON.parse((await picksRes.json()).contents);
 
-
-        // --- API STEP 3: Get User's Details ---
-        const entryUrl = `https://fantasy.premierleague.com/api/entry/${id}/`;
-        const entryProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(entryUrl)}`;
-        
+        // 3. Get Manager Details
+        const entryProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/`)}`;
         const entryRes = await fetch(entryProxy);
-        const entryRaw = await entryRes.json();
-        const entryData = JSON.parse(entryRaw.contents);
+        const entryData = JSON.parse((await entryRes.json()).contents);
 
-
-        // --- RENDER STEP: Build the HTML ---
-        
-        // 1. Header Info
+        // 4. Render HTML
         let html = `
-            <div class="result-header">
-                <div class="manager-name">${entryData.name}</div>
-                <div class="meta-info">
-                    ${entryData.player_first_name} ${entryData.player_last_name} | 
-                    GW${gw} Points: ${picksData.entry_history.points}
+            <div class="manager-card">
+                <div class="manager-name"><i class="fa-solid fa-shirt"></i> ${entryData.name}</div>
+                <div class="manager-meta">
+                    ${entryData.player_first_name} ${entryData.player_last_name} &bull; 
+                    <span style="color:var(--pl-purple); font-weight:bold">${picksData.entry_history.points} pts</span>
                 </div>
             </div>
+            
             <div class="section-title">Starting XI</div>
             <ul class="player-list">
         `;
 
-        // 2. Loop through players
         picksData.picks.forEach((pick, index) => {
             const player = playerMap[pick.element];
             const teamName = teamMap[player.team_code];
             
-            // LOGIC: The "Transfer Helper" Chip
-            // If form is bad (< 2.0) AND they are in starting XI
+            // LOGIC: Cold Form Badge with Icon
             let chipHTML = '';
             if (index < 11 && player.form < 2.0) {
-                chipHTML = `<span class="chip chip-cold">COLD: ${player.form}</span>`;
+                // Here is the FontAwesome Snowflake Icon
+                chipHTML = `<span class="chip chip-cold"><i class="fa-regular fa-snowflake"></i> ${player.form}</span>`;
             }
 
-            // Divider for Bench
             if (index === 11) {
                 html += `</ul><div class="section-title">Bench</div><ul class="player-list">`;
             }
 
             html += `
                 <li class="player-item">
-                    <div class="player-info">
-                        <span class="p-name">
-                            ${player.web_name} 
-                            ${chipHTML}
-                        </span>
+                    <div>
+                        <span class="p-name">${player.web_name} ${chipHTML}</span>
                         <span class="p-team">${teamName}</span>
                     </div>
                     <span class="p-cost">£${player.now_cost}m</span>
@@ -127,20 +100,23 @@ async function getTeam() {
             `;
         });
 
-        html += `</ul>`; // Close list
-
-        // Inject into page
+        html += `</ul>`;
         resultDiv.innerHTML = html;
         resultDiv.classList.remove('hidden');
 
     } catch (error) {
         console.error(error);
-        resultDiv.innerHTML = `<p style="color:red; text-align:center;">Could not find team. <br>Check ID or try again later.</p>`;
+        resultDiv.innerHTML = `
+            <div style="text-align:center; padding:20px; color:var(--pl-red);">
+                <i class="fa-solid fa-circle-exclamation" style="font-size:2rem; margin-bottom:10px;"></i><br>
+                <strong>Team Not Found</strong><br>
+                <span style="font-size:0.8rem; color:#666">Check the ID and try again.</span>
+            </div>
+        `;
         resultDiv.classList.remove('hidden');
     } finally {
-        // UI Cleanup
         loadingDiv.classList.add('hidden');
         searchBtn.disabled = false;
-        searchBtn.innerText = 'Find Team';
+        searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Find Team';
     }
 }
