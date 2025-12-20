@@ -14,45 +14,87 @@
             --bg-body: #f0f2f5; --bg-app: #ffffff;
             --text-main: #111827; --text-sub: #6b7280;
             --border: #e5e7eb; --red: #e90052;
-            --grass-1: #059669; --grass-2: #047857;
+            
+            /* PITCH COLORS */
+            --grass-1: #059669; --grass-2: #027a45;
+            
+            /* FDR Colors */
             --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e7e7e7; --fdr-4: #ff1751; --fdr-5: #80072d;
             --fdr-text-dark: #00381b; --fdr-text-light: white;
+
+            /* STATUS COLORS */
             --status-warn: #fbbf24; --status-bad: #ef4444;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; }
 
-        .app-container { width: 100%; max-width: 600px; background-color: var(--bg-app); min-height: 100vh; position: relative; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
-        @media (min-width: 600px) { body { padding: 40px 0; } .app-container { min-height: auto; border-radius: 24px; height: 90vh; overflow: hidden; } }
+        /* APP SHELL */
+        .app-container {
+            width: 100%; max-width: 600px; background-color: var(--bg-app);
+            min-height: 100vh; position: relative; display: flex; flex-direction: column;
+        }
+        @media (min-width: 600px) {
+            body { padding: 40px 0; }
+            .app-container {
+                min-height: auto; border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+                height: 90vh; overflow: hidden;
+            }
+        }
 
-        header { background: var(--bg-app); height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50; }
+        /* HEADER */
+        header {
+            background: var(--bg-app); height: 60px; padding: 0 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50;
+        }
         .header-left { display: flex; align-items: center; gap: 15px; }
-        .menu-btn { font-size: 1.2rem; cursor: pointer; color:var(--text-main); }
+        .menu-btn { font-size: 1.2rem; cursor: pointer; padding: 8px; margin-left: -8px; }
         .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6; border: 1px solid var(--border); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .user-avatar.active { background: var(--primary); color: var(--accent); }
+        .brand i { color: var(--accent); }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6;
+            border: 1px solid var(--border); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .user-avatar.active { background: var(--primary); color: var(--accent); border-color: var(--primary); }
 
-        .sidebar { position: fixed; top: 0; left: 0; height: 100%; width: 280px; background: var(--bg-app); z-index: 200; transform: translateX(-100%); transition: transform 0.3s; box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed; top: 0; left: 0; height: 100%; width: 280px;
+            background: var(--bg-app); z-index: 200; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
         .sidebar.open { transform: translateX(0); }
         .menu-header { height: 60px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
         .menu-items { flex: 1; padding-top: 10px; }
         .menu-item { display: flex; align-items: center; gap: 16px; padding: 16px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
+        .menu-item:hover { background: #f9fafb; color: var(--primary); }
         .menu-item.active { color: var(--primary); background: rgba(55, 0, 60, 0.04); border-left-color: var(--primary); }
         
         .menu-footer { padding: 20px; border-top: 1px solid var(--border); margin-top: auto; }
-        .logout-btn { width: 100%; padding: 12px; border: 1px solid #fee2e2; background: #fef2f2; color: #ef4444; border-radius: 12px; font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; }
+        .logout-btn { 
+            width: 100%; padding: 12px; border: 1px solid #fee2e2; background: #fef2f2; 
+            color: #ef4444; border-radius: 12px; font-size: 0.9rem; font-weight: 700; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.2s; 
+        }
         .logout-btn:active { background: #fee2e2; transform: scale(0.98); }
-        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; display: none; }
-        .menu-overlay.open { display: block; }
 
-        .content { padding: 15px; overflow-y: auto; flex: 1; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
+        .menu-overlay.open { opacity: 1; visibility: visible; }
+
+        /* CONTENT */
+        .content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        
         .welcome-card { text-align: center; padding: 40px 20px; background: #fafafa; border-radius: 20px; border: 1px solid var(--border); margin-top: 20px; }
         input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: white; font-size: 1rem; }
         .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
+        
         .demo-alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 15px; border: 1px solid #ffeeba; }
-        .hidden { display: none !important; }
 
+        /* SCOREBOARD */
         .scoreboard { background: var(--primary); color: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2); }
         .manager-name { font-size: 1.1rem; font-weight: 800; text-align: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; }
@@ -61,6 +103,7 @@
         .stat-val { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
         .stat-val-small { font-size: 0.9rem; font-weight: 700; color: white; }
 
+        /* PITCH */
         .pitch-wrapper { background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 20px; }
         .budget-bar { background: white; padding: 8px 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 0.75rem; font-weight: 600; color: var(--text-sub); }
         .budget-val { color: var(--primary); font-weight: 800; }
@@ -72,20 +115,35 @@
         .box-bot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-bottom: none; }
         .field-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 20px; position: relative; z-index: 10; }
         
-        .player-pill { background: rgba(255,255,255,0.95); width: 68px; padding: 6px 2px; border-radius: 6px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s; }
+        /* PLAYER PILL */
+        .player-pill {
+            background: rgba(255,255,255,0.95); width: 68px; padding: 6px 2px; border-radius: 6px; text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s;
+        }
         .player-pill:active { transform: scale(0.95); }
+        
         .kit-img { width: 36px; height: 46px; object-fit: contain; margin-bottom: -2px; margin-top: 2px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
         .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; background: white; margin-top: 2px; padding: 1px 0; }
         .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding-bottom: 2px; }
         .points-badge { background: var(--primary); color: white; padding: 0 4px; border-radius: 3px; font-weight: 700; }
         .fix-badge { font-size: 0.5rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; }
         
-        .fdr-1, .fdr-2 { background: var(--fdr-2); color: var(--fdr-text-dark); } .fdr-3 { background: var(--fdr-3); color: #333; } .fdr-4 { background: var(--fdr-4); color: white; } .fdr-5 { background: var(--fdr-5); color: white; }
+        /* FDR Colors */
+        .fdr-1, .fdr-2 { background: var(--fdr-2); color: var(--fdr-text-dark); }
+        .fdr-3 { background: var(--fdr-3); color: #333; }
+        .fdr-4 { background: var(--fdr-4); color: white; }
+        .fdr-5 { background: var(--fdr-5); color: white; }
+
+        /* BADGES */
         .captain-badge { position: absolute; bottom: 30px; right: -4px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
         .vice-badge { background: #666; }
+        
+        /* STATUS FLAGS */
         .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
-        .status-warn { background: var(--status-warn); color: #78350f; } .status-bad { background: var(--status-bad); color: white; }
+        .status-warn { background: var(--status-warn); color: #78350f; }
+        .status-bad { background: var(--status-bad); color: white; }
 
+        /* BENCH */
         .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
         .bench-header { background: #f8f9fa; padding: 8px 15px; font-size: 0.7rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
         .bench-row { display: flex; justify-content: space-around; padding: 15px; background: #fdfdfd; }
@@ -93,32 +151,63 @@
         .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
 
         /* MODAL */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: flex-end; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); z-index: 1000; 
+            /* Fix: Flexbox pushes content to bottom */
+            display: flex; justify-content: center; align-items: flex-end; 
+            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); 
+        }
         .modal-overlay.open { opacity: 1; visibility: visible; }
-        .modal-card { background: white; width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 25px; box-shadow: 0 -10px 40px rgba(0,0,0,0.3); margin: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        .modal-card {
+            background: white; 
+            width: 100%; /* Fix: Full width */
+            max-width: 600px; /* Constrain on desktop */
+            border-radius: 20px 20px 0 0; /* Fix: Only top corners rounded */
+            padding: 25px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+            margin: 0; /* Fix: No margins */
+            transform: translateY(100%); 
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
         .modal-overlay.open .modal-card { transform: translateY(0); }
+
         .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
         .m-player-team { font-size: 0.9rem; color: var(--text-sub); }
         .close-modal { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; color: #666; }
+        
         .m-stats-row { display: flex; gap: 15px; margin-bottom: 20px; }
         .m-stat-box { background: #f9fafb; padding: 10px; border-radius: 10px; flex: 1; text-align: center; border: 1px solid var(--border); }
         .m-stat-label { font-size: 0.65rem; text-transform: uppercase; color: #888; font-weight: 700; }
         .m-stat-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        
         .m-section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 10px; color: var(--text-main); }
         .fix-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
         .fix-item { min-width: 80px; background: #fff; border: 1px solid var(--border); padding: 8px; border-radius: 8px; text-align: center; }
         .fix-opp { font-weight: 800; font-size: 0.9rem; }
         .fix-diff-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+        
         .m-news { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #ffeeba; display: none; }
 
         .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
 
-        /* LOGOUT MODAL */
-        .logout-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px); }
+        /* --- LOGOUT MODAL STYLES --- */
+        .logout-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); z-index: 2000; 
+            display: flex; justify-content: center; align-items: center; 
+            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px); 
+        }
         .logout-overlay.open { opacity: 1; visibility: visible; }
-        .logout-card { background: white; width: 90%; max-width: 320px; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform: scale(0.95); transition: 0.2s; }
+        .logout-card { 
+            background: white; width: 90%; max-width: 320px; 
+            border-radius: 20px; padding: 24px; text-align: center; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform: scale(0.95); transition: 0.2s;
+        }
         .logout-overlay.open .logout-card { transform: scale(1); }
         .logout-actions { display: flex; gap: 10px; margin-top: 24px; }
         .l-btn { flex: 1; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; border: none; }
@@ -132,11 +221,17 @@
     <div id="sideMenu" class="sidebar">
         <div class="menu-header">FPL Hub</div>
         <div class="menu-items">
-            <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')"><i class="fa-solid fa-shirt"></i> Squad</div>
-            <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')"><i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions</div>
+            <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
+                <i class="fa-solid fa-shirt"></i> Squad
+            </div>
+            <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
+            </div>
         </div>
         <div class="menu-footer">
-            <button class="logout-btn" onclick="clearData()"><i class="fa-solid fa-power-off"></i> Logout</button>
+            <button class="logout-btn" onclick="clearData()">
+                <i class="fa-solid fa-power-off"></i> Logout
+            </button>
         </div>
     </div>
 
@@ -149,12 +244,24 @@
                 </div>
                 <button class="close-modal" onclick="closeModal()">×</button>
             </div>
+            
             <div id="modalNews" class="m-news"></div>
+
             <div class="m-stats-row">
-                <div class="m-stat-box"><div class="m-stat-label">Form</div><div class="m-stat-val" id="modalForm">0.0</div></div>
-                <div class="m-stat-box"><div class="m-stat-label">Selected</div><div class="m-stat-val" id="modalSel">0%</div></div>
-                <div class="m-stat-box"><div class="m-stat-label">Points</div><div class="m-stat-val" id="modalPts">0</div></div>
+                <div class="m-stat-box">
+                    <div class="m-stat-label">Form</div>
+                    <div class="m-stat-val" id="modalForm">0.0</div>
+                </div>
+                <div class="m-stat-box">
+                    <div class="m-stat-label">Selected</div>
+                    <div class="m-stat-val" id="modalSel">0%</div>
+                </div>
+                <div class="m-stat-box">
+                    <div class="m-stat-label">Points</div>
+                    <div class="m-stat-val" id="modalPts">0</div>
+                </div>
             </div>
+
             <div class="m-section-title">Upcoming Fixtures</div>
             <div id="modalFixtures" class="fix-list">
                 <div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>
@@ -199,71 +306,158 @@
             </div>
 
             <div id="dashboardView" class="hidden">
-                <div id="demoAlert" class="demo-alert hidden"><i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.</div>
+                <div id="demoAlert" class="demo-alert hidden">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
+                </div>
+
                 <div class="scoreboard">
                     <div class="manager-name" id="dispName">...</div>
                     <div class="stats-grid">
-                        <div class="stat-box"><div class="stat-label">GW Points</div><div class="stat-val" id="dispGW">...</div></div>
-                        <div class="stat-box"><div class="stat-label">Total Pts</div><div class="stat-val-small" id="dispTotal">...</div></div>
-                        <div class="stat-box"><div class="stat-label">Rank</div><div class="stat-val-small" id="dispRank">...</div></div>
+                        <div class="stat-box">
+                            <div class="stat-label">GW Points</div>
+                            <div class="stat-val" id="dispGW">...</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Total Pts</div>
+                            <div class="stat-val-small" id="dispTotal">...</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Rank</div>
+                            <div class="stat-val-small" id="dispRank">...</div>
+                        </div>
                     </div>
                 </div>
+
                 <div class="pitch-wrapper">
-                    <div class="budget-bar"><span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span><span>Value: <span class="budget-val" id="dispValue">£0.0m</span></span></div>
+                    <div class="budget-bar">
+                        <span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span>
+                        <span>Value: <span class="budget-val" id="dispValue">£0.0m</span></span>
+                    </div>
+
                     <div class="pitch-container">
-                        <div class="pitch-lines"><div class="box-top"></div><div class="line-mid"></div><div class="pitch-circle"></div><div class="box-bot"></div></div>
+                        <div class="pitch-lines">
+                            <div class="box-top"></div>
+                            <div class="line-mid"></div>
+                            <div class="pitch-circle"></div>
+                            <div class="box-bot"></div>
+                        </div>
                         <div id="pitchRows"></div>
                     </div>
                 </div>
-                <div class="bench-wrapper"><div class="bench-header">Substitutes</div><div id="benchRow" class="bench-row"></div></div>
+
+                <div class="bench-wrapper">
+                    <div class="bench-header">Substitutes</div>
+                    <div id="benchRow" class="bench-row"></div>
+                </div>
             </div>
 
-            <div id="transfersView" class="hidden"></div>
+            <div id="transfersView" class="hidden">
+                <div class="welcome-card">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
+                    <h2>Transfer Hub</h2>
+                    <p>Coming next...</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const MOCK_DATA = { user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 }, bank: 5, value: 1024, picks: [{ element: 1, position: 1 }, { element: 2, position: 2 }, { element: 3, position: 3 }, { element: 4, position: 4 }, { element: 5, position: 5, is_vice_captain: true }, { element: 6, position: 6 }, { element: 7, position: 7 }, { element: 8, position: 8 }, { element: 9, position: 9, is_captain: true }, { element: 10, position: 10 }, { element: 11, position: 11 }, { element: 12, position: 12 }, { element: 13, position: 13 }, { element: 14, position: 14 }, { element: 15, position: 15 }], players: { 9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock - 75% chance of playing", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 }, 5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40, form: 7.0, transfers_in: 30000, total_points: 140, ict_index: 280 }, 1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', form: 3.5, transfers_in: 1000, total_points: 50, ict_index: 20 } }, fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } } };
+        // --- MOCK DATA ---
+        const MOCK_DATA = {
+            user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
+            bank: 5, value: 1024,
+            picks: [
+                { element: 1, position: 1 }, { element: 2, position: 2 }, { element: 3, position: 3 }, { element: 4, position: 4 }, 
+                { element: 5, position: 5, is_vice_captain: true }, { element: 6, position: 6 }, { element: 7, position: 7 }, { element: 8, position: 8 }, 
+                { element: 9, position: 9, is_captain: true }, { element: 10, position: 10 }, { element: 11, position: 11 }, { element: 12, position: 12 }, 
+                { element: 13, position: 13 }, { element: 14, position: 14 }, { element: 15, position: 15 }
+            ],
+            players: {
+                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock - 75% chance of playing", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 },
+                5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40, form: 7.0, transfers_in: 30000, total_points: 140, ict_index: 280 },
+                1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', form: 3.5, transfers_in: 1000, total_points: 50, ict_index: 20 }
+            },
+            fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
+        };
 
         const TransferBot = {
-            solveOne: (currentPicks, allPlayers, bank, fixtures, excludeIds = []) => {
-                let worstPlayer = null; let minScore = 999.0;
-                currentPicks.forEach(pick => {
-                    const p = allPlayers[pick.element];
-                    if (p.pos === 1 || excludeIds.includes(p.id)) return;
-                    const nextFix = fixtures[p.team_id] || { diff: 3 };
-                    let score = parseFloat(p.form) - (nextFix.diff * 2);
-                    if (p.status !== 'a' && p.chance < 75) score = -100;
-                    if (score < minScore) { minScore = score; worstPlayer = p; }
-                });
-                if (!worstPlayer) return null;
-
-                let bestTarget = null; let maxScore = -999.0;
-                const maxBudget = bank + worstPlayer.price;
-                Object.values(allPlayers).forEach(target => {
-                    if (target.pos !== worstPlayer.pos) return;
-                    if (target.price > maxBudget) return;
-                    if (target.id === worstPlayer.id) return;
-                    if (target.status !== 'a' || target.chance < 75) return;
-                    if (currentPicks.some(pick => pick.element === target.id)) return;
-                    if (excludeIds.includes(target.id)) return;
-                    const targetFix = fixtures[target.team_id] || { diff: 3 };
-                    let targetScore = parseFloat(target.form) + (10 - (targetFix.diff * 2));
-                    if (targetScore > maxScore) { maxScore = targetScore; bestTarget = target; }
-                });
-
-                if (bestTarget) return { out: worstPlayer, in: bestTarget, rawDiff: maxScore - minScore };
-                return null;
+            getScore: (p, fixtures) => {
+                const nextFix = fixtures[p.team_id] || { diff: 3 };
+                let score = parseFloat(p.form) - (nextFix.diff * 2);
+                if (p.status !== 'a' && p.chance < 75) score = -50;
+                return score;
             },
+
             analyze: (myPicks, allPlayers, bank, fixtures) => {
-                const move1 = TransferBot.solveOne(myPicks, allPlayers, bank, fixtures);
-                if (!move1) return null;
-                const newBank = bank + move1.out.price - move1.in.price;
-                const tempPicks = myPicks.filter(p => p.element !== move1.out.id);
-                tempPicks.push({ element: move1.in.id });
-                const move2 = TransferBot.solveOne(tempPicks, allPlayers, newBank, fixtures, [move1.in.id, move1.out.id]);
-                if (move2 && move2.rawDiff > 5.0) return { type: 'double', moves: [move1, move2], totalDiff: (move1.rawDiff + move2.rawDiff - 4).toFixed(1) };
-                return { type: 'single', moves: [move1], totalDiff: move1.rawDiff.toFixed(1) };
+                let suggestions = [];
+
+                // 1. Identify Sell Candidates (Sort squad by lowest score)
+                const squadScores = myPicks.map(pick => {
+                    const p = allPlayers[pick.element];
+                    if(p.pos === 1) return null; // Skip GK
+                    return { p: p, score: TransferBot.getScore(p, fixtures) };
+                }).filter(x => x).sort((a,b) => a.score - b.score);
+
+                // 2. Identify Buy Candidates (Sort market by highest score)
+                const marketScores = Object.values(allPlayers)
+                    .filter(p => p.status === 'a' && p.pos > 1) 
+                    .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
+                    .sort((a,b) => b.score - a.score)
+                    .slice(0, 50);
+
+                // STRATEGY A: Single Transfers (Try selling worst 3)
+                for(let i=0; i<3; i++) {
+                    const sell = squadScores[i];
+                    if(!sell) continue;
+                    const maxBudget = bank + sell.p.price;
+
+                    for(let j=0; j<marketScores.length; j++) {
+                        const buy = marketScores[j];
+                        if(buy.p.pos !== sell.p.pos) continue; 
+                        if(buy.p.price > maxBudget) continue; 
+                        if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
+
+                        const diff = (buy.score - sell.score).toFixed(1);
+                        if(diff > 0) {
+                            suggestions.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff), cost: 0 });
+                            break; 
+                        }
+                    }
+                }
+
+                // STRATEGY B: Double Transfer (Hit -4)
+                if(suggestions.length > 0) {
+                    const bestMove = suggestions[0];
+                    const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
+                    const secondSell = squadScores.find(s => s.p.id !== bestMove.out[0].id);
+                    
+                    if(secondSell) {
+                        const budget2 = newBank + secondSell.p.price;
+                        const secondBuy = marketScores.find(m => 
+                            m.p.id !== bestMove.in[0].id && 
+                            !myPicks.some(pick => pick.element === m.p.id) && 
+                            m.p.pos === secondSell.p.pos && 
+                            m.p.price <= budget2
+                        );
+
+                        if(secondBuy) {
+                            const diff2 = secondBuy.score - secondSell.score;
+                            const totalDiff = (bestMove.diff + diff2 - 4).toFixed(1);
+                            
+                            if(totalDiff > bestMove.diff) {
+                                suggestions.push({ 
+                                    type: 'Double Move (-4)', 
+                                    out: [bestMove.out[0], secondSell.p], 
+                                    in: [bestMove.in[0], secondBuy.p], 
+                                    diff: parseFloat(totalDiff), 
+                                    cost: 4 
+                                });
+                            }
+                        }
+                    }
+                }
+
+                return suggestions.sort((a,b) => b.diff - a.diff).slice(0, 3);
             }
         };
 
@@ -271,8 +465,10 @@
             getTrends: (allPlayers) => {
                 const players = Object.values(allPlayers);
                 const movers = [...players].sort((a, b) => b.transfers_in - a.transfers_in).slice(0, 3);
+                // RE-ADDED BEST VALUE
+                const valueKings = [...players].filter(p => p.total_points > 30).map(p => ({ ...p, value_ratio: (p.total_points / p.price) })).sort((a, b) => b.value_ratio - a.value_ratio).slice(0, 3);
                 const differentials = [...players].filter(p => p.sel < 5 && p.status === 'a').sort((a, b) => parseFloat(b.form) - parseFloat(a.form)).slice(0, 3);
-                return { movers, differentials };
+                return { movers, differentials, valueKings };
             }
         };
 
@@ -295,41 +491,62 @@
                     const container = document.getElementById('transfersView');
                     container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analysing Market...</p></div>';
                     setTimeout(() => {
-                        const result = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
+                        const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
                         const market = MarketBot.getTrends(app.playersCache);
                         let html = '';
 
-                        if (result) {
-                            html += `
-                                <div style="background:linear-gradient(135deg, var(--primary) 0%, #2a002e 100%); padding:20px; border-radius:16px; color:white; margin-bottom:25px; box-shadow:0 10px 25px -5px rgba(55,0,60,0.3);">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                        <div><div style="font-size:0.75rem; opacity:0.8; text-transform:uppercase; font-weight:700;">AI Suggestion</div><div style="font-size:1.4rem; font-weight:800; color:var(--accent);">+${result.totalDiff} Pts</div></div>
-                                        <i class="fa-solid fa-robot" style="font-size:2rem; opacity:0.9;"></i>
-                                    </div>
-                                    <div style="display:flex; flex-direction:column; gap:10px;">
-                            `;
-                            result.moves.forEach(m => {
+                        // --- RENDER TOP 3 SUGGESTIONS ---
+                        if (suggestions.length > 0) {
+                            html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-robot" style="color:var(--primary);"></i> Top Suggestions</div>`;
+                            
+                            suggestions.forEach((s, index) => {
+                                let badgeColor = index === 0 ? '#e90052' : '#666'; 
                                 html += `
-                                    <div style="display:flex; gap:10px; align-items:center;">
-                                        <div style="flex:1; background:rgba(255,255,255,0.1); padding:10px; border-radius:8px; text-align:center;">
-                                            <div style="font-size:0.6rem; opacity:0.7;">SELL</div><div style="font-weight:700; font-size:0.9rem;">${m.out.name}</div>
+                                    <div style="background:white; border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px; position:relative; overflow:hidden;">
+                                        ${index === 0 ? '<div style="position:absolute; top:0; right:0; background:#e90052; color:white; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">BEST OPTION</div>' : ''}
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                            <div style="font-size:0.75rem; font-weight:800; color:${badgeColor}; text-transform:uppercase;">${s.type}</div>
+                                            <div style="font-size:1.1rem; font-weight:800; color:var(--accent); background:var(--primary); padding:2px 8px; border-radius:6px;">+${s.diff}</div>
                                         </div>
-                                        <i class="fa-solid fa-arrow-right" style="opacity:0.5;"></i>
-                                        <div style="flex:1; background:white; color:var(--text-main); padding:10px; border-radius:8px; text-align:center;">
-                                            <div style="font-size:0.6rem; color:#02894e; font-weight:800;">BUY</div><div style="font-weight:700; font-size:0.9rem;">${m.in.name}</div>
-                                        </div>
-                                    </div>
                                 `;
+                                for(let i=0; i < s.out.length; i++) {
+                                    html += `
+                                        <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+                                            <div style="flex:1; background:#fff5f5; border:1px solid #fee2e2; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:10px;">
+                                                <div style="font-size:0.6rem; font-weight:800; color:#ef4444;">OUT</div>
+                                                <div style="font-weight:700; font-size:0.85rem;">${s.out[i].name}</div>
+                                            </div>
+                                            <i class="fa-solid fa-arrow-right" style="color:#d1d5db; font-size:0.8rem;"></i>
+                                            <div style="flex:1; background:#f0fdf4; border:1px solid #dcfce7; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:10px;">
+                                                <div style="font-size:0.6rem; font-weight:800; color:#16a34a;">IN</div>
+                                                <div style="font-weight:700; font-size:0.85rem;">${s.in[i].name}</div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                                html += `</div>`;
                             });
-                            html += `</div></div>`;
-                        } else { html += `<div class="welcome-card" style="margin-top:0;"><p>Squad is optimal.</p></div>`; }
+                        } else {
+                            html += `<div class="welcome-card" style="margin-top:0;"><p>Squad is optimal.</p></div>`;
+                        }
 
+                        // MARKET TRENDS
                         html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-fire" style="color:#e90052;"></i> Market Movers</div>
                                  <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
                         market.movers.forEach(p => {
                             html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#02894e; font-weight:800; background:#f0fdf4; padding:4px 8px; border-radius:100px; display:inline-block;">+${(p.transfers_in/1000).toFixed(1)}k</div></div>`;
                         });
-                        html += `</div><div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div><div style="display:flex; flex-direction:column; gap:10px;">`;
+                        html += `</div>`;
+
+                        // RESTORED BEST VALUE
+                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-coins" style="color:#eab308;"></i> Best Value</div>
+                                 <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
+                        market.valueKings.forEach(p => {
+                            html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#d97706; font-weight:800; background:#fef3c7; padding:4px 8px; border-radius:100px; display:inline-block;">${p.total_points} Pts</div></div>`;
+                        });
+                        html += `</div>`;
+
+                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div><div style="display:flex; flex-direction:column; gap:10px;">`;
                         market.differentials.forEach(p => {
                             html += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 16px; border-radius:12px; border:1px solid var(--border);" onclick="app.openModal(${p.id})"><div style="display:flex; align-items:center; gap:12px;"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px;"><div><div style="font-size:0.9rem; font-weight:700;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.sel}%</div></div></div><div style="text-align:right;"><div style="font-size:1rem; font-weight:800; color:var(--primary);">${p.form}</div><div style="font-size:0.6rem; color:var(--text-sub); text-transform:uppercase; font-weight:600;">Form</div></div></div>`;
                         });
@@ -434,7 +651,7 @@
             },
 
             createPill: (p, fixMap) => {
-                let capBadge = p.is_captain ? `<div class="captain-badge">C</div>` : (p.is_vice ? `<div class="vice-badge cap-badge">V</div>` : '');
+                let capBadge = p.is_captain ? `<div class="cap-badge">C</div>` : (p.is_vice ? `<div class="vice-badge cap-badge">V</div>` : '');
                 let statusBadge = p.status === 'd' ? `<div class="status-flag status-warn">!</div>` : (['i', 's'].includes(p.status) ? `<div class="status-flag status-bad">×</div>` : '');
                 let bNum = p.is_bench ? `<div class="bench-num">${p.sub_order}</div>` : '';
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
