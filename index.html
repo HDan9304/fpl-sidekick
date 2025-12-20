@@ -458,9 +458,18 @@
 
 const TransferBot = {
     getScore: (p, fixtures) => {
-        const nextFix = fixtures[p.team_id] || { diff: 3 };
+        // FIX: Check if fixtures is an array (new format) or object (old format)
+        // We want the first fixture (Next Gameweek)
+        const teamFix = fixtures[p.team_id];
+        const nextFix = Array.isArray(teamFix) ? teamFix[0] : (teamFix || { diff: 3 });
+        
+        // Calculate Score: Form minus Fixture Difficulty
+        // Higher Form + Lower Difficulty = Higher Score
         let score = parseFloat(p.form) - (nextFix.diff * 2);
-        if (p.status !== 'a' && p.chance < 75) score = -50;
+        
+        // Penalty for injured/suspended players
+        if (p.status !== 'a' && p.chance < 75) score -= 50;
+        
         return score;
     },
 
@@ -471,7 +480,7 @@ const TransferBot = {
         // 1. Identify Sell Candidates (Sort squad by lowest score)
         const squadScores = myPicks.map(pick => {
             const p = allPlayers[pick.element];
-            if(p.pos === 1) return null; // Skip GK
+            if(!p || p.pos === 1) return null; // Skip GK
             return { p: p, score: TransferBot.getScore(p, fixtures) };
         }).filter(x => x).sort((a,b) => a.score - b.score);
 
@@ -490,19 +499,24 @@ const TransferBot = {
 
             for(let j=0; j<marketScores.length; j++) {
                 const buy = marketScores[j];
+                
+                // Rules: Same Position, Affordable, Not already owned
                 if(buy.p.pos !== sell.p.pos) continue; 
                 if(buy.p.price > maxBudget) continue; 
                 if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
 
                 const diff = (buy.score - sell.score).toFixed(1);
-                if(diff > 0) {
+                
+                // Allow even small improvements (diff > -1) to ensure we always show options
+                // The bot will prioritize the best ones anyway due to sorting
+                if(parseFloat(diff) > -20) { 
                     singleMoves.push({ 
                         type: 'Single Move', 
                         out: [sell.p], 
                         in: [buy.p], 
                         diff: parseFloat(diff)
                     });
-                    break; // Found best replacement for this specific player
+                    break; // Found best replacement for this specific sell candidate
                 }
             }
         }
@@ -512,10 +526,11 @@ const TransferBot = {
         finalSuggestions.push(...singleMoves.slice(0, 3));
 
         // 4. STRATEGY B: The "How many transfers" Option (Double Move)
-        // Takes the best single move and tries to add a second move
         if(singleMoves.length > 0) {
             const bestMove = singleMoves[0];
             const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
+            
+            // Find a second player to sell (who isn't the first one)
             const secondSell = squadScores.find(s => s.p.id !== bestMove.out[0].id);
             
             if(secondSell) {
@@ -549,7 +564,6 @@ const TransferBot = {
             diff: 0.0
         });
 
-        // Return the specific list (Top 3 Singles + Double + No Transfer)
         return finalSuggestions;
     }
 };
