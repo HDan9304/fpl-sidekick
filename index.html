@@ -583,30 +583,13 @@
                 }
             },
 
-            // --- IMPROVED FETCH ENGINE (FASTER) ---
+            // --- ORIGINAL FAST PROXY ---
             fetchUrl: async (url) => {
-                // We prioritize 'allorigins' as it handles JSON better, then corsproxy
-                const proxies = [
-                    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-                    (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
-                ];
-                
-                for (let i = 0; i < proxies.length; i++) {
-                    try {
-                        const controller = new AbortController();
-                        // Reduced timeout to 4 seconds to fail faster and try next proxy
-                        const timeoutId = setTimeout(() => controller.abort(), 4000);
-                        
-                        const response = await fetch(proxies[i](url), { signal: controller.signal });
-                        clearTimeout(timeoutId);
-                        
-                        if (response.ok) return await response.json();
-                    } catch (e) {
-                        console.warn(`Proxy ${i} failed, trying next...`);
-                    }
-                }
-                // If the second one specifically fails, we check fetchUrl specific return for contents
-                throw new Error("Connection failed");
+                const proxy = 'https://api.allorigins.win/get?url=';
+                const res = await fetch(proxy + encodeURIComponent(url));
+                if (!res.ok) throw new Error('Network error');
+                const data = await res.json();
+                return JSON.parse(data.contents);
             },
 
             show: (viewId) => {
@@ -747,37 +730,30 @@
                 try {
                     document.getElementById('loadingMsg').innerText = "Connecting...";
                     
-                    // --- PARALLEL FETCH (High Speed) ---
-                    // We fetch the big 3 endpoints at the same time
-                    const [staticData, user, history] = await Promise.all([
-                        app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/'),
-                        app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`),
-                        app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`)
-                    ]);
-                    
+                    const staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
+                    const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                     app.userData = user;
+                    
+                    const history = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`);
                     app.historyData = history;
 
                     const gwEvent = staticData.events.find(e => e.is_current) || staticData.events[0];
                     const gw = gwEvent.id;
-                    
-                    // Fetch Picks
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
+                    
                     const nextEvent = staticData.events.find(e => e.is_next);
                     app.deadline = nextEvent ? nextEvent.deadline_time : null;
                     app.gwName = nextEvent ? nextEvent.name : 'GW-';
                     app.currentStats = picks.entry_history;
 
                     document.getElementById('loadingMsg').innerText = "Fetching Live Scores...";
-                    
-                    // Fetch Live Data & Fixtures
                     const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
                     const liveMap = {};
                     liveData.elements.forEach(el => {
                         liveMap[el.id] = { points: el.stats.total_points, mins: el.stats.minutes, goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, own_goals: el.stats.own_goals };
                     });
 
-                    // Fetch Fixtures (Next 3 GWs) in Parallel
+                    // Fetch 3 fixtures in parallel because it's safe
                     const fixReqs = [gw, gw + 1, gw + 2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
                     const [fix1, fix2, fix3] = await Promise.all(fixReqs);
                     
@@ -832,10 +808,9 @@
                     const mPlayers = {};
                     Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = { ...MOCK_DATA.players[k], id: k, team: 'MOCK' });
                     app.playersCache = mPlayers;
-                    // Force Render Demo after small delay
                     setTimeout(() => { 
                         app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, {}, { bank: 5, value: 1000 }, { chips: [] }, new Date().toISOString(), "GW Demo"); 
-                    }, 200);
+                    }, 500);
                 }
             },
 
@@ -1063,5 +1038,3 @@
         document.getElementById('playerModalOverlay').addEventListener('click', (e) => { if (e.target.id === 'playerModalOverlay') closeModal(); });
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
-</body>
-</html>
