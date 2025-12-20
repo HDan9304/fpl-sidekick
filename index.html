@@ -142,30 +142,20 @@
         .bench-pill { opacity: 0.85; }
         .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
 
-        /* --- MODAL FIX (EDGE-TO-EDGE BOTTOM SHEET) --- */
-        .modal-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.5); z-index: 1000; 
-            /* Fix: Flexbox pushes content to bottom */
-            display: flex; justify-content: center; align-items: flex-end; 
-            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); 
-        }
-        .modal-overlay.open { opacity: 1; visibility: visible; }
-
+        /* MODAL */
+        .modal-overlay { z-index: 1000; display: flex; justify-content: center; align-items: flex-end; } /* Bottom sheet on mobile */
+        @media (min-width: 600px) { .modal-overlay { align-items: center; } }
+        
         .modal-card {
-            background: white; 
-            width: 100%; /* Fix: Full width */
-            max-width: 600px; /* Constrain on desktop */
-            border-radius: 20px 20px 0 0; /* Fix: Only top corners rounded */
-            padding: 25px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
-            margin: 0; /* Fix: No margins */
-            transform: translateY(100%); 
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            background: white; width: 100%; max-width: 500px;
+            border-radius: 20px 20px 0 0; padding: 25px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .modal-overlay.open .modal-card { transform: translateY(0); }
+        @media (min-width: 600px) { .modal-card { border-radius: 20px; transform: translateY(20px); opacity: 0; } }
+        
+        .modal-overlay.open .modal-card { transform: translateY(0); opacity: 1; }
 
-        /* Modal Inner Styles */
         .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
         .m-player-team { font-size: 0.9rem; color: var(--text-sub); }
@@ -181,6 +171,7 @@
         .fix-item { min-width: 80px; background: #fff; border: 1px solid var(--border); padding: 8px; border-radius: 8px; text-align: center; }
         .fix-opp { font-weight: 800; font-size: 0.9rem; }
         .fix-diff-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+        
         .m-news { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #ffeeba; display: none; }
 
         .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
@@ -206,8 +197,8 @@
         </div>
     </div>
 
-    <div id="playerModalOverlay" class="modal-overlay" onclick="closeModal()">
-        <div class="modal-card" onclick="event.stopPropagation()">
+    <div id="playerModalOverlay" class="menu-overlay">
+        <div class="modal-card">
             <div class="modal-header">
                 <div>
                     <div class="m-player-name" id="modalName">Player Name</div>
@@ -237,8 +228,7 @@
             <div id="modalFixtures" class="fix-list">
                 <div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>
             </div>
-            <div style="height:20px;"></div> 
-        </div>
+            <div style="height:20px;"></div> </div>
     </div>
 
     <div class="app-container">
@@ -339,95 +329,6 @@
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
-const TransferBot = {
-    analyze: (myPicks, allPlayers, bank, fixtures) => {
-        // 1. IDENTIFY WEAKEST LINK
-        // We look for: Low Form + Hard Next Game
-        let worstPlayer = null;
-        let minScore = 999.0;
-
-        myPicks.forEach(pick => {
-            const p = allPlayers[pick.element];
-            if (p.pos === 1) return; // Skip GK
-
-            // Get next fixture difficulty for this player's team
-            // (If not found, assume average difficulty of 3)
-            const nextFix = fixtures[p.team_id] || { diff: 3 };
-            
-            // LOGIC: Form is important, but if they have a hard game (Diff 5), score drops.
-            // Formula: Form - (Fixture Difficulty * 2)
-            let score = parseFloat(p.form) - (nextFix.diff * 2);
-
-            // Force sell if injured
-            if (p.status !== 'a' && p.chance < 75) score = -100;
-
-            if (score < minScore) {
-                minScore = score;
-                worstPlayer = p;
-            }
-        });
-
-        if (!worstPlayer) return null;
-
-        // 2. FIND BEST REPLACEMENT
-        // We look for: High Form + Easy Next Game
-        let bestTarget = null;
-        let maxScore = -999.0;
-        const maxBudget = bank + worstPlayer.price;
-
-        Object.values(allPlayers).forEach(target => {
-            // Basic Rules
-            if (target.pos !== worstPlayer.pos) return;
-            if (target.price > maxBudget) return;
-            if (target.id === worstPlayer.id) return;
-            if (target.status !== 'a' || target.chance < 75) return;
-            
-            // Don't buy players we already own
-            if (myPicks.some(pick => pick.element === target.id)) return;
-
-            // Get target's next fixture
-            const targetFix = fixtures[target.team_id] || { diff: 3 };
-
-            // LOGIC: High Form + Easy Game (Diff 2)
-            // Formula: Form + (10 - (Fixture Difficulty * 2))
-            // Example: Diff 2 adds 6 points. Diff 5 adds 0 points.
-            let targetScore = parseFloat(target.form) + (10 - (targetFix.diff * 2));
-
-            if (targetScore > maxScore) {
-                maxScore = targetScore;
-                bestTarget = target;
-            }
-        });
-
-        // 3. GENERATE REASONING
-        if (bestTarget) {
-            // Calculate a "Projected Delta" to show the user
-            const diff = (maxScore - minScore).toFixed(1);
-            return { out: worstPlayer, in: bestTarget, diff: diff };
-        }
-        return null;
-    }
-};
-
-const MarketBot = {
-    getTrends: (allPlayers) => {
-        const players = Object.values(allPlayers);
-        
-        // 1. Market Movers (Most bought this week)
-        const movers = [...players]
-            .sort((a, b) => b.transfers_in - a.transfers_in)
-            .slice(0, 3);
-
-        // 2. Differentials (Low ownership < 5%, High Form)
-        const differentials = [...players]
-            .filter(p => p.sel < 5 && p.status === 'a')
-            .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))
-            .slice(0, 3);
-
-        return { movers, differentials };
-    }
-};
-
         const app = {
             currentTool: 'squad',
             playersCache: {}, // Store full player objects
@@ -445,97 +346,14 @@ const MarketBot = {
                 document.getElementById(viewId).classList.remove('hidden');
             },
             toggleMenu: () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); },
-                        switchTool: (t) => {
+            switchTool: (t) => {
                 app.toggleMenu(); app.currentTool = t;
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-' + t).classList.add('active');
-                
                 if (t === 'squad') {
                     if(Object.keys(app.playersCache).length > 0) app.show('dashboardView');
                     else app.load(localStorage.getItem('fpl_id_final'));
-                } else {
-                    // --- TRANSFER HUB LOGIC ---
-                    app.show('transfersView');
-                    const container = document.getElementById('transfersView');
-                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Scouting Market...</p></div>';
-                    
-                    setTimeout(() => {
-                        // 1. Run AI
-                        const result = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
-                        // 2. Run Market Analysis
-                        const market = MarketBot.getTrends(app.playersCache);
-                        
-                        let html = '';
-
-                        // SECTION 1: AI HERO
-                        if (result) {
-                            html += `
-                                <div style="background:linear-gradient(135deg, var(--primary) 0%, #2a002e 100%); padding:20px; border-radius:16px; color:white; margin-bottom:25px; box-shadow:0 10px 25px -5px rgba(55,0,60,0.3);">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                        <div>
-                                            <div style="font-size:0.75rem; opacity:0.8; text-transform:uppercase; font-weight:700;">AI Recommendation</div>
-                                            <div style="font-size:1.4rem; font-weight:800; color:var(--accent);">+${result.diff} Pts</div>
-                                        </div>
-                                        <div style="font-size:2rem;">🤖</div>
-                                    </div>
-                                    <div style="display:flex; gap:10px; align-items:center;">
-                                        <div style="flex:1; background:rgba(255,255,255,0.1); padding:10px; border-radius:8px; text-align:center;">
-                                            <div style="font-size:0.6rem; opacity:0.7; margin-bottom:4px;">SELL</div>
-                                            <div style="font-weight:700; font-size:0.9rem;">${result.out.name}</div>
-                                        </div>
-                                        <i class="fa-solid fa-arrow-right" style="opacity:0.5;"></i>
-                                        <div style="flex:1; background:white; color:var(--text-main); padding:10px; border-radius:8px; text-align:center;">
-                                            <div style="font-size:0.6rem; color:#02894e; font-weight:800; margin-bottom:4px;">BUY</div>
-                                            <div style="font-weight:700; font-size:0.9rem;">${result.in.name}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            html += `<div class="welcome-card" style="margin-top:0;"><p>Squad is optimal. Save your transfer.</p></div>`;
-                        }
-
-                        // SECTION 2: MARKET MOVERS
-                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-fire" style="color:#e90052;"></i> Market Movers</div>
-                                 <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
-                        
-                        market.movers.forEach(p => {
-                            html += `
-                                <div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})">
-                                    <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div>
-                                    <div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div>
-                                    <div style="font-size:0.75rem; color:#02894e; font-weight:800; background:#f0fdf4; padding:4px 8px; border-radius:100px; display:inline-block;">
-                                        +${(p.transfers_in / 1000).toFixed(1)}k
-                                    </div>
-                                </div>`;
-                        });
-                        html += `</div>`;
-
-                        // SECTION 3: DIFFERENTIALS
-                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div>
-                                 <div style="display:flex; flex-direction:column; gap:10px;">`;
-                        
-                        market.differentials.forEach(p => {
-                            html += `
-                                <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 16px; border-radius:12px; border:1px solid var(--border);" onclick="app.openModal(${p.id})">
-                                    <div style="display:flex; align-items:center; gap:12px;">
-                                        <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px;">
-                                        <div>
-                                            <div style="font-size:0.9rem; font-weight:700;">${p.name}</div>
-                                            <div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.sel}%</div>
-                                        </div>
-                                    </div>
-                                    <div style="text-align:right;">
-                                        <div style="font-size:1rem; font-weight:800; color:var(--primary);">${p.form}</div>
-                                        <div style="font-size:0.6rem; color:var(--text-sub); text-transform:uppercase; font-weight:600;">Form</div>
-                                    </div>
-                                </div>`;
-                        });
-                        html += `</div><div style="height:40px;"></div>`;
-
-                        container.innerHTML = html;
-                    }, 500);
-                }
+                } else app.show('transfersView');
             },
             
             // PROXY ENGINE
@@ -570,10 +388,8 @@ const MarketBot = {
 
                     // Map Fixtures
                     const fixMap = {};
-                    app.fixMap = fixMap;
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
-                    app.teams = teamShort; 
                     fixtures.forEach(f => {
                         fixMap[f.team_h] = { opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true };
                         fixMap[f.team_a] = { opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false };
@@ -591,18 +407,12 @@ const MarketBot = {
                             chance: p.chance_of_playing_next_round,
                             news: p.news,
                             sel: parseFloat(p.selected_by_percent),
-                            form: p.form,
-                            ict_index: p.ict_index
-                            transfers_in: p.transfers_in_event,
-                            total_points: p.total_points
+                            form: p.form
                         };
                     });
                     
                     app.playersCache = players; // Save for modal
 
-                    app.currentPicks = picks.picks;
-                    app.currentBank = picks.entry_history.bank / 10;
-                    
                     document.getElementById('demoAlert').classList.add('hidden');
                     app.render(user, picks.picks, players, fixMap, picks.entry_history);
 
@@ -718,21 +528,19 @@ const MarketBot = {
                     // First 5 fixtures
                     data.fixtures.slice(0, 5).forEach(f => {
                         const diff = f.difficulty;
-                        const colorClass = `fdr-${diff}`;
-                        
-                        // Calculate Opponent
+                        const oppId = f.is_home ? f.team_a : f.team_h;
+                        // Use basic logic if team map not avail inside modal scope easily, 
+                        // but we have team_h/a IDs. For now, just show difficulty dot.
                         const isHome = f.is_home;
-                        const oppId = isHome ? f.team_a : f.team_h;
-                        const oppName = app.teams ? app.teams[oppId] : '---'; // Get Name
+                        const colorClass = `fdr-${diff}`;
                         
                         html += `
                             <div class="fix-item">
-                                <div style="font-size:0.6rem; color:#888; font-weight:700;">GW${f.event}</div>
-                                <div style="font-weight:800; font-size:0.9rem; margin:2px 0; color:var(--primary);">
-                                    ${oppName} <span style="font-weight:400; color:#666; font-size:0.7rem;">${isHome ? '(H)' : '(A)'}</span>
-                                </div>
-                                <div style="margin-top:2px;">
+                                <div class="fix-opp">GW${f.event}</div>
+                                <div style="font-size:0.7rem; color:#666;">${isHome?'Home':'Away'}</div>
+                                <div style="margin-top:5px;">
                                     <span class="fix-diff-dot ${colorClass}"></span>
+                                    <span style="font-weight:700; font-size:0.8rem;">${diff}</span>
                                 </div>
                             </div>
                         `;
@@ -742,7 +550,7 @@ const MarketBot = {
                 } catch (e) {
                     content.innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>';
                 }
-            }            
+            }
         };
 
         function toggleMenu() { app.toggleMenu(); }
