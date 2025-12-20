@@ -219,6 +219,18 @@
         .chip-pill { background: #e5e7eb; color: #9ca3af; padding: 6px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #d1d5db; letter-spacing: 0.5px; }
         .chip-pill.active { background: #fff; color: var(--primary); border-color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .chip-pill.used { text-decoration: line-through; opacity: 0.6; }
+        
+        /* COUNTDOWN TIMER */
+        .countdown-box { 
+            text-align: center; margin-bottom: 15px; 
+            background: #111; color: white; padding: 10px; 
+            border-radius: 12px; font-weight: 700; font-size: 0.9rem;
+            display: flex; justify-content: center; gap: 10px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .time-part { font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
+        .live-dot { width: 8px; height: 8px; background: #e90052; border-radius: 50%; display: inline-block; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -316,6 +328,8 @@
                     <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
                 </div>
 
+                <div id="gwCountdown">...</div>
+                
                 <div class="scoreboard">
                     <div class="manager-name" id="dispName">...</div>
                     <div class="stats-grid">
@@ -620,15 +634,21 @@ const TransferBot = {
                     document.getElementById('loadingMsg').innerText = "Connecting...";
                     const staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
-                    const history = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`); // Added History Fetch
+                    const history = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`);
                     
-                    const gw = staticData.events.find(e => e.is_current)?.id || 1;
+                    const gwEvent = staticData.events.find(e => e.is_current) || staticData.events[0];
+                    const gw = gwEvent.id;
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
                     
+                    // NEW: Get Next Deadline
+                    const nextEvent = staticData.events.find(e => e.is_next);
+                    const deadline = nextEvent ? nextEvent.deadline_time : null;
+                    const nextGwName = nextEvent ? nextEvent.name : 'GW-';
+
                     document.getElementById('loadingMsg').innerText = "Checking Fixtures...";
                     const fixtures = await app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`);
 
-                    // Map Fixtures
+                    // Map Fixtures & Players (Standard Logic)
                     const fixMap = {};
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
@@ -637,25 +657,17 @@ const TransferBot = {
                         fixMap[f.team_h] = { opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true };
                         fixMap[f.team_a] = { opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false };
                     });
-                    
                     app.fixMap = fixMap;
 
-                    // Map Players
                     const players = {};
                     staticData.elements.forEach(p => {
                         players[p.id] = {
-                            id: p.id,
-                            name: p.web_name, team: teamShort[p.team], team_id: p.team,
+                            id: p.id, name: p.web_name, team: teamShort[p.team], team_id: p.team,
                             pos: p.element_type, price: p.now_cost / 10,
                             event_points: p.event_points, team_code: p.team_code,
-                            status: p.status, 
-                            chance: p.chance_of_playing_next_round,
-                            news: p.news,
-                            sel: parseFloat(p.selected_by_percent),
-                            form: p.form,
-                            transfers_in: p.transfers_in_event,
-                            total_points: p.total_points,
-                            ict_index: p.ict_index
+                            status: p.status, chance: p.chance_of_playing_next_round, news: p.news,
+                            sel: parseFloat(p.selected_by_percent), form: p.form,
+                            transfers_in: p.transfers_in_event, total_points: p.total_points, ict_index: p.ict_index
                         };
                     });
                     
@@ -664,8 +676,8 @@ const TransferBot = {
                     app.currentBank = picks.entry_history.bank / 10;
                     
                     document.getElementById('demoAlert').classList.add('hidden');
-                    // Pass 'history' to render
-                    app.render(user, picks.picks, players, fixMap, picks.entry_history, history);
+                    // Pass deadline info to render
+                    app.render(user, picks.picks, players, fixMap, picks.entry_history, history, deadline, nextGwName);
 
                 } catch (error) {
                     console.error(error);
@@ -674,12 +686,11 @@ const TransferBot = {
                     const mPlayers = {}; 
                     Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = {...MOCK_DATA.players[k], id:k, team:'MOCK'});
                     app.playersCache = mPlayers;
-                    // Pass mock history { chips: [] }
-                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, MOCK_DATA.fixtures, {bank:5, value:1000}, {chips:[]}); }, 500);
+                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, MOCK_DATA.fixtures, {bank:5, value:1000}, {chips:[]}, new Date().toISOString(), "GW Demo"); }, 500);
                 }
             },
 
-            render: (user, picks, players, fixMap, stats, history) => {
+            render: (user, picks, players, fixMap, stats, history, deadline, gwName) => {
                 document.getElementById('dispName').innerText = user.name;
                 document.getElementById('dispGW').innerText = user.summary_event_points || 0;
                 document.getElementById('dispTotal').innerText = user.summary_overall_points || 0;
@@ -687,22 +698,45 @@ const TransferBot = {
                 document.getElementById('dispBank').innerText = `£${(stats.bank/10).toFixed(1)}m`;
                 document.getElementById('dispValue').innerText = `£${(stats.value/10).toFixed(1)}m`;
 
-                // --- NEW: CHIP BAR LOGIC ---
-                const usedChips = history.chips.map(c => c.name); // e.g. ['wildcard', '3xc']
+                // --- NEW: COUNTDOWN LOGIC ---
+                if (app.timer) clearInterval(app.timer); // Clear old timer
+                
+                const updateTime = () => {
+                    const now = new Date().getTime();
+                    const countDate = new Date(deadline).getTime();
+                    const gap = countDate - now;
+
+                    if (gap > 0) {
+                        const d = Math.floor(gap / (1000 * 60 * 60 * 24));
+                        const h = Math.floor((gap % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const m = Math.floor((gap % (1000 * 60 * 60)) / (1000 * 60));
+                        const s = Math.floor((gap % (1000 * 60)) / 1000);
+                        
+                        document.getElementById('gwCountdown').innerHTML = 
+                            `<span>${gwName} Deadline</span> <span class="live-dot"></span> <span class="time-part">${d}d ${h}h ${m}m ${s}s</span>`;
+                    } else {
+                        document.getElementById('gwCountdown').innerHTML = "⚠️ Deadline Passed";
+                        clearInterval(app.timer);
+                    }
+                };
+                
+                updateTime(); // Run immediately
+                app.timer = setInterval(updateTime, 1000); // Run every second
+                // ---------------------------
+
+                // Render Chips
+                const usedChips = history.chips.map(c => c.name);
                 const chipMap = { 'wildcard': 'WC', 'freehit': 'FH', 'bboost': 'BB', '3xc': 'TC' };
                 const allChips = ['wildcard', 'freehit', 'bboost', '3xc'];
-                
                 const chipHtml = allChips.map(c => {
                     const isUsed = usedChips.includes(c);
                     const label = chipMap[c];
-                    // Logic: If used, show grey/crossed. If not used, show active color.
                     const className = isUsed ? 'chip-pill used' : 'chip-pill active';
                     return `<div class="${className}">${label}</div>`;
                 }).join('');
-                
                 document.getElementById('chipBar').innerHTML = chipHtml;
-                // ---------------------------
 
+                // Render Pitch
                 const pitchDiv = document.getElementById('pitchRows');
                 const benchDiv = document.getElementById('benchRow');
                 pitchDiv.innerHTML = ''; benchDiv.innerHTML = '';
