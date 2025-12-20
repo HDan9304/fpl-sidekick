@@ -142,20 +142,30 @@
         .bench-pill { opacity: 0.85; }
         .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
 
-        /* MODAL */
-        .modal-overlay { z-index: 1000; display: flex; justify-content: center; align-items: flex-end; } /* Bottom sheet on mobile */
-        @media (min-width: 600px) { .modal-overlay { align-items: center; } }
-        
-        .modal-card {
-            background: white; width: 100%; max-width: 500px;
-            border-radius: 20px 20px 0 0; padding: 25px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
-            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        /* --- MODAL FIX (EDGE-TO-EDGE BOTTOM SHEET) --- */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); z-index: 1000; 
+            /* Fix: Flexbox pushes content to bottom */
+            display: flex; justify-content: center; align-items: flex-end; 
+            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); 
         }
-        @media (min-width: 600px) { .modal-card { border-radius: 20px; transform: translateY(20px); opacity: 0; } }
-        
-        .modal-overlay.open .modal-card { transform: translateY(0); opacity: 1; }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
 
+        .modal-card {
+            background: white; 
+            width: 100%; /* Fix: Full width */
+            max-width: 600px; /* Constrain on desktop */
+            border-radius: 20px 20px 0 0; /* Fix: Only top corners rounded */
+            padding: 25px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+            margin: 0; /* Fix: No margins */
+            transform: translateY(100%); 
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-overlay.open .modal-card { transform: translateY(0); }
+
+        /* Modal Inner Styles */
         .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
         .m-player-team { font-size: 0.9rem; color: var(--text-sub); }
@@ -197,8 +207,8 @@
         </div>
     </div>
 
-    <div id="playerModalOverlay" class="menu-overlay">
-        <div class="modal-card">
+    <div id="playerModalOverlay" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div>
                     <div class="m-player-name" id="modalName">Player Name</div>
@@ -322,16 +332,96 @@
                 { element: 13, position: 13 }, { element: 14, position: 14 }, { element: 15, position: 15 }
             ],
             players: {
-                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock - 75% chance of playing", sel: 70, form: 8.5 },
-                5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40, form: 7.0 },
-                1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', form: 3.5 }
+                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock - 75% chance of playing", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 },
+                5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40, form: 7.0, transfers_in: 30000, total_points: 140, ict_index: 280 },
+                1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', form: 3.5, transfers_in: 1000, total_points: 50, ict_index: 20 }
             },
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
+        // --- NEW: TransferBot (Smart Logic) ---
+        const TransferBot = {
+            analyze: (myPicks, allPlayers, bank, fixtures) => {
+                let worstPlayer = null;
+                let minScore = 999.0;
+
+                myPicks.forEach(pick => {
+                    const p = allPlayers[pick.element];
+                    if (p.pos === 1) return; // Skip GK
+
+                    // Get next fixture difficulty
+                    const nextFix = fixtures[p.team_id] || { diff: 3 };
+                    
+                    // LOGIC: Form - (Fixture Difficulty * 2)
+                    let score = parseFloat(p.form) - (nextFix.diff * 2);
+
+                    // Penalize injured
+                    if (p.status !== 'a' && p.chance < 75) score = -100;
+
+                    if (score < minScore) {
+                        minScore = score;
+                        worstPlayer = p;
+                    }
+                });
+
+                if (!worstPlayer) return null;
+
+                // Find Best Replacement
+                let bestTarget = null;
+                let maxScore = -999.0;
+                const maxBudget = bank + worstPlayer.price;
+
+                Object.values(allPlayers).forEach(target => {
+                    // Filter constraints
+                    if (target.pos !== worstPlayer.pos) return;
+                    if (target.price > maxBudget) return;
+                    if (target.id === worstPlayer.id) return;
+                    if (target.status !== 'a' || target.chance < 75) return;
+                    
+                    // Don't buy owned players
+                    if (myPicks.some(pick => pick.element === target.id)) return;
+
+                    // Logic: Form + Easy Game Bonus
+                    const targetFix = fixtures[target.team_id] || { diff: 3 };
+                    let targetScore = parseFloat(target.form) + (10 - (targetFix.diff * 2));
+
+                    if (targetScore > maxScore) {
+                        maxScore = targetScore;
+                        bestTarget = target;
+                    }
+                });
+
+                if (bestTarget) {
+                    const diff = (maxScore - minScore).toFixed(1);
+                    return { out: worstPlayer, in: bestTarget, diff: diff };
+                }
+                return null;
+            }
+        };
+
+        // --- NEW: MarketBot (Trending Players) ---
+        const MarketBot = {
+            getTrends: (allPlayers) => {
+                const players = Object.values(allPlayers);
+                
+                // Sort by transfers_in
+                const movers = [...players]
+                    .sort((a, b) => b.transfers_in - a.transfers_in)
+                    .slice(0, 3);
+
+                // Sort by differentials (Low own, High form)
+                const differentials = [...players]
+                    .filter(p => p.sel < 5 && p.status === 'a')
+                    .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))
+                    .slice(0, 3);
+
+                return { movers, differentials };
+            }
+        };
+
         const app = {
             currentTool: 'squad',
-            playersCache: {}, // Store full player objects
+            playersCache: {}, 
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
@@ -346,14 +436,97 @@
                 document.getElementById(viewId).classList.remove('hidden');
             },
             toggleMenu: () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); },
+            
+            // --- UPDATED: switchTool (Renders New Transfer UI) ---
             switchTool: (t) => {
                 app.toggleMenu(); app.currentTool = t;
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-' + t).classList.add('active');
+                
                 if (t === 'squad') {
                     if(Object.keys(app.playersCache).length > 0) app.show('dashboardView');
                     else app.load(localStorage.getItem('fpl_id_final'));
-                } else app.show('transfersView');
+                } else {
+                    // RENDER TRANSFER TAB
+                    app.show('transfersView');
+                    const container = document.getElementById('transfersView');
+                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Scouting Market...</p></div>';
+                    
+                    setTimeout(() => {
+                        const result = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
+                        const market = MarketBot.getTrends(app.playersCache);
+                        
+                        let html = '';
+
+                        // 1. AI HERO CARD
+                        if (result) {
+                            html += `
+                                <div style="background:linear-gradient(135deg, var(--primary) 0%, #2a002e 100%); padding:20px; border-radius:16px; color:white; margin-bottom:25px; box-shadow:0 10px 25px -5px rgba(55,0,60,0.3);">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                        <div>
+                                            <div style="font-size:0.75rem; opacity:0.8; text-transform:uppercase; font-weight:700;">AI Recommendation</div>
+                                            <div style="font-size:1.4rem; font-weight:800; color:var(--accent);">+${result.diff} Pts</div>
+                                        </div>
+                                        <div style="font-size:2rem;">🤖</div>
+                                    </div>
+                                    <div style="display:flex; gap:10px; align-items:center;">
+                                        <div style="flex:1; background:rgba(255,255,255,0.1); padding:10px; border-radius:8px; text-align:center;">
+                                            <div style="font-size:0.6rem; opacity:0.7; margin-bottom:4px;">SELL</div>
+                                            <div style="font-weight:700; font-size:0.9rem;">${result.out.name}</div>
+                                        </div>
+                                        <i class="fa-solid fa-arrow-right" style="opacity:0.5;"></i>
+                                        <div style="flex:1; background:white; color:var(--text-main); padding:10px; border-radius:8px; text-align:center;">
+                                            <div style="font-size:0.6rem; color:#02894e; font-weight:800; margin-bottom:4px;">BUY</div>
+                                            <div style="font-weight:700; font-size:0.9rem;">${result.in.name}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            html += `<div class="welcome-card" style="margin-top:0;"><p>Squad is optimal. Save your transfer.</p></div>`;
+                        }
+
+                        // 2. MARKET MOVERS
+                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-fire" style="color:#e90052;"></i> Market Movers</div>
+                                 <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
+                        
+                        market.movers.forEach(p => {
+                            html += `
+                                <div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})">
+                                    <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div>
+                                    <div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div>
+                                    <div style="font-size:0.75rem; color:#02894e; font-weight:800; background:#f0fdf4; padding:4px 8px; border-radius:100px; display:inline-block;">
+                                        +${(p.transfers_in / 1000).toFixed(1)}k
+                                    </div>
+                                </div>`;
+                        });
+                        html += `</div>`;
+
+                        // 3. DIFFERENTIALS
+                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div>
+                                 <div style="display:flex; flex-direction:column; gap:10px;">`;
+                        
+                        market.differentials.forEach(p => {
+                            html += `
+                                <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 16px; border-radius:12px; border:1px solid var(--border);" onclick="app.openModal(${p.id})">
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px;">
+                                        <div>
+                                            <div style="font-size:0.9rem; font-weight:700;">${p.name}</div>
+                                            <div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.sel}%</div>
+                                        </div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="font-size:1rem; font-weight:800; color:var(--primary);">${p.form}</div>
+                                        <div style="font-size:0.6rem; color:var(--text-sub); text-transform:uppercase; font-weight:600;">Form</div>
+                                    </div>
+                                </div>`;
+                        });
+                        html += `</div><div style="height:40px;"></div>`;
+
+                        container.innerHTML = html;
+                    }, 500);
+                }
             },
             
             // PROXY ENGINE
@@ -390,12 +563,16 @@
                     const fixMap = {};
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
+                    app.teams = teamShort; // SAVE FOR MODAL
+
                     fixtures.forEach(f => {
                         fixMap[f.team_h] = { opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true };
                         fixMap[f.team_a] = { opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false };
                     });
+                    
+                    app.fixMap = fixMap; // SAVE FOR BOT
 
-                    // Map Players (Include Status & Chance)
+                    // --- UPDATED: Map Players with Extra Data ---
                     const players = {};
                     staticData.elements.forEach(p => {
                         players[p.id] = {
@@ -407,21 +584,30 @@
                             chance: p.chance_of_playing_next_round,
                             news: p.news,
                             sel: parseFloat(p.selected_by_percent),
-                            form: p.form
+                            form: p.form,
+                            // --- NEW DATA ---
+                            transfers_in: p.transfers_in_event,
+                            total_points: p.total_points,
+                            ict_index: p.ict_index
                         };
                     });
                     
-                    app.playersCache = players; // Save for modal
+                    app.playersCache = players;
+                    app.currentPicks = picks.picks;
+                    app.currentBank = picks.entry_history.bank / 10;
 
                     document.getElementById('demoAlert').classList.add('hidden');
                     app.render(user, picks.picks, players, fixMap, picks.entry_history);
 
                 } catch (error) {
                     document.getElementById('demoAlert').classList.remove('hidden');
-                    // Mock Data Fallback logic omitted for brevity in this specific update, but keeps app alive
-                    const mPlayers = {}; // Use mock
+                    const mPlayers = {}; 
                     Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = {...MOCK_DATA.players[k], id:k, team:'MOCK'});
                     app.playersCache = mPlayers;
+                    // Mock Fallback
+                    app.currentPicks = MOCK_DATA.picks;
+                    app.currentBank = 50;
+                    app.fixMap = {};
                     setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, MOCK_DATA.fixtures, {bank:5, value:1000}); }, 500);
                 }
             },
@@ -528,16 +714,12 @@
                     // First 5 fixtures
                     data.fixtures.slice(0, 5).forEach(f => {
                         const diff = f.difficulty;
-                        const oppId = f.is_home ? f.team_a : f.team_h;
-                        // Use basic logic if team map not avail inside modal scope easily, 
-                        // but we have team_h/a IDs. For now, just show difficulty dot.
-                        const isHome = f.is_home;
                         const colorClass = `fdr-${diff}`;
                         
                         html += `
                             <div class="fix-item">
                                 <div class="fix-opp">GW${f.event}</div>
-                                <div style="font-size:0.7rem; color:#666;">${isHome?'Home':'Away'}</div>
+                                <div style="font-size:0.7rem; color:#666;">${f.is_home?'Home':'Away'}</div>
                                 <div style="margin-top:5px;">
                                     <span class="fix-diff-dot ${colorClass}"></span>
                                     <span style="font-weight:700; font-size:0.8rem;">${diff}</span>
