@@ -773,21 +773,19 @@ const TransferBot = {
                 document.getElementById(viewId).classList.remove('hidden');
             },
             toggleMenu: () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); },
+            // --- 1. SWITCH TOOL ---
             switchTool: (t) => {
                 app.toggleMenu(); app.currentTool = t;
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-' + t).classList.add('active');
                 
                 if (t === 'squad') {
-                    // 1. RESET SIMULATION STATE
+                    // RESET SIMULATION
                     app.isSimulating = false;
-                    app.simNewIds = []; // Clear highlighted players
-                    
-                    // 2. FORCE REMOVE BANNER
+                    app.simNewIds = []; 
                     const banner = document.querySelector('.sim-banner');
                     if(banner) banner.remove();
 
-                    // 3. RELOAD REAL DATA
                     if(Object.keys(app.playersCache).length > 0) {
                         app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.currentStats, app.historyData, app.deadline, app.gwName);
                     } else {
@@ -867,9 +865,9 @@ const TransferBot = {
                         container.innerHTML = html;
                     }, 100);
                 }
-            },
-            
-            // --- SIMULATE TRANSFER ---
+            }, // <--- COMMA HERE IS CRITICAL
+
+            // --- 2. SIMULATE ---
             simulate: (outIds, inIds) => {
                 const simPicks = JSON.parse(JSON.stringify(app.currentPicks));
                 let simBank = app.currentBank;
@@ -887,8 +885,6 @@ const TransferBot = {
 
                 app.currentTool = 'squad';
                 app.isSimulating = true;
-                
-                // SAVE NEW IDs FOR HIGHLIGHTING
                 app.simNewIds = inIds; 
 
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
@@ -897,59 +893,75 @@ const TransferBot = {
                 const simStats = { ...app.currentStats, bank: simBank * 10, value: app.currentStats.value }; 
                 app.render(app.userData, simPicks, app.playersCache, app.fixMap, simStats, app.historyData, app.deadline, app.gwName);
                 
-                const bannerHtml = `
-                    <div class="sim-banner">
-                        <div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div>
-                        <div class="sim-btn" onclick="app.switchTool('squad')">Reset</div>
-                    </div>
-                `;
+                const bannerHtml = `<div class="sim-banner"><div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div><div class="sim-btn" onclick="app.switchTool('squad')">Reset</div></div>`;
                 const dash = document.getElementById('dashboardView');
                 const existingBanner = dash.querySelector('.sim-banner');
                 if(existingBanner) existingBanner.remove(); 
                 dash.insertAdjacentHTML('afterbegin', bannerHtml);
-            },
-            
-            // --- SHOW MANUAL TRANSFER OPTIONS ---
+            }, // <--- COMMA HERE IS CRITICAL
+
+            // --- 3. OPEN MODAL ---
+            openModal: async (playerId) => {
+                const p = app.playersCache[playerId];
+                if(!p) return;
+                const overlay = document.getElementById('playerModalOverlay');
+                
+                document.getElementById('modalName').innerText = p.name;
+                document.getElementById('modalTeam').innerText = `${p.team} • £${p.price}m`;
+                document.getElementById('modalForm').innerText = p.form;
+                document.getElementById('modalSel').innerText = `${p.sel}%`;
+                document.getElementById('modalPts').innerText = p.event_points;
+                const newsEl = document.getElementById('modalNews');
+                if(p.news) { newsEl.style.display = 'block'; newsEl.innerText = p.news; } else { newsEl.style.display = 'none'; }
+
+                const actionContainer = document.getElementById('modalActions');
+                const isOwned = app.currentPicks.some(pick => pick.element == p.id);
+                if (isOwned) {
+                    actionContainer.innerHTML = `<div style="text-align:center; color:#888; font-size:0.8rem;">You own this player</div>`;
+                } else {
+                    actionContainer.innerHTML = `<button class="action-btn btn-buy" onclick="app.showReplacements(${p.id}, ${p.pos})"><i class="fa-solid fa-arrow-right-arrow-left"></i> Transfer In</button><div id="repList_${p.id}" class="rep-list"></div>`;
+                }
+
+                overlay.classList.add('open');
+                const content = document.getElementById('modalFixtures');
+                content.innerHTML = '<div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>';
+                try {
+                    const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
+                    let html = '';
+                    data.fixtures.slice(0, 5).forEach(f => {
+                        const diff = f.difficulty;
+                        const isHome = f.is_home;
+                        const oppId = isHome ? f.team_a : f.team_h;
+                        const oppName = app.teams ? app.teams[oppId] : '---';
+                        html += `<div class="fix-item"><div style="font-size:0.6rem; color:#888; font-weight:700;">GW${f.event}</div><div style="font-weight:800; font-size:0.9rem; margin:2px 0; color:var(--primary);">${oppName} <span style="font-weight:400; color:#666; font-size:0.7rem;">${isHome ? '(H)' : '(A)'}</span></div><div><span class="fix-diff-dot fdr-${diff}"></span></div></div>`;
+                    });
+                    content.innerHTML = html;
+                } catch (e) { content.innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>'; }
+            }, // <--- COMMA HERE IS CRITICAL
+
+            // --- 4. SHOW REPLACEMENTS ---
             showReplacements: (buyId, buyPos) => {
                 const list = document.getElementById(`repList_${buyId}`);
                 if(!list) return;
-                
-                // Toggle visibility
                 if(list.style.display === 'block') { list.style.display = 'none'; return; }
                 
-                // Find candidates to sell (Same Position)
                 const candidates = app.currentPicks.filter(pick => {
                     const p = app.playersCache[pick.element];
                     return p.pos === buyPos;
                 });
 
                 let html = `<div style="font-size:0.8rem; font-weight:700; color:#666; margin:10px 0 5px 0;">Replace who?</div>`;
-                
                 candidates.forEach(pick => {
                     const p = app.playersCache[pick.element];
                     const bankAfter = (app.currentBank + p.price - app.playersCache[buyId].price).toFixed(1);
-                    const color = bankAfter >= 0 ? '#16a34a' : '#ef4444'; // Green if affordable, Red if not
-                    
-                    // We use the existing simulate function!
-                    // Note: simulate expects arrays [id]
-                    html += `
-                        <div class="rep-item" onclick="app.closeModal(); app.simulate([${p.id}], [${buyId}])">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:25px;">
-                                <div style="font-weight:700; font-size:0.9rem;">${p.name}</div>
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="font-size:0.7rem; color:#888;">Sell: £${p.price}m</div>
-                                <div style="font-size:0.75rem; font-weight:800; color:${color};">Bank: £${bankAfter}m</div>
-                            </div>
-                        </div>
-                    `;
+                    const color = bankAfter >= 0 ? '#16a34a' : '#ef4444';
+                    html += `<div class="rep-item" onclick="app.closeModal(); app.simulate([${p.id}], [${buyId}])"><div style="display:flex; align-items:center; gap:10px;"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:25px;"><div style="font-weight:700; font-size:0.9rem;">${p.name}</div></div><div style="text-align:right;"><div style="font-size:0.7rem; color:#888;">Sell: £${p.price}m</div><div style="font-size:0.75rem; font-weight:800; color:${color};">Bank: £${bankAfter}m</div></div></div>`;
                 });
-
                 list.innerHTML = html;
                 list.style.display = 'block';
-            },
-            
+            }, // <--- COMMA HERE IS CRITICAL
+
+            // --- 5. CLOSE MODAL ---
             closeModal: () => { document.getElementById('playerModalOverlay').classList.remove('open'); },
             
             // PROXY ENGINE
