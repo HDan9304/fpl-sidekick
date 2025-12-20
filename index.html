@@ -311,6 +311,19 @@
         .evt-assist { background: #3b82f6; color: white; } 
         .evt-red { background: #ef4444; color: white; }
         .evt-own { background: #111; color: #ef4444; } /* Own Goal */
+        
+        /* LEAGUE MODAL STYLES */
+        .league-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
+        .league-item:last-child { border-bottom: none; }
+        .lg-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
+        .lg-rank-box { text-align: right; }
+        .lg-rank { font-weight: 800; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+        .rank-arrow { font-size: 0.8rem; }
+        .arrow-up { color: #16a34a; }   /* Green */
+        .arrow-down { color: #ef4444; } /* Red */
+        .arrow-same { color: #d1d5db; } /* Grey */
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .trophy-btn { font-size: 1.2rem; color: #fbbf24; cursor: pointer; padding: 5px; } /* Gold Trophy */
     </style>
 </head>
 <body>
@@ -343,6 +356,16 @@
                 <button class="close-modal" onclick="closeModal()">×</button>
             </div>
             
+            <div id="leaguesModalOverlay" class="modal-overlay" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="m-player-name">My Leagues</div>
+                <button class="close-modal" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">×</button>
+            </div>
+            <div id="leaguesList" style="padding-bottom: 20px;"></div>
+        </div>
+    </div>
+    
             <div id="modalNews" class="m-news"></div>
 
             <div class="m-stats-row">
@@ -386,7 +409,10 @@
                 <div class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></div>
                 <div class="brand"><i class="fa-solid fa-bolt"></i> FPL Hub</div>
             </div>
-            <div class="user-avatar" id="userIcon" onclick="clearData()"><i class="fa-regular fa-user"></i></div>
+            <div class="header-right">
+                <div class="trophy-btn" onclick="app.openLeagues()"><i class="fa-solid fa-trophy"></i></div>
+                <div class="user-avatar" id="userIcon" onclick="clearData()"><i class="fa-regular fa-user"></i></div>
+            </div>
         </header>
 
         <div class="content">
@@ -730,6 +756,7 @@ const TransferBot = {
                     document.getElementById('loadingMsg').innerText = "Connecting...";
                     const staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
+                    app.userData = user; // Save for Leagues Modal
                     const history = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`);
                     
                     const gwEvent = staticData.events.find(e => e.is_current) || staticData.events[0];
@@ -1077,7 +1104,41 @@ const TransferBot = {
                 }
             }            
         };
+// --- LEAGUES MODAL ---
+            openLeagues: () => {
+                if(!app.userData || !app.userData.leagues) return alert("No league data found.");
+                
+                const leagues = app.userData.leagues.classic;
+                const container = document.getElementById('leaguesList');
+                let html = '';
 
+                if(leagues.length === 0) {
+                    html = '<div style="text-align:center; padding:20px; color:#888;">No Classic Leagues found.</div>';
+                } else {
+                    leagues.forEach(lg => {
+                        // Calculate movement arrows
+                        let arrow = '<i class="fa-solid fa-minus arrow-same"></i>';
+                        if(lg.entry_rank < lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-up arrow-up"></i>';
+                        else if(lg.entry_rank > lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-down arrow-down"></i>';
+
+                        html += `
+                            <div class="league-item">
+                                <div class="lg-name">${lg.name}</div>
+                                <div class="lg-rank-box">
+                                    <div class="lg-rank">
+                                        ${arrow} <span>${lg.entry_rank.toLocaleString()}</span>
+                                    </div>
+                                    <div style="font-size:0.65rem; color:#888;">Rank</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                container.innerHTML = html;
+                document.getElementById('leaguesModalOverlay').classList.add('open');
+            },
+        
         function toggleMenu() { app.toggleMenu(); }
         function switchTool(t) { app.switchTool(t); }
         function clearData() { document.getElementById('logoutOverlay').classList.add('open'); app.toggleMenu(); }
