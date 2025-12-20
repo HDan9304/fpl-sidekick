@@ -598,20 +598,17 @@
                 let singleMoves = [];
                 let finalSuggestions = [];
 
-                // 1. Identify Sell Candidates
                 const squadScores = myPicks.map(pick => {
                     const p = allPlayers[pick.element];
                     if(!p || p.pos === 1) return null;
                     return { p: p, score: TransferBot.getScore(p, fixtures) };
                 }).filter(x => x).sort((a,b) => a.score - b.score);
 
-                // 2. Identify Buy Candidates
                 const marketScores = Object.values(allPlayers)
                     .filter(p => p.status === 'a' && p.pos > 1)
                     .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
                     .sort((a,b) => b.score - a.score).slice(0, 50);
 
-                // 3. Find Single Moves
                 for(let i=0; i<Math.min(5, squadScores.length); i++) {
                     const sell = squadScores[i];
                     const maxBudget = bank + sell.p.price;
@@ -631,7 +628,6 @@
                 singleMoves.sort((a,b) => b.diff - a.diff);
                 finalSuggestions.push(...singleMoves.slice(0, 3));
 
-                // 4. Double Move Logic
                 if(singleMoves.length > 0) {
                     const bestMove = singleMoves[0];
                     const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
@@ -644,23 +640,15 @@
                             const hitCost = ftCount >= 2 ? 0 : 4;
                             const totalDiff = (bestMove.diff + diff2 - hitCost).toFixed(1);
                             if (parseFloat(totalDiff) > 1.0) {
-                                finalSuggestions.push({ 
-                                    type: `Double Move (-${hitCost})`, 
-                                    out: [bestMove.out[0], secondSell.p], 
-                                    in: [bestMove.in[0], secondBuy.p], 
-                                    diff: parseFloat(totalDiff) 
-                                });
+                                finalSuggestions.push({ type: `Double Move (-${hitCost})`, out: [bestMove.out[0], secondSell.p], in: [bestMove.in[0], secondBuy.p], diff: parseFloat(totalDiff) });
                             }
                         }
                     }
                 }
-
-                // 5. SMART ROLL LOGIC
                 const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
                 if (ftCount < 5 && bestDiff < 4.0) {
                     finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
                 }
-
                 return finalSuggestions;
             }
         };
@@ -686,6 +674,10 @@
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
+                // RECOVER LAST TAB
+                const lastTool = localStorage.getItem('fpl_last_tool');
+                if (lastTool) app.currentTool = lastTool;
+
                 if (savedId) {
                     document.getElementById('teamID').value = savedId;
                     app.load(savedId);
@@ -735,9 +727,15 @@
                 document.getElementById('menuOverlay').classList.toggle('open');
             },
 
-            switchTool: (t) => {
-                app.toggleMenu();
+            // --- UPDATED SWITCH TOOL (With Persistence) ---
+            switchTool: (t, suppressMenu = false) => {
+                if (!suppressMenu) app.toggleMenu();
+                
+                // Save state
                 app.currentTool = t;
+                localStorage.setItem('fpl_last_tool', t);
+                
+                // Update Nav UI
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-' + t).classList.add('active');
 
@@ -846,7 +844,6 @@
                             html += `<div class="welcome-card"><p>Team is optimal. Save your transfer.</p></div>`;
                         }
 
-                        // --- UPDATED MARKET TRENDS UI ---
                         html += `<div style="font-size:1.1rem; font-weight:800; margin:30px 0 15px 0; padding-left:5px;">Market Trends</div><div class="trend-scroll">`;
                         market.movers.forEach(p => {
                             html += `
@@ -1001,8 +998,6 @@
                         fix1.forEach(f => {
                             let status = 'FIX';
                             let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                            
-                            // CHECK BOTH FINISHED STATES (Provisional & Final)
                             if (f.finished || f.finished_provisional) { 
                                 status = 'FT'; 
                                 label = 'FT'; 
@@ -1171,7 +1166,13 @@
                         benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false, multiplier: pick.multiplier }, fixMap, statusMap, true, i - 10, status);
                     }
                 }
-                app.show('dashboardView');
+
+                // --- NEW: AUTO SWITCH TO SAVED TAB ON LOAD ---
+                if (app.currentTool === 'transfers' && !app.isSimulating) {
+                    app.switchTool('transfers', true); // True = Suppress menu toggle
+                } else {
+                    app.show('dashboardView');
+                }
             },
 
             createPill: (p, fixMap, statusMap, isBench = false, benchNum = 0, subStatus = null) => {
