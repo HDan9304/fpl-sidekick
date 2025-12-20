@@ -331,6 +331,31 @@
         .r-green { color: #00ff85; } /* Bright Green */
         .r-red { color: #ef4444; }   /* Red */
         .r-grey { color: #9ca3af; }  /* Grey */
+        
+        /* TRANSFER CARD UI */
+        .t-card { background: white; border-radius: 16px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .t-header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: #f9fafb; }
+        .t-type { font-size: 0.75rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; }
+        .t-gain { background: var(--primary); color: var(--accent); font-weight: 800; font-size: 0.9rem; padding: 4px 10px; border-radius: 8px; }
+        
+        .t-body { display: flex; position: relative; }
+        .t-mid-arrow { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid var(--border); color: var(--text-sub); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        .t-half { flex: 1; padding: 15px 10px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .t-out { background: #fff5f5; border-right: 1px solid #fee2e2; }
+        .t-in { background: #f0fdf4; }
+        
+        .t-label { font-size: 0.6rem; font-weight: 800; margin-bottom: 8px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+        .lbl-out { background: #fee2e2; color: #ef4444; }
+        .lbl-in { background: #dcfce7; color: #16a34a; }
+
+        /* Reuse standard pill styles but tweak for list */
+        .t-kit { width: 40px; height: 50px; object-fit: contain; margin: 5px 0; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2)); }
+        .t-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 2px; line-height: 1.2; }
+        .t-meta { font-size: 0.7rem; color: var(--text-sub); font-weight: 500; }
+        
+        .t-fdr { display: flex; gap: 2px; margin-top: 8px; }
+        .t-dot { width: 18px; height: 6px; border-radius: 2px; } /* Slimmer dots for transfer view */
     </style>
 </head>
 <body>
@@ -677,65 +702,99 @@ const TransferBot = {
                     container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analysing Market...</p></div>';
                     
                     setTimeout(() => {
+                        // 1. Run Analysis
                         const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
-                        const market = MarketBot.getTrends(app.playersCache);
+                        const market = MarketBot.getTrends(app.playersCache); // Uses your existing logic
+                        
                         let html = '';
 
-                        // --- 1. TOP 3 SUGGESTIONS SECTION ---
+                        // --- 2. SUGGESTIONS RENDER ---
                         if (suggestions.length > 0) {
-                            html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-robot" style="color:var(--primary);"></i> Top Suggestions</div>`;
+                            html += `<div style="font-size:1.1rem; font-weight:800; margin-bottom:15px; padding-left:5px;">Top Suggestions</div>`;
                             
-                            suggestions.forEach((s, index) => {
-                                let isBest = index === 0;
-                                let badge = isBest ? `<div style="position:absolute; top:0; right:0; background:#e90052; color:white; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">BEST OPTION</div>` : '';
-                                
-                                html += `
-                                    <div style="background:white; border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px; position:relative; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
-                                        ${badge}
-                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                            <div style="font-size:0.75rem; font-weight:800; color:${isBest ? '#111' : '#666'}; text-transform:uppercase;">${s.type}</div>
-                                            <div style="font-size:1.1rem; font-weight:800; color:${isBest ? 'var(--accent)' : '#111'}; background:${isBest ? 'var(--primary)' : '#f3f4f6'}; padding:2px 8px; border-radius:6px;">+${s.diff}</div>
-                                        </div>
-                                `;
-                                
-                                // Render Moves (Handles both Single and Double arrays)
-                                for(let i=0; i < s.out.length; i++) {
+                            suggestions.forEach(s => {
+                                // Skip "Roll Transfer" if you want, or render it differently. 
+                                // Here we render everything visually.
+                                if(s.type === 'Roll Transfer') {
                                     html += `
-                                        <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
-                                            <div style="flex:1; background:#fff5f5; border:1px solid #fee2e2; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:8px;">
-                                                <div style="font-size:0.6rem; font-weight:800; color:#ef4444;">OUT</div>
-                                                <div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.out[i].name}</div>
-                                            </div>
-                                            <i class="fa-solid fa-arrow-right" style="color:#d1d5db; font-size:0.8rem;"></i>
-                                            <div style="flex:1; background:#f0fdf4; border:1px solid #dcfce7; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:8px;">
-                                                <div style="font-size:0.6rem; font-weight:800; color:#16a34a;">IN</div>
-                                                <div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.in[i].name}</div>
-                                            </div>
+                                        <div class="t-card" style="padding:20px; text-align:center;">
+                                            <div style="font-weight:700; color:#555;">Option: Save Transfer</div>
+                                            <div style="font-size:0.8rem; color:#888; margin-top:5px;">Rolling the free transfer to next week.</div>
+                                        </div>`;
+                                    return;
+                                }
+
+                                // Header
+                                html += `
+                                    <div class="t-card">
+                                        <div class="t-header">
+                                            <div class="t-type">${s.type}</div>
+                                            <div class="t-gain">+${s.diff} pts</div>
+                                        </div>
+                                        <div class="t-body">
+                                            <div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                `;
+
+                                // RENDER "OUT" PLAYERS
+                                html += `<div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                                s.out.forEach(p => {
+                                    // Get Fix Dots
+                                    const fixtures = app.fixMap[p.team_id] || [];
+                                    let dots = '<div class="t-fdr">';
+                                    fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
+                                    dots += '</div>';
+
+                                    html += `
+                                        <div onclick="app.openModal(${p.id})" style="cursor:pointer;">
+                                            <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit">
+                                            <div class="t-name">${p.name}</div>
+                                            <div class="t-meta">£${p.price}m • ${p.form} Form</div>
+                                            ${dots}
                                         </div>
                                     `;
-                                }
-                                html += `</div>`;
+                                });
+                                html += `</div>`; // Close OUT
+
+                                // RENDER "IN" PLAYERS
+                                html += `<div class="t-half t-in"><span class="t-label lbl-in">BUY</span>`;
+                                s.in.forEach(p => {
+                                    const fixtures = app.fixMap[p.team_id] || [];
+                                    let dots = '<div class="t-fdr">';
+                                    fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
+                                    dots += '</div>';
+
+                                    html += `
+                                        <div onclick="app.openModal(${p.id})" style="cursor:pointer;">
+                                            <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit">
+                                            <div class="t-name">${p.name}</div>
+                                            <div class="t-meta">£${p.price}m • ${p.form} Form</div>
+                                            ${dots}
+                                        </div>
+                                    `;
+                                });
+                                html += `</div>`; // Close IN
+                                html += `</div></div>`; // Close Body & Card
                             });
                         } else {
-                            html += `<div class="welcome-card" style="margin-top:0;"><p>Your squad is optimal.</p></div>`;
+                            html += `<div class="welcome-card"><p>Your team looks solid. Consider rolling the transfer.</p></div>`;
                         }
 
-                        // --- 2. MARKET TRENDS (UNCHANGED) ---
-                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-fire" style="color:#e90052;"></i> Market Movers</div>
-                                 <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
+                        // --- 3. MARKET TRENDS ---
+                        html += `<div style="font-size:1.1rem; font-weight:800; margin:30px 0 15px 0; padding-left:5px;">Market Trends</div>
+                                 <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:10px; scrollbar-width:none;">`;
+                        
                         market.movers.forEach(p => {
-                            html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#02894e; font-weight:800; background:#f0fdf4; padding:4px 8px; border-radius:100px; display:inline-block;">+${(p.transfers_in/1000).toFixed(1)}k</div></div>`;
-                        });
-                        html += `</div>`;
-
-                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div><div style="display:flex; flex-direction:column; gap:10px;">`;
-                        market.differentials.forEach(p => {
-                            html += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 16px; border-radius:12px; border:1px solid var(--border);" onclick="app.openModal(${p.id})"><div style="display:flex; align-items:center; gap:12px;"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px;"><div><div style="font-size:0.9rem; font-weight:700;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.sel}%</div></div></div><div style="text-align:right;"><div style="font-size:1rem; font-weight:800; color:var(--primary);">${p.form}</div><div style="font-size:0.6rem; color:var(--text-sub); text-transform:uppercase; font-weight:600;">Form</div></div></div>`;
+                            html += `
+                                <div style="min-width:110px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center;" onclick="app.openModal(${p.id})">
+                                    <div style="font-size:0.8rem; font-weight:700; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.name}</div>
+                                    <div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:8px;">${p.team}</div>
+                                    <div style="font-size:0.75rem; color:#02894e; font-weight:800; background:#f0fdf4; padding:2px 8px; border-radius:10px;">+${(p.transfers_in/1000).toFixed(1)}k</div>
+                                </div>`;
                         });
                         html += `</div><div style="height:40px;"></div>`;
                         
                         container.innerHTML = html;
-                    }, 500);
+                    }, 100); // Tiny delay to allow UI switch
                 }
             },
             
