@@ -584,23 +584,25 @@
                 let singleMoves = [];
                 let finalSuggestions = [];
 
-                // 1. Sell Candidates
+                // 1. Identify Sell Candidates
                 const squadScores = myPicks.map(pick => {
                     const p = allPlayers[pick.element];
-                    if(!p || p.pos === 1) return null;
+                    if(!p || p.pos === 1) return null; // Skip GK for simplicity
                     return { p: p, score: TransferBot.getScore(p, fixtures) };
                 }).filter(x => x).sort((a,b) => a.score - b.score);
 
-                // 2. Buy Candidates
+                // 2. Identify Buy Candidates
                 const marketScores = Object.values(allPlayers)
                     .filter(p => p.status === 'a' && p.pos > 1)
                     .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
-                    .sort((a,b) => b.score - a.score).slice(0, 50);
+                    .sort((a,b) => b.score - a.score)
+                    .slice(0, 50);
 
                 // 3. Find Single Moves
                 for(let i=0; i<Math.min(5, squadScores.length); i++) {
                     const sell = squadScores[i];
                     const maxBudget = bank + sell.p.price;
+
                     for(let j=0; j<marketScores.length; j++) {
                         const buy = marketScores[j];
                         if(buy.p.pos !== sell.p.pos) continue; 
@@ -608,32 +610,76 @@
                         if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
 
                         const diff = (buy.score - sell.score).toFixed(1);
-                        if(parseFloat(diff) > -20) { 
-                            singleMoves.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff) });
-                            break;
+                        
+                        // We allow slightly negative moves if they free up massive funds, 
+                        // but generally we look for positive diff
+                        if(parseFloat(diff) > -2) { 
+                            singleMoves.push({ 
+                                type: 'Single Move', 
+                                out: [sell.p], 
+                                in: [buy.p], 
+                                diff: parseFloat(diff)
+                            });
+                            break; 
                         }
                     }
                 }
+
+                // Sort single moves by impact
                 singleMoves.sort((a,b) => b.diff - a.diff);
+                
+                // Add Top 3 Single Moves
                 finalSuggestions.push(...singleMoves.slice(0, 3));
 
-                // 4. Double Moves
+                // 4. Double Move Logic (Hit -4)
                 if(singleMoves.length > 0) {
                     const bestMove = singleMoves[0];
                     const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
                     const secondSell = squadScores.find(s => s.p.id !== bestMove.out[0].id);
+                    
                     if(secondSell) {
                         const budget2 = newBank + secondSell.p.price;
-                        const secondBuy = marketScores.find(m => m.p.id !== bestMove.in[0].id && !myPicks.some(pick => pick.element === m.p.id) && m.p.pos === secondSell.p.pos && m.p.price <= budget2);
+                        const secondBuy = marketScores.find(m => 
+                            m.p.id !== bestMove.in[0].id && 
+                            !myPicks.some(pick => pick.element === m.p.id) && 
+                            m.p.pos === secondSell.p.pos && 
+                            m.p.price <= budget2
+                        );
+
                         if(secondBuy) {
                             const diff2 = secondBuy.score - secondSell.score;
-                            const totalDiff = (bestMove.diff + diff2 - 4).toFixed(1);
-                            finalSuggestions.push({ type: 'Double Move (-4)', out: [bestMove.out[0], secondSell.p], in: [bestMove.in[0], secondBuy.p], diff: parseFloat(totalDiff) });
+                            const totalDiff = (bestMove.diff + diff2 - 4).toFixed(1); // Subtract 4 for hit
+                            
+                            // Only suggest double move if it's actually worth it
+                            if (parseFloat(totalDiff) > 1.0) {
+                                finalSuggestions.push({ 
+                                    type: 'Double Move (-4)', 
+                                    out: [bestMove.out[0], secondSell.p], 
+                                    in: [bestMove.in[0], secondBuy.p], 
+                                    diff: parseFloat(totalDiff) 
+                                });
+                            }
                         }
                     }
                 }
-                // 5. Roll Option
-                finalSuggestions.push({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
+
+                // 5. SMART ROLL LOGIC (Only if no valuable transfers)
+                // If the best move gives less than 4 points gain, suggest rolling first.
+                // If we have no moves at all, suggest rolling.
+                const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
+                
+                if (bestDiff < 4.0) {
+                    // Prepend "Roll" to the top if moves are weak
+                    finalSuggestions.unshift({
+                        type: 'Roll Transfer',
+                        out: [],
+                        in: [],
+                        diff: 0.0
+                    });
+                } 
+                // If moves are strong (> 4.0), we DO NOT add Roll Transfer, 
+                // because the user *should* make that move.
+
                 return finalSuggestions;
             }
         };
@@ -665,13 +711,11 @@
                 }
             },
 
-            // --- PROXY WITH FALLBACK ---
             fetchUrl: async (targetUrl) => {
                 const proxies = [
                     (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`, 
                     (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
                 ];
-                
                 for (let i = 0; i < proxies.length; i++) {
                     try {
                         const c = new AbortController(); 
@@ -715,29 +759,56 @@
                 } else {
                     app.show('transfersView');
                     
-                    // Clear search input on entry
                     document.querySelector('.search-input').value = '';
                     document.getElementById('scoutResults').style.display = 'none';
                     document.getElementById('transferContent').style.display = 'block';
 
+                    // --- NEW: Header with Bank & Transfers Made ---
+                    const txMade = app.currentStats ? app.currentStats.event_transfers : 0;
+                    const bankTxt = app.currentStats ? (app.currentStats.bank/10).toFixed(1) : '0.0';
+                    
+                    const headerHtml = `
+                        <div style="display:flex; justify-content:space-between; padding:15px; background:white; border-bottom:1px solid var(--border); margin:-15px -15px 15px -15px;">
+                            <div style="font-size:0.8rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
+                            <div style="font-size:0.8rem; font-weight:700; color:var(--text-sub);">Transfers Made: <span style="color:${txMade > 0 ? 'var(--red)' : 'var(--accent)'};">${txMade}</span></div>
+                        </div>
+                        <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Finding Best Move...</p></div>
+                    `;
+                    
                     const container = document.getElementById('transferContent');
-                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Finding Best Move...</p></div>';
+                    container.innerHTML = headerHtml;
 
                     setTimeout(() => {
                         const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
                         const market = MarketBot.getTrends(app.playersCache);
                         let html = '';
 
+                        // Re-add Header so it doesn't disappear
+                        html += `
+                        <div style="display:flex; justify-content:space-between; padding:10px 15px; background:white; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
+                            <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
+                            <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Tx Made: <span style="color:${txMade > 0 ? '#e90052' : '#00ff85'};">${txMade}</span></div>
+                        </div>`;
+
                         if (suggestions.length > 0) {
                             suggestions.forEach((s, index) => {
                                 const isBest = index === 0;
                                 const cardClass = isBest ? 't-card best-pick' : 't-card';
                                 const badge = isBest ? '<div class="rec-badge"><i class="fa-solid fa-star"></i> AI RECOMMENDED</div>' : '';
-                                if (index === 0) html += `<div style="font-size:1.1rem; font-weight:800; margin-bottom:10px; padding-left:5px;">Best Move</div>`;
-                                else if (index === 1) html += `<div style="font-size:0.9rem; font-weight:700; color:#888; margin:20px 0 10px 0; padding-left:5px;">Other Options</div>`;
+                                
+                                if(index === 0) html += `<div style="font-size:1.1rem; font-weight:800; margin-bottom:10px; padding-left:5px;">Strategy</div>`;
+                                else if(index === 1) html += `<div style="font-size:0.9rem; font-weight:700; color:#888; margin:20px 0 10px 0; padding-left:5px;">Alternative Options</div>`;
 
                                 if (s.type === 'Roll Transfer') {
-                                    html += `<div class="${cardClass}" style="padding:25px; text-align:center;">${badge}<div style="font-weight:800; margin-bottom:5px;">Save Free Transfer</div><div style="font-size:0.8rem; color:#888;">No high-value moves found.</div></div>`;
+                                    html += `
+                                        <div class="${cardClass}" style="padding:25px; text-align:center;">
+                                            ${badge}
+                                            <div style="font-size:2rem; margin:10px 0;">🛡️</div>
+                                            <div style="font-weight:800; margin-bottom:5px; font-size:1.1rem;">Save Free Transfer</div>
+                                            <div style="font-size:0.85rem; color:#666; line-height:1.4;">
+                                                Your team is looking strong. No high-value transfers found (> 4.0 pts gain).
+                                            </div>
+                                        </div>`;
                                     return;
                                 }
 
@@ -778,7 +849,7 @@
                                 </div>`;
                             });
                         } else {
-                            html += `<div class="welcome-card"><p>Team is optimal.</p></div>`;
+                            html += `<div class="welcome-card"><p>Team is optimal. Save your transfer.</p></div>`;
                         }
 
                         html += `<div style="font-size:1.1rem; font-weight:800; margin:30px 0 15px 0; padding-left:5px;">Market Trends</div><div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:10px; scrollbar-width:none;">`;
@@ -791,7 +862,6 @@
                 }
             },
 
-            // --- SEARCH FUNCTION (THE SCOUT) ---
             searchScout: (query) => {
                 const resultsContainer = document.getElementById('scoutResults');
                 const mainContent = document.getElementById('transferContent');
@@ -808,16 +878,12 @@
                 const q = query.toLowerCase();
                 const players = Object.values(app.playersCache);
                 
-                // Filter matches
                 const matches = players.filter(p => 
                     p.name.toLowerCase().includes(q) || 
                     (p.team && p.team.toLowerCase().includes(q))
                 );
 
-                // Sort by Form (Hot players first)
                 matches.sort((a,b) => parseFloat(b.form) - parseFloat(a.form));
-                
-                // Limit results
                 const top20 = matches.slice(0, 20);
                 
                 let html = '';
