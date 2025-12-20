@@ -291,6 +291,18 @@
         .did-not-play { opacity: 0.5; filter: grayscale(1); }
         .coming-on { border: 2px solid #00ff85; box-shadow: 0 0 10px rgba(0, 255, 133, 0.4); transform: translateY(-4px); }
         .sub-icon { position: absolute; top: -5px; left: -5px; background: #00ff85; color: #00381b; width: 18px; height: 18px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; z-index: 30; font-weight: 800; border: 1px solid white; }
+        
+        /* LIVE EVENT ICONS */
+        .event-row { 
+            position: absolute; 
+            bottom: 38px; /* Sits just above the name */
+            left: 50%; transform: translateX(-50%);
+            display: flex; gap: 2px; z-index: 25;
+        }
+        .evt-icon { width: 14px; height: 14px; border-radius: 50%; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; }
+        .evt-goal { background: white; } /* Football emoji handles color */
+        .evt-assist { background: #3b82f6; color: white; font-weight: 800; } /* Blue A */
+        .evt-red { background: #ef4444; color: white; font-weight: 800; } /* Red Card */
     </style>
 </head>
 <body>
@@ -723,16 +735,22 @@ const TransferBot = {
                     document.getElementById('loadingMsg').innerText = "Fetching Live Scores...";
                     const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
                     
-                    // MAP LIVE STATS (Points & Minutes)
+                    // --- MAP LIVE STATS (Points, Mins, Goals, Assists, Cards) ---
                     const liveMap = {};
                     liveData.elements.forEach(el => { 
                         liveMap[el.id] = { 
                             points: el.stats.total_points, 
-                            mins: el.stats.minutes 
+                            mins: el.stats.minutes,
+                            goals: el.stats.goals_scored,
+                            assists: el.stats.assists,
+                            red_cards: el.stats.red_cards,
+                            own_goals: el.stats.own_goals,
+                            pen_missed: el.stats.penalties_missed,
+                            pen_saved: el.stats.penalties_saved
                         }; 
                     });
+                    // ------------------------------------------------------------
 
-                    // FETCH FIXTURES (Next 3)
                     const fixReqs = [gw, gw+1, gw+2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
                     const [fix1, fix2, fix3] = await Promise.all(fixReqs);
 
@@ -751,11 +769,7 @@ const TransferBot = {
                         });
                         return map;
                     };
-
-                    const map1 = processFix(fix1);
-                    const map2 = processFix(fix2);
-                    const map3 = processFix(fix3);
-
+                    const map1 = processFix(fix1); const map2 = processFix(fix2); const map3 = processFix(fix3);
                     const masterFixMap = {};
                     staticData.teams.forEach(t => {
                         const f1 = (map1[t.id] || [])[0] || { opp: '-', diff: 3 };
@@ -767,16 +781,17 @@ const TransferBot = {
 
                     const players = {};
                     staticData.elements.forEach(p => {
-                        const liveStats = liveMap[p.id];
-                        const realPoints = liveStats ? liveStats.points : p.event_points;
-                        // Default minutes to 0 if not started, but use live if available
-                        const realMins = liveStats ? liveStats.mins : 0;
+                        const live = liveMap[p.id];
+                        const realPoints = live ? live.points : p.event_points;
+                        const realMins = live ? live.mins : 0;
 
                         players[p.id] = {
                             id: p.id, name: p.web_name, team: teamShort[p.team], team_id: p.team,
                             pos: p.element_type, price: p.now_cost / 10,
                             event_points: realPoints,
-                            minutes: realMins, // <--- NEW DATA POINT
+                            minutes: realMins,
+                            // Pass stats to player object
+                            stats: live || { goals:0, assists:0, red_cards:0 }, 
                             team_code: p.team_code,
                             status: p.status, chance: p.chance_of_playing_next_round, news: p.news,
                             sel: parseFloat(p.selected_by_percent), form: p.form,
@@ -934,32 +949,37 @@ const TransferBot = {
                 if (p.status === 'd') statusBadge = `<div class="status-flag status-warn">!</div>`;
                 else if (['i', 's', 'n'].includes(p.status)) statusBadge = `<div class="status-flag status-bad">×</div>`;
                 
-                // SUB VISUALS
                 let extraClass = '';
                 let subIcon = '';
-                
-                if (subStatus === 'out') {
-                    extraClass = 'did-not-play'; // Grey out
-                } else if (subStatus === 'in') {
-                    extraClass = 'coming-on'; // Green Border
-                    subIcon = `<div class="sub-icon"><i class="fa-solid fa-arrow-up"></i></div>`;
+                if (subStatus === 'out') extraClass = 'did-not-play'; 
+                else if (subStatus === 'in') { extraClass = 'coming-on'; subIcon = `<div class="sub-icon"><i class="fa-solid fa-arrow-up"></i></div>`; }
+
+                // --- NEW: EVENT ICONS ---
+                let evtHtml = '';
+                if(p.stats) {
+                    evtHtml += '<div class="event-row">';
+                    // Goals
+                    for(let i=0; i<p.stats.goals; i++) evtHtml += `<div class="evt-icon evt-goal">⚽</div>`;
+                    // Assists
+                    for(let i=0; i<p.stats.assists; i++) evtHtml += `<div class="evt-icon evt-assist">A</div>`;
+                    // Red Cards
+                    if(p.stats.red_cards > 0) evtHtml += `<div class="evt-icon evt-red">R</div>`;
+                    evtHtml += '</div>';
                 }
+                // ------------------------
 
                 let bNum = isBench ? `<div class="bench-num">${benchNum}</div>` : '';
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
-                
                 const fixtures = fixMap[p.team_id] || [{diff:3, opp:'-'}, {diff:3, opp:'-'}, {diff:3, opp:'-'}];
                 let dotsHtml = '<div class="fdr-row">';
-                fixtures.slice(0, 3).forEach(f => {
-                    dotsHtml += `<div class="fdr-dot bg-${f.diff}">${f.opp}</div>`;
-                });
+                fixtures.slice(0, 3).forEach(f => { dotsHtml += `<div class="fdr-dot bg-${f.diff}">${f.opp}</div>`; });
                 dotsHtml += '</div>';
 
                 return `
                     <div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
                         ${bNum} ${capBadge} ${statusBadge} ${subIcon}
                         ${dotsHtml}
-                        <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
+                        ${evtHtml} <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
                         <div class="pill-data">
                             <span>£${p.price}</span>
