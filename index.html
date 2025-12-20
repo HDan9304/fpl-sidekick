@@ -788,14 +788,22 @@
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
                     app.teams = teamShort;
 
-                    // --- MATCH STATUS MAP (For Live Badges) ---
+                    // --- MATCH STATUS MAP (FIXED FOR PROVISIONAL FINISH) ---
                     const statusMap = {};
                     if(fix1) {
                         fix1.forEach(f => {
                             let status = 'FIX';
                             let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                            if (f.finished) { status = 'FT'; label = 'FT'; }
-                            else if (f.started) { status = 'LIVE'; label = 'LIVE'; }
+                            
+                            // CHECK BOTH FINISHED STATES
+                            if (f.finished || f.finished_provisional) { 
+                                status = 'FT'; 
+                                label = 'FT'; 
+                            } else if (f.started) { 
+                                status = 'LIVE'; 
+                                label = 'LIVE'; 
+                            }
+                            
                             statusMap[f.team_h] = { status, label, id: f.id };
                             statusMap[f.team_a] = { status, label, id: f.id };
                         });
@@ -968,14 +976,17 @@
                 let newBadge = (app.isSimulating && app.simNewIds && app.simNewIds.includes(p.id)) ? `<div class="new-badge">NEW</div>` : '';
                 if(newBadge) extraClass += ' sim-new';
 
-                // --- LIVE BADGE LOGIC ---
+                // --- LIVE BADGE LOGIC (FIXED) ---
                 let matchBadge = '';
                 if (!app.isSimulating && statusMap && statusMap[p.team_id]) {
                     const m = statusMap[p.team_id];
                     let badgeClass = 'ms-fix';
                     let label = m.label;
-                    if (m.status === 'FT') { badgeClass = 'ms-ft'; } 
-                    else if (m.status === 'LIVE') { 
+                    
+                    if (m.status === 'FT') { 
+                        badgeClass = 'ms-ft'; 
+                        label = 'FT'; // Force label to FT
+                    } else if (m.status === 'LIVE') { 
                         badgeClass = 'ms-live'; 
                         if(p.minutes > 0) label = p.minutes + "'";
                     }
