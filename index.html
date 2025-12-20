@@ -583,13 +583,23 @@
                 }
             },
 
-            // --- ORIGINAL FAST PROXY ---
-            fetchUrl: async (url) => {
-                const proxy = 'https://api.allorigins.win/get?url=';
-                const res = await fetch(proxy + encodeURIComponent(url));
-                if (!res.ok) throw new Error('Network error');
-                const data = await res.json();
-                return JSON.parse(data.contents);
+            // --- PROXY WITH FALLBACK (USER REQUESTED) ---
+            fetchUrl: async (targetUrl) => {
+                const proxies = [
+                    (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`, 
+                    (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+                ];
+                
+                for (let i = 0; i < proxies.length; i++) {
+                    try {
+                        const c = new AbortController(); 
+                        const id = setTimeout(() => c.abort(), 8000); // 8s Timeout
+                        const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); 
+                        clearTimeout(id);
+                        if(r.ok) return await r.json();
+                    } catch (e) {}
+                }
+                throw new Error("Failed");
             },
 
             show: (viewId) => {
