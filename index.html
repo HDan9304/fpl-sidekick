@@ -382,71 +382,65 @@
 
 const TransferBot = {
     getScore: (p, fixtures) => {
-        const nextFix = fixtures[p.team_id] || { diff: 3 };
+        if (!p) return 0;
+        // Safety check: if fixtures missing, assume average difficulty (3)
+        const nextFix = (fixtures && fixtures[p.team_id]) ? fixtures[p.team_id] : { diff: 3 };
         let score = parseFloat(p.form) - (nextFix.diff * 2);
-        // Huge penalty for injuries
         if (p.status !== 'a' && p.chance < 75) score = -50;
         return score;
     },
 
     analyze: (myPicks, allPlayers, bank, fixtures) => {
-        let allMoves = [];
+        try {
+            let allMoves = [];
+            // optimization: Create a Set of owned IDs for instant lookup (0ms)
+            const ownedIds = new Set(myPicks.map(p => p.element));
 
-        // 1. OPTIMIZATION: Only analyze the worst 5 players in your squad
-        // No point checking if we should sell Haaland if he's your best player.
-        const squad = myPicks.map(pick => {
-            const p = allPlayers[pick.element];
-            if(p.pos === 1) return null; 
-            return { p: p, score: TransferBot.getScore(p, fixtures) };
-        }).filter(x => x)
-          .sort((a,b) => a.score - b.score) // Sort lowest score first
-          .slice(0, 5); // Take bottom 5
+            // 1. Analyze Squad: Filter out GK (pos 1) and sort by lowest score
+            const squad = myPicks.map(pick => {
+                const p = allPlayers[pick.element];
+                if (!p || p.pos === 1) return null; 
+                return { p: p, score: TransferBot.getScore(p, fixtures) };
+            }).filter(x => x).sort((a,b) => a.score - b.score).slice(0, 5); // Bottom 5 only
 
-        // 2. OPTIMIZATION: Pre-calculate market scores and keep only Top 50
-        // We filter out owned players immediately
-        const market = Object.values(allPlayers)
-            .filter(p => p.status === 'a' && p.pos > 1 && !myPicks.some(pick => pick.element === p.id))
-            .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
-            .sort((a,b) => b.score - a.score) // Sort highest score first
-            .slice(0, 50); // Only look at the elite options
+            // 2. Analyze Market: Filter first, then score.
+            // We only look at players with Form > 3.0 to save time
+            const market = Object.values(allPlayers)
+                .filter(p => p.status === 'a' && p.pos > 1 && parseFloat(p.form) > 2.0 && !ownedIds.has(p.id))
+                .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
+                .sort((a,b) => b.score - a.score)
+                .slice(0, 30); // Top 30 only
 
-        // 3. Fast Loop (Max 250 iterations vs 9000 previously)
-        for (const sell of squad) {
-            const maxBudget = bank + sell.p.price;
+            // 3. Fast Loop
+            for (const sell of squad) {
+                const maxBudget = bank + sell.p.price;
+                for (const buy of market) {
+                    if (buy.p.pos !== sell.p.pos) continue;
+                    if (buy.p.price > maxBudget) continue;
 
-            for (const buy of market) {
-                // Must be same position
-                if (buy.p.pos !== sell.p.pos) continue;
-                
-                // Must be affordable
-                if (buy.p.price > maxBudget) continue;
-
-                // Calculate improvement
-                const diff = (buy.score - sell.score).toFixed(1);
-
-                if (diff > 0.5) {
-                    allMoves.push({
-                        out: sell.p,
-                        in: buy.p,
-                        diff: parseFloat(diff)
-                    });
+                    const diff = (buy.score - sell.score).toFixed(1);
+                    if (diff > 0.5) {
+                        allMoves.push({ out: sell.p, in: buy.p, diff: parseFloat(diff) });
+                    }
                 }
             }
+
+            const top3 = allMoves.sort((a,b) => b.diff - a.diff).slice(0, 3);
+            
+            // 4. Strategy Decision
+            let strategy = "TRANSFER";
+            let message = "Make 1 Transfer";
+            if (top3.length === 0 || top3[0].diff < 3.0) {
+                strategy = "SAVE";
+                message = "Save Transfer";
+            }
+
+            return { strategy, message, moves: top3 };
+
+        } catch (e) {
+            console.error("Bot Error:", e);
+            return { strategy: "SAVE", message: "Analysis Failed", moves: [] };
         }
-
-        // 4. Sort results
-        const top3 = allMoves.sort((a,b) => b.diff - a.diff).slice(0, 3);
-
-        // 5. Strategy Decision
-        let strategy = "TRANSFER";
-        let message = "Make 1 Transfer";
-        
-        if (top3.length === 0 || top3[0].diff < 3.0) {
-            strategy = "SAVE";
-            message = "Save Transfer";
-        }
-
-        return { strategy, message, moves: top3 };
     }
 };
 
@@ -498,79 +492,87 @@ const TransferBot = {
                 } else {
                     app.show('transfersView');
                     const container = document.getElementById('transfersView');
-                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analyzing Options...</p></div>';
+                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analyzing...</p></div>';
                     
+                    // Reduced delay to 50ms (Instant)
                     setTimeout(() => {
-                        const aiResult = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
-                        const market = MarketBot.getTrends(app.playersCache);
-                        let html = '';
+                        try {
+                            if(!app.currentPicks || !app.playersCache) throw new Error("Data missing");
 
-                        // --- 1. STRATEGY BANNER ---
-                        // Green for "Save", Purple for "Transfer"
-                        let bg = aiResult.strategy === 'SAVE' ? '#10b981' : '#8b5cf6';
-                        let icon = aiResult.strategy === 'SAVE' ? 'fa-piggy-bank' : 'fa-arrow-right-arrow-left';
-                        let subText = aiResult.strategy === 'SAVE' ? 'Team looks solid. Roll the transfer.' : 'Found high value moves.';
+                            const aiResult = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
+                            const market = MarketBot.getTrends(app.playersCache);
+                            let html = '';
 
-                        html += `
-                            <div style="background:${bg}; padding:20px; border-radius:16px; color:white; margin-bottom:20px; box-shadow:0 8px 20px -5px ${bg}80; text-align:center;">
-                                <div style="font-size:2rem; margin-bottom:10px;"><i class="fa-solid ${icon}"></i></div>
-                                <div style="font-size:0.8rem; text-transform:uppercase; font-weight:700; opacity:0.9;">AI STRATEGY</div>
-                                <div style="font-size:1.5rem; font-weight:800;">${aiResult.message}</div>
-                                <div style="font-size:0.9rem; opacity:0.9; margin-top:5px;">${subText}</div>
-                            </div>
-                        `;
+                            // --- 1. STRATEGY BANNER ---
+                            let bg = aiResult.strategy === 'SAVE' ? '#10b981' : '#8b5cf6';
+                            let icon = aiResult.strategy === 'SAVE' ? 'fa-piggy-bank' : 'fa-arrow-right-arrow-left';
+                            let subText = aiResult.strategy === 'SAVE' ? 'Team looks solid. Roll the transfer.' : 'Found high value moves.';
 
-                        // --- 2. TOP 3 SUGGESTIONS ---
-                        if (aiResult.moves.length > 0) {
-                            html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-list-ol" style="color:var(--primary);"></i> Top 3 Options</div>`;
-                            
-                            aiResult.moves.forEach((move, index) => {
-                                let badge = index === 0 ? `<div style="position:absolute; top:0; right:0; background:${bg}; color:white; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>` : `<div style="position:absolute; top:0; right:0; background:#eee; color:#666; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>`;
+                            html += `
+                                <div style="background:${bg}; padding:20px; border-radius:16px; color:white; margin-bottom:20px; box-shadow:0 8px 20px -5px ${bg}80; text-align:center;">
+                                    <div style="font-size:2rem; margin-bottom:10px;"><i class="fa-solid ${icon}"></i></div>
+                                    <div style="font-size:0.8rem; text-transform:uppercase; font-weight:700; opacity:0.9;">AI STRATEGY</div>
+                                    <div style="font-size:1.5rem; font-weight:800;">${aiResult.message}</div>
+                                    <div style="font-size:0.9rem; opacity:0.9; margin-top:5px;">${subText}</div>
+                                </div>
+                            `;
+
+                            // --- 2. TOP 3 SUGGESTIONS ---
+                            if (aiResult.moves.length > 0) {
+                                html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-list-ol" style="color:var(--primary);"></i> Top 3 Options</div>`;
                                 
-                                html += `
-                                    <div style="background:white; border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px; position:relative; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
-                                        ${badge}
-                                        <div style="font-size:0.75rem; font-weight:800; color:#666; text-transform:uppercase; margin-bottom:10px;">Impact: <span style="color:${bg};">+${move.diff}</span></div>
-                                        
-                                        <div style="display:flex; gap:10px; align-items:center;">
-                                            <div style="flex:1; background:#fff5f5; border:1px solid #fee2e2; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:8px;">
-                                                <div style="font-size:0.6rem; font-weight:800; color:#ef4444;">OUT</div>
-                                                <div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${move.out.name}</div>
-                                            </div>
-                                            <i class="fa-solid fa-arrow-right" style="color:#d1d5db; font-size:0.8rem;"></i>
-                                            <div style="flex:1; background:#f0fdf4; border:1px solid #dcfce7; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:8px;">
-                                                <div style="font-size:0.6rem; font-weight:800; color:#16a34a;">IN</div>
-                                                <div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${move.in.name}</div>
+                                aiResult.moves.forEach((move, index) => {
+                                    let badge = index === 0 ? `<div style="position:absolute; top:0; right:0; background:${bg}; color:white; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>` : `<div style="position:absolute; top:0; right:0; background:#eee; color:#666; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>`;
+                                    
+                                    html += `
+                                        <div style="background:white; border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px; position:relative; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+                                            ${badge}
+                                            <div style="font-size:0.75rem; font-weight:800; color:#666; text-transform:uppercase; margin-bottom:10px;">Impact: <span style="color:${bg};">+${move.diff}</span></div>
+                                            
+                                            <div style="display:flex; gap:10px; align-items:center;">
+                                                <div style="flex:1; background:#fff5f5; border:1px solid #fee2e2; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:8px;">
+                                                    <div style="font-size:0.6rem; font-weight:800; color:#ef4444;">OUT</div>
+                                                    <div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${move.out.name}</div>
+                                                </div>
+                                                <i class="fa-solid fa-arrow-right" style="color:#d1d5db; font-size:0.8rem;"></i>
+                                                <div style="flex:1; background:#f0fdf4; border:1px solid #dcfce7; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:8px;">
+                                                    <div style="font-size:0.6rem; font-weight:800; color:#16a34a;">IN</div>
+                                                    <div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${move.in.name}</div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                `;
+                                    `;
+                                });
+                            }
+
+                            // --- 3. MARKET SECTIONS ---
+                            html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-fire" style="color:#e90052;"></i> Market Movers</div>
+                                     <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
+                            market.movers.forEach(p => {
+                                html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#02894e; font-weight:800; background:#f0fdf4; padding:4px 8px; border-radius:100px; display:inline-block;">+${(p.transfers_in/1000).toFixed(1)}k</div></div>`;
                             });
+                            html += `</div>`;
+
+                            // BEST VALUE
+                            html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-coins" style="color:#eab308;"></i> Best Value</div>
+                                     <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
+                            market.valueKings.forEach(p => {
+                                html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#d97706; font-weight:800; background:#fef3c7; padding:4px 8px; border-radius:100px; display:inline-block;">${p.total_points} Pts</div></div>`;
+                            });
+                            html += `</div>`;
+
+                            // DIFFERENTIALS
+                            html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div><div style="display:flex; flex-direction:column; gap:10px;">`;
+                            market.differentials.forEach(p => {
+                                html += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 16px; border-radius:12px; border:1px solid var(--border);" onclick="app.openModal(${p.id})"><div style="display:flex; align-items:center; gap:12px;"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px;"><div><div style="font-size:0.9rem; font-weight:700;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.sel}%</div></div></div><div style="text-align:right;"><div style="font-size:1rem; font-weight:800; color:var(--primary);">${p.form}</div><div style="font-size:0.6rem; color:var(--text-sub); text-transform:uppercase; font-weight:600;">Form</div></div></div>`;
+                            });
+                            html += `</div><div style="height:40px;"></div>`;
+
+                            container.innerHTML = html;
+                        } catch (e) {
+                            container.innerHTML = `<div class="welcome-card"><p>Couldn't load suggestions.</p><p style="font-size:0.8rem; color:red;">${e.message}</p></div>`;
                         }
-
-                        // --- 3. MARKET TRENDS (UNCHANGED) ---
-                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-fire" style="color:#e90052;"></i> Market Movers</div>
-                                 <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
-                        market.movers.forEach(p => {
-                            html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#02894e; font-weight:800; background:#f0fdf4; padding:4px 8px; border-radius:100px; display:inline-block;">+${(p.transfers_in/1000).toFixed(1)}k</div></div>`;
-                        });
-                        html += `</div>`;
-
-                        // RESTORED BEST VALUE
-                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-coins" style="color:#eab308;"></i> Best Value</div>
-                                 <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
-                        market.valueKings.forEach(p => {
-                            html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#d97706; font-weight:800; background:#fef3c7; padding:4px 8px; border-radius:100px; display:inline-block;">${p.total_points} Pts</div></div>`;
-                        });
-                        html += `</div>`;
-
-                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div><div style="display:flex; flex-direction:column; gap:10px;">`;
-                        market.differentials.forEach(p => {
-                            html += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 16px; border-radius:12px; border:1px solid var(--border);" onclick="app.openModal(${p.id})"><div style="display:flex; align-items:center; gap:12px;"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px;"><div><div style="font-size:0.9rem; font-weight:700;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.sel}%</div></div></div><div style="text-align:right;"><div style="font-size:1rem; font-weight:800; color:var(--primary);">${p.form}</div><div style="font-size:0.6rem; color:var(--text-sub); text-transform:uppercase; font-weight:600;">Form</div></div></div>`;
-                        });
-                        html += `</div><div style="height:40px;"></div>`;
-                        container.innerHTML = html;
-                    }, 500);
+                    }, 50);
                 }
             },
             
