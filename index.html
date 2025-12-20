@@ -25,10 +25,9 @@
             /* Pitch Colors */
             --grass-1: #059669; --grass-2: #047857;
             
-            /* FDR Colors */
+            /* FDR Colors (For Dots) */
             --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e7e7e7; 
             --fdr-4: #ff1751; --fdr-5: #80072d;
-            --fdr-text-dark: #00381b; --fdr-text-light: white;
 
             /* Status Colors */
             --status-warn: #fbbf24; --status-bad: #ef4444;
@@ -167,7 +166,6 @@
         .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; background: white; margin-top: 2px; padding: 1px 0; }
         .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding-bottom: 2px; }
         .points-badge { background: var(--primary); color: white; padding: 0 4px; border-radius: 3px; font-weight: 700; }
-        .fix-badge { font-size: 0.5rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; }
         
         /* Badges & Status */
         .captain-badge { position: absolute; bottom: 30px; right: -4px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
@@ -255,9 +253,30 @@
         .m-stat-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
         .m-news { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #ffeeba; display: none; }
         
-        .fix-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
-        .fix-item { min-width: 80px; background: #fff; border: 1px solid var(--border); padding: 8px; border-radius: 8px; text-align: center; }
-        .fix-diff-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+        /* --- NEW FIXTURE TRACKER STYLES --- */
+        .fix-list { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
+        .fix-box { 
+            min-width: 70px; flex: 1;
+            display: flex; flex-direction: column; align-items: center; 
+            background: #f9fafb; border: 1px solid var(--border); 
+            border-radius: 8px; overflow: hidden;
+        }
+        .fix-gw-label { font-size: 0.6rem; color: #888; font-weight: 700; padding: 4px 0; width: 100%; text-align: center; background: #fff; border-bottom: 1px solid #eee; }
+        .fix-opp-pill { 
+            width: 100%; text-align: center; padding: 8px 0; 
+            font-weight: 800; font-size: 0.85rem; color: #111;
+            display: flex; flex-direction: column; justify-content: center;
+            flex: 1;
+        }
+        .fix-loc { font-size: 0.65rem; font-weight: 500; opacity: 0.8; margin-top: 2px; }
+        
+        /* Difficulty Backgrounds for Modal */
+        .d-1 { background: #375523; color: white; }
+        .d-2 { background: #00ff85; color: #00381b; }
+        .d-3 { background: #e5e7eb; color: #1f2937; }
+        .d-4 { background: #ff1751; color: white; }
+        .d-5 { background: #80072d; color: white; }
+        /* ---------------------------------- */
         
         /* Modal Action Buttons */
         .modal-actions { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
@@ -986,10 +1005,22 @@
                 try {
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
                     let html = '';
+                    
+                    // --- NEW FIXTURE TRACKER LOGIC ---
                     data.fixtures.slice(0, 5).forEach(f => {
                         const isHome = f.is_home;
                         const oppName = app.teams ? app.teams[isHome ? f.team_a : f.team_h] : '---';
-                        html += `<div class="fix-item"><div style="font-size:0.6rem; color:#888; font-weight:700;">GW${f.event}</div><div style="font-weight:800; font-size:0.9rem; margin:2px 0; color:var(--primary);">${oppName} <span style="font-weight:400; color:#666; font-size:0.7rem;">${isHome ? '(H)' : '(A)'}</span></div><div><span class="fix-diff-dot fdr-${f.difficulty}"></span></div></div>`;
+                        const diffClass = `d-${f.difficulty}`;
+                        
+                        html += `
+                            <div class="fix-box">
+                                <div class="fix-gw-label">GW${f.event}</div>
+                                <div class="fix-opp-pill ${diffClass}">
+                                    <div>${oppName}</div>
+                                    <div class="fix-loc">${isHome ? '(H)' : '(A)'}</div>
+                                </div>
+                            </div>
+                        `;
                     });
                     document.getElementById('modalFixtures').innerHTML = html;
                 } catch (e) { document.getElementById('modalFixtures').innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>'; }
