@@ -384,7 +384,7 @@ const TransferBot = {
     getScore: (p, fixtures) => {
         const nextFix = fixtures[p.team_id] || { diff: 3 };
         let score = parseFloat(p.form) - (nextFix.diff * 2);
-        // Huge penalty for injuries/suspensions
+        // Huge penalty for injuries
         if (p.status !== 'a' && p.chance < 75) score = -50;
         return score;
     },
@@ -392,46 +392,52 @@ const TransferBot = {
     analyze: (myPicks, allPlayers, bank, fixtures) => {
         let allMoves = [];
 
-        // 1. Calculate Score for Current Squad
-        const squadWithScores = myPicks.map(pick => {
+        // 1. OPTIMIZATION: Only analyze the worst 5 players in your squad
+        // No point checking if we should sell Haaland if he's your best player.
+        const squad = myPicks.map(pick => {
             const p = allPlayers[pick.element];
-            if(p.pos === 1) return null; // Skip GK for now
+            if(p.pos === 1) return null; 
             return { p: p, score: TransferBot.getScore(p, fixtures) };
-        }).filter(x => x);
+        }).filter(x => x)
+          .sort((a,b) => a.score - b.score) // Sort lowest score first
+          .slice(0, 5); // Take bottom 5
 
-        // 2. Identify Buy Candidates (Fit & Active)
-        const market = Object.values(allPlayers).filter(p => 
-            p.status === 'a' && p.pos > 1 && !myPicks.some(pick => pick.element === p.id)
-        );
+        // 2. OPTIMIZATION: Pre-calculate market scores and keep only Top 50
+        // We filter out owned players immediately
+        const market = Object.values(allPlayers)
+            .filter(p => p.status === 'a' && p.pos > 1 && !myPicks.some(pick => pick.element === p.id))
+            .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
+            .sort((a,b) => b.score - a.score) // Sort highest score first
+            .slice(0, 50); // Only look at the elite options
 
-        // 3. Brute Force: Check every valid single swap
-        squadWithScores.forEach(sell => {
+        // 3. Fast Loop (Max 250 iterations vs 9000 previously)
+        for (const sell of squad) {
             const maxBudget = bank + sell.p.price;
 
-            market.forEach(buy => {
-                // Rules: Same position, Affordability
-                if(buy.pos !== sell.p.pos) return;
-                if(buy.price > maxBudget) return;
+            for (const buy of market) {
+                // Must be same position
+                if (buy.p.pos !== sell.p.pos) continue;
+                
+                // Must be affordable
+                if (buy.p.price > maxBudget) continue;
 
-                const buyScore = TransferBot.getScore(buy, fixtures);
-                const diff = (buyScore - sell.score).toFixed(1);
+                // Calculate improvement
+                const diff = (buy.score - sell.score).toFixed(1);
 
-                // Only consider positive moves
                 if (diff > 0.5) {
                     allMoves.push({
                         out: sell.p,
-                        in: buy,
+                        in: buy.p,
                         diff: parseFloat(diff)
                     });
                 }
-            });
-        });
+            }
+        }
 
-        // 4. Sort by Impact and Take Top 3
+        // 4. Sort results
         const top3 = allMoves.sort((a,b) => b.diff - a.diff).slice(0, 3);
 
-        // 5. AI DECISION LOGIC
-        // If the best move is less than 3.0 improvement, suggest Saving.
+        // 5. Strategy Decision
         let strategy = "TRANSFER";
         let message = "Make 1 Transfer";
         
