@@ -389,7 +389,8 @@ const TransferBot = {
     },
 
     analyze: (myPicks, allPlayers, bank, fixtures) => {
-        let suggestions = [];
+        let singleMoves = [];
+        let finalSuggestions = [];
 
         // 1. Identify Sell Candidates (Sort squad by lowest score)
         const squadScores = myPicks.map(pick => {
@@ -400,14 +401,14 @@ const TransferBot = {
 
         // 2. Identify Buy Candidates (Sort market by highest score)
         const marketScores = Object.values(allPlayers)
-            .filter(p => p.status === 'a' && p.pos > 1) 
+            .filter(p => p.status === 'a' && p.pos > 1)
             .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
             .sort((a,b) => b.score - a.score)
             .slice(0, 50);
 
-        // STRATEGY A: Find Single Transfers for the worst 3 players
-        // This gives us diversity in suggestions (Option A, Option B, etc.)
-        for(let i=0; i<Math.min(3, squadScores.length); i++) {
+        // 3. STRATEGY A: Find Top Single Moves
+        // We iterate the bottom 5 players to ensure we find at least 3 valid distinct moves
+        for(let i=0; i<Math.min(5, squadScores.length); i++) {
             const sell = squadScores[i];
             const maxBudget = bank + sell.p.price;
 
@@ -419,7 +420,7 @@ const TransferBot = {
 
                 const diff = (buy.score - sell.score).toFixed(1);
                 if(diff > 0) {
-                    suggestions.push({ 
+                    singleMoves.push({ 
                         type: 'Single Move', 
                         out: [sell.p], 
                         in: [buy.p], 
@@ -430,10 +431,14 @@ const TransferBot = {
             }
         }
 
-        // STRATEGY B: Check for a Double Transfer (Hit -4)
+        // Sort single moves by best difference and take TOP 3
+        singleMoves.sort((a,b) => b.diff - a.diff);
+        finalSuggestions.push(...singleMoves.slice(0, 3));
+
+        // 4. STRATEGY B: The "How many transfers" Option (Double Move)
         // Takes the best single move and tries to add a second move
-        if(suggestions.length > 0) {
-            const bestMove = suggestions[0];
+        if(singleMoves.length > 0) {
+            const bestMove = singleMoves[0];
             const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
             const secondSell = squadScores.find(s => s.p.id !== bestMove.out[0].id);
             
@@ -450,20 +455,26 @@ const TransferBot = {
                     const diff2 = secondBuy.score - secondSell.score;
                     const totalDiff = (bestMove.diff + diff2 - 4).toFixed(1); // Subtract 4 pts cost
                     
-                    if(totalDiff > bestMove.diff) {
-                        suggestions.push({ 
-                            type: 'Double Move (-4)', 
-                            out: [bestMove.out[0], secondSell.p], 
-                            in: [bestMove.in[0], secondBuy.p], 
-                            diff: parseFloat(totalDiff) 
-                        });
-                    }
+                    finalSuggestions.push({ 
+                        type: 'Double Move (-4)', 
+                        out: [bestMove.out[0], secondSell.p], 
+                        in: [bestMove.in[0], secondBuy.p], 
+                        diff: parseFloat(totalDiff) 
+                    });
                 }
             }
         }
 
-        // Return Top 3 Unique Suggestions
-        return suggestions.sort((a,b) => b.diff - a.diff).slice(0, 3);
+        // 5. STRATEGY C: No Transfer Option
+        finalSuggestions.push({
+            type: 'Roll Transfer',
+            out: [],
+            in: [],
+            diff: 0.0
+        });
+
+        // Return the specific list (Top 3 Singles + Double + No Transfer)
+        return finalSuggestions;
     }
 };
 
