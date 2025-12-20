@@ -256,20 +256,36 @@
         }
         .status-dot.urgent { background: #e90052; box-shadow: 0 0 0 3px rgba(233, 0, 82, 0.15); }
         
-        /* FDR TICKER DOTS */
-        .fdr-row { display: flex; gap: 3px; justify-content: center; margin-top: 2px; }
+        /* FDR TICKER STRIP */
+        .fdr-row { 
+            position: absolute; 
+            top: -6px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            display: flex; 
+            gap: 1px; /* Tighter gap */
+            z-index: 20;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            border-radius: 4px;
+            overflow: hidden; /* Keeps corners rounded */
+        }
         .fdr-dot { 
-            width: 14px; height: 14px; 
-            border-radius: 4px; 
-            font-size: 0.5rem; font-weight: 800; color: rgba(0,0,0,0.7);
-            display: flex; align-items: center; justify-content: center;
+            width: 22px; /* Wider to fit text */
+            height: 12px; 
+            font-size: 0.5rem; 
+            font-weight: 800; 
+            color: rgba(0,0,0,0.7);
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            line-height: 1;
         }
         /* FDR Colors */
-        .bg-1 { background: #375523; color: white; } /* Dark Green (Very Easy) */
-        .bg-2 { background: #01fc7a; color: #00381b; } /* Green (Easy) */
-        .bg-3 { background: #e5e7eb; color: #374151; } /* Grey (Average) */
-        .bg-4 { background: #ff1751; color: white; } /* Red (Hard) */
-        .bg-5 { background: #80072d; color: white; } /* Dark Red (Very Hard) */
+        .bg-1 { background: #375523; color: white; } 
+        .bg-2 { background: #01fc7a; color: #00381b; } 
+        .bg-3 { background: #e5e7eb; color: #374151; } 
+        .bg-4 { background: #ff1751; color: white; } 
+        .bg-5 { background: #80072d; color: white; }
     </style>
 </head>
 <body>
@@ -884,27 +900,25 @@ const TransferBot = {
                 else if (['i', 's', 'n'].includes(p.status)) statusBadge = `<div class="status-flag status-bad">×</div>`;
                 
                 let bNum = isBench ? `<div class="bench-num">${benchNum}</div>` : '';
-
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
                 
-                // --- NEW: FDR DOTS LOGIC ---
-                // Get next 3 fixtures from map
+                // Get next 3 fixtures
                 const fixtures = fixMap[p.team_id] || [{diff:3, opp:'-'}, {diff:3, opp:'-'}, {diff:3, opp:'-'}];
                 
-                // Generate 3 dots
+                // Create the Strip
                 let dotsHtml = '<div class="fdr-row">';
                 fixtures.slice(0, 3).forEach(f => {
                     dotsHtml += `<div class="fdr-dot bg-${f.diff}">${f.opp}</div>`;
                 });
                 dotsHtml += '</div>';
-                // ---------------------------
 
                 return `
                     <div class="player-pill ${isBench ? 'bench-pill' : ''}" onclick="app.openModal(${p.id})">
                         ${bNum} ${capBadge} ${statusBadge}
+                        ${dotsHtml}
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
-                        ${dotsHtml} <div class="pill-data">
+                        <div class="pill-data">
                             <span>£${p.price}</span>
                             <span class="points-badge">${p.event_points}</span>
                         </div>
