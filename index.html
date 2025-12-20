@@ -25,9 +25,10 @@
             /* Pitch Colors */
             --grass-1: #059669; --grass-2: #047857;
             
-            /* FDR Colors (For Dots) */
+            /* FDR Colors */
             --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e7e7e7; 
             --fdr-4: #ff1751; --fdr-5: #80072d;
+            --fdr-text-dark: #00381b; --fdr-text-light: white;
 
             /* Status Colors */
             --status-warn: #fbbf24; --status-bad: #ef4444;
@@ -159,13 +160,14 @@
         /* Player Pill Components */
         .player-pill {
             background: rgba(255,255,255,0.95); width: 68px; padding: 6px 2px; border-radius: 6px; text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s; margin-top: 10px;
         }
         .player-pill:active { transform: scale(0.95); }
         .kit-img { width: 36px; height: 46px; object-fit: contain; margin-bottom: -2px; margin-top: 2px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
         .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; background: white; margin-top: 2px; padding: 1px 0; }
         .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding-bottom: 2px; }
         .points-badge { background: var(--primary); color: white; padding: 0 4px; border-radius: 3px; font-weight: 700; }
+        .fix-badge { font-size: 0.5rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; }
         
         /* Badges & Status */
         .captain-badge { position: absolute; bottom: 30px; right: -4px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
@@ -173,6 +175,13 @@
         .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
         .status-warn { background: var(--status-warn); color: #78350f; }
         .status-bad { background: var(--status-bad); color: white; }
+
+        /* LIVE MATCH STATUS BADGES (NEW) */
+        .match-status { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; white-space: nowrap; z-index: 18; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .ms-fix { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; } 
+        .ms-live { background: #00ff85; color: #00381b; border: 1px solid #00e676; animation: pulseLive 2s infinite; } 
+        .ms-ft { background: #111827; color: #9ca3af; border: 1px solid #374151; } 
+        @keyframes pulseLive { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
         /* Subs & Live Events */
         .did-not-play { opacity: 0.5; filter: grayscale(1); }
@@ -253,30 +262,19 @@
         .m-stat-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
         .m-news { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #ffeeba; display: none; }
         
-        /* --- NEW FIXTURE TRACKER STYLES --- */
+        /* Fixture Tracker in Modal (Visual Boxes) */
         .fix-list { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
-        .fix-box { 
-            min-width: 70px; flex: 1;
-            display: flex; flex-direction: column; align-items: center; 
-            background: #f9fafb; border: 1px solid var(--border); 
-            border-radius: 8px; overflow: hidden;
-        }
+        .fix-box { min-width: 70px; flex: 1; display: flex; flex-direction: column; align-items: center; background: #f9fafb; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
         .fix-gw-label { font-size: 0.6rem; color: #888; font-weight: 700; padding: 4px 0; width: 100%; text-align: center; background: #fff; border-bottom: 1px solid #eee; }
-        .fix-opp-pill { 
-            width: 100%; text-align: center; padding: 8px 0; 
-            font-weight: 800; font-size: 0.85rem; color: #111;
-            display: flex; flex-direction: column; justify-content: center;
-            flex: 1;
-        }
+        .fix-opp-pill { width: 100%; text-align: center; padding: 8px 0; font-weight: 800; font-size: 0.85rem; color: #111; display: flex; flex-direction: column; justify-content: center; flex: 1; }
         .fix-loc { font-size: 0.65rem; font-weight: 500; opacity: 0.8; margin-top: 2px; }
         
-        /* Difficulty Backgrounds for Modal */
+        /* Modal Difficulty Colors */
         .d-1 { background: #375523; color: white; }
         .d-2 { background: #00ff85; color: #00381b; }
         .d-3 { background: #e5e7eb; color: #1f2937; }
         .d-4 { background: #ff1751; color: white; }
         .d-5 { background: #80072d; color: white; }
-        /* ---------------------------------- */
         
         /* Modal Action Buttons */
         .modal-actions { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
@@ -592,7 +590,7 @@
         const app = {
             userData: null, playersCache: {}, fixMap: {}, currentPicks: [], currentBank: 0,
             teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
-            currentStats: null, isSimulating: false, simNewIds: [], timer: null,
+            currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
@@ -645,7 +643,7 @@
                     if (banner) banner.remove();
 
                     if (Object.keys(app.playersCache).length > 0) {
-                        app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.currentStats, app.historyData, app.deadline, app.gwName);
+                        app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
                     } else {
                         app.load(localStorage.getItem('fpl_id_final'));
                     }
@@ -741,7 +739,7 @@
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-squad').classList.add('active');
                 const simStats = { ...app.currentStats, bank: simBank * 10, value: app.currentStats.value };
-                app.render(app.userData, simPicks, app.playersCache, app.fixMap, simStats, app.historyData, app.deadline, app.gwName);
+                app.render(app.userData, simPicks, app.playersCache, app.fixMap, app.statusMap || {}, simStats, app.historyData, app.deadline, app.gwName);
                 const bannerHtml = `<div class="sim-banner"><div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div><div class="sim-btn" onclick="app.switchTool('squad')">Reset</div></div>`;
                 const dash = document.getElementById('dashboardView');
                 const existingBanner = dash.querySelector('.sim-banner');
@@ -790,6 +788,20 @@
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
                     app.teams = teamShort;
 
+                    // --- MATCH STATUS MAP (For Live Badges) ---
+                    const statusMap = {};
+                    if(fix1) {
+                        fix1.forEach(f => {
+                            let status = 'FIX';
+                            let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            if (f.finished) { status = 'FT'; label = 'FT'; }
+                            else if (f.started) { status = 'LIVE'; label = 'LIVE'; }
+                            statusMap[f.team_h] = { status, label, id: f.id };
+                            statusMap[f.team_a] = { status, label, id: f.id };
+                        });
+                    }
+                    app.statusMap = statusMap;
+
                     const processFix = (fixList) => {
                         const map = {};
                         if (!fixList) return map;
@@ -829,7 +841,7 @@
                     app.currentPicks = picks.picks;
                     app.currentBank = picks.entry_history.bank / 10;
                     document.getElementById('demoAlert').classList.add('hidden');
-                    app.render(user, picks.picks, players, masterFixMap, picks.entry_history, history, app.deadline, app.gwName);
+                    app.render(user, picks.picks, players, masterFixMap, app.statusMap, picks.entry_history, history, app.deadline, app.gwName);
 
                 } catch (error) {
                     console.error("Data Fetch Failed:", error);
@@ -838,12 +850,12 @@
                     Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = { ...MOCK_DATA.players[k], id: k, team: 'MOCK' });
                     app.playersCache = mPlayers;
                     setTimeout(() => { 
-                        app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, {}, { bank: 5, value: 1000 }, { chips: [] }, new Date().toISOString(), "GW Demo"); 
+                        app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, {}, {}, { bank: 5, value: 1000 }, { chips: [] }, new Date().toISOString(), "GW Demo"); 
                     }, 500);
                 }
             },
 
-            render: (user, picks, players, fixMap, stats, history, deadline, gwName) => {
+            render: (user, picks, players, fixMap, statusMap, stats, history, deadline, gwName) => {
                 let liveScore = 0;
                 picks.forEach(pick => {
                     if (pick.position <= 11) {
@@ -934,7 +946,7 @@
                 }
                 [1, 2, 3, 4].forEach(posId => {
                     const row = document.createElement('div'); row.className = 'field-row';
-                    formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap, false, 0, p.subStatus));
+                    formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap, statusMap, false, 0, p.subStatus));
                     pitchDiv.appendChild(row);
                 });
                 for (let i = 11; i < picks.length; i++) {
@@ -942,19 +954,33 @@
                     const p = players[pick.element];
                     if (p) {
                         const status = subInIds.includes(p.id) ? 'in' : null;
-                        benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, fixMap, true, i - 10, status);
+                        benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, fixMap, statusMap, true, i - 10, status);
                     }
                 }
                 app.show('dashboardView');
             },
 
-            createPill: (p, fixMap, isBench = false, benchNum = 0, subStatus = null) => {
+            createPill: (p, fixMap, statusMap, isBench = false, benchNum = 0, subStatus = null) => {
                 let capBadge = p.is_captain ? `<div class="captain-badge">C</div>` : (p.is_vice ? `<div class="captain-badge vice-badge">V</div>` : '');
                 let statusBadge = p.status === 'd' ? `<div class="status-flag status-warn">!</div>` : (['i', 's', 'n'].includes(p.status) ? `<div class="status-flag status-bad">×</div>` : '');
                 let extraClass = subStatus === 'out' ? 'did-not-play' : (subStatus === 'in' ? 'coming-on' : '');
                 let subIcon = subStatus === 'in' ? `<div class="sub-icon"><i class="fa-solid fa-arrow-up"></i></div>` : '';
                 let newBadge = (app.isSimulating && app.simNewIds && app.simNewIds.includes(p.id)) ? `<div class="new-badge">NEW</div>` : '';
                 if(newBadge) extraClass += ' sim-new';
+
+                // --- LIVE BADGE LOGIC ---
+                let matchBadge = '';
+                if (!app.isSimulating && statusMap && statusMap[p.team_id]) {
+                    const m = statusMap[p.team_id];
+                    let badgeClass = 'ms-fix';
+                    let label = m.label;
+                    if (m.status === 'FT') { badgeClass = 'ms-ft'; } 
+                    else if (m.status === 'LIVE') { 
+                        badgeClass = 'ms-live'; 
+                        if(p.minutes > 0) label = p.minutes + "'";
+                    }
+                    matchBadge = `<div class="match-status ${badgeClass}">${label}</div>`;
+                }
 
                 let evtHtml = '';
                 if (p.stats) {
@@ -973,7 +999,7 @@
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
 
                 return `<div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
-                        ${isBench ? `<div class="bench-num">${benchNum}</div>` : ''} ${capBadge} ${statusBadge} ${subIcon} ${newBadge} ${dotsHtml} ${evtHtml}
+                        ${isBench ? `<div class="bench-num">${benchNum}</div>` : ''} ${capBadge} ${statusBadge} ${subIcon} ${newBadge} ${matchBadge} ${dotsHtml} ${evtHtml}
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
                         <div class="pill-data"><span>£${p.price}</span><span class="points-badge">${p.event_points}</span></div>
@@ -1006,7 +1032,6 @@
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
                     let html = '';
                     
-                    // --- NEW FIXTURE TRACKER LOGIC ---
                     data.fixtures.slice(0, 5).forEach(f => {
                         const isHome = f.is_home;
                         const oppName = app.teams ? app.teams[isHome ? f.team_a : f.team_h] : '---';
