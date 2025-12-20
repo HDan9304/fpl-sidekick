@@ -414,26 +414,17 @@ const MarketBot = {
         const players = Object.values(allPlayers);
         
         // 1. Market Movers (Most bought this week)
-        // Sort by transfers_in descending
         const movers = [...players]
             .sort((a, b) => b.transfers_in - a.transfers_in)
             .slice(0, 3);
 
-        // 2. Best Value (Points per Million)
-        // Formula: Total Points / Price. Minimum 500 minutes played (approx 30 pts) to avoid flukes.
-        const valueKings = [...players]
-            .filter(p => p.total_points > 30) 
-            .map(p => ({ ...p, value_ratio: (p.total_points / p.price) }))
-            .sort((a, b) => b.value_ratio - a.value_ratio)
-            .slice(0, 3);
-
-        // 3. Differentials (Low ownership < 5%, High Form)
+        // 2. Differentials (Low ownership < 5%, High Form)
         const differentials = [...players]
-            .filter(p => p.selected_by < 5 && p.status === 'a')
+            .filter(p => p.sel < 5 && p.status === 'a')
             .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))
             .slice(0, 3);
 
-        return { movers, valueKings, differentials };
+        return { movers, differentials };
     }
 };
 
@@ -454,94 +445,98 @@ const MarketBot = {
                 document.getElementById(viewId).classList.remove('hidden');
             },
             toggleMenu: () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); },
-            switchTool: (t) => {
+                        switchTool: (t) => {
                 app.toggleMenu(); app.currentTool = t;
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-' + t).classList.add('active');
+                
                 if (t === 'squad') {
                     if(Object.keys(app.playersCache).length > 0) app.show('dashboardView');
                     else app.load(localStorage.getItem('fpl_id_final'));
                 } else {
-                    // --- TRANSFER VIEW LOGIC ---
+                    // --- TRANSFER HUB LOGIC ---
                     app.show('transfersView');
-    const container = document.getElementById('transfersView');
-    
-    // Loading State
-    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Scouting Market...</p></div>';
-    
-    setTimeout(() => {
-        // 1. Get AI Suggestion
-        const aiResult = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
-        // 2. Get Market Trends
-        const market = MarketBot.getTrends(app.playersCache);
+                    const container = document.getElementById('transfersView');
+                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Scouting Market...</p></div>';
+                    
+                    setTimeout(() => {
+                        // 1. Run AI
+                        const result = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
+                        // 2. Run Market Analysis
+                        const market = MarketBot.getTrends(app.playersCache);
+                        
+                        let html = '';
 
-        let html = '';
+                        // SECTION 1: AI HERO
+                        if (result) {
+                            html += `
+                                <div style="background:linear-gradient(135deg, var(--primary) 0%, #2a002e 100%); padding:20px; border-radius:16px; color:white; margin-bottom:25px; box-shadow:0 10px 25px -5px rgba(55,0,60,0.3);">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                        <div>
+                                            <div style="font-size:0.75rem; opacity:0.8; text-transform:uppercase; font-weight:700;">AI Recommendation</div>
+                                            <div style="font-size:1.4rem; font-weight:800; color:var(--accent);">+${result.diff} Pts</div>
+                                        </div>
+                                        <div style="font-size:2rem;">🤖</div>
+                                    </div>
+                                    <div style="display:flex; gap:10px; align-items:center;">
+                                        <div style="flex:1; background:rgba(255,255,255,0.1); padding:10px; border-radius:8px; text-align:center;">
+                                            <div style="font-size:0.6rem; opacity:0.7; margin-bottom:4px;">SELL</div>
+                                            <div style="font-weight:700; font-size:0.9rem;">${result.out.name}</div>
+                                        </div>
+                                        <i class="fa-solid fa-arrow-right" style="opacity:0.5;"></i>
+                                        <div style="flex:1; background:white; color:var(--text-main); padding:10px; border-radius:8px; text-align:center;">
+                                            <div style="font-size:0.6rem; color:#02894e; font-weight:800; margin-bottom:4px;">BUY</div>
+                                            <div style="font-weight:700; font-size:0.9rem;">${result.in.name}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            html += `<div class="welcome-card" style="margin-top:0;"><p>Squad is optimal. Save your transfer.</p></div>`;
+                        }
 
-        // --- SECTION 1: AI HERO ---
-        if (aiResult) {
-            html += `
-                <div style="background:linear-gradient(135deg, var(--primary) 0%, #2a002e 100%); padding:20px; border-radius:16px; color:white; margin-bottom:25px; box-shadow:0 4px 15px rgba(55,0,60,0.3);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                        <div>
-                            <div style="font-size:0.75rem; opacity:0.8; text-transform:uppercase; font-weight:700;">AI Recommendation</div>
-                            <div style="font-size:1.4rem; font-weight:800; color:var(--accent);">+${aiResult.diff} Pts</div>
-                        </div>
-                        <div style="font-size:2rem;">🤖</div>
-                    </div>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <div style="flex:1; background:rgba(255,255,255,0.1); padding:10px; border-radius:8px; text-align:center;">
-                            <div style="font-size:0.6rem; opacity:0.7;">SELL</div>
-                            <div style="font-weight:700; font-size:0.9rem;">${aiResult.out.name}</div>
-                        </div>
-                        <i class="fa-solid fa-arrow-right" style="opacity:0.5;"></i>
-                        <div style="flex:1; background:white; color:var(--text-main); padding:10px; border-radius:8px; text-align:center;">
-                            <div style="font-size:0.6rem; color:#02894e; font-weight:800;">BUY</div>
-                            <div style="font-weight:700; font-size:0.9rem;">${aiResult.in.name}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+                        // SECTION 2: MARKET MOVERS
+                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-fire" style="color:#e90052;"></i> Market Movers</div>
+                                 <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
+                        
+                        market.movers.forEach(p => {
+                            html += `
+                                <div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})">
+                                    <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div>
+                                    <div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div>
+                                    <div style="font-size:0.75rem; color:#02894e; font-weight:800; background:#f0fdf4; padding:4px 8px; border-radius:100px; display:inline-block;">
+                                        +${(p.transfers_in / 1000).toFixed(1)}k
+                                    </div>
+                                </div>`;
+                        });
+                        html += `</div>`;
 
-        // --- SECTION 2: MARKET MOVERS ---
-        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:10px;">🔥 Market Movers</div>
-                 <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:15px; margin-bottom:10px;">`;
-        
-        market.movers.forEach(p => {
-            html += `
-                <div style="min-width:110px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0;">
-                    <div style="font-size:0.8rem; font-weight:700;">${p.name}</div>
-                    <div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:5px;">${p.team}</div>
-                    <div style="font-size:0.75rem; color:#02894e; font-weight:800;">+${p.transfers_in.toLocaleString()}</div>
-                </div>`;
-        });
-        html += `</div>`;
+                        // SECTION 3: DIFFERENTIALS
+                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div>
+                                 <div style="display:flex; flex-direction:column; gap:10px;">`;
+                        
+                        market.differentials.forEach(p => {
+                            html += `
+                                <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 16px; border-radius:12px; border:1px solid var(--border);" onclick="app.openModal(${p.id})">
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px;">
+                                        <div>
+                                            <div style="font-size:0.9rem; font-weight:700;">${p.name}</div>
+                                            <div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.sel}%</div>
+                                        </div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="font-size:1rem; font-weight:800; color:var(--primary);">${p.form}</div>
+                                        <div style="font-size:0.6rem; color:var(--text-sub); text-transform:uppercase; font-weight:600;">Form</div>
+                                    </div>
+                                </div>`;
+                        });
+                        html += `</div><div style="height:40px;"></div>`;
 
-        // --- SECTION 3: DIFFERENTIALS ---
-        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:10px;">💎 Hidden Gems</div>
-                 <div style="display:flex; flex-direction:column; gap:8px;">`;
-        
-        market.differentials.forEach(p => {
-            html += `
-                <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px; border-radius:12px; border:1px solid var(--border);">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:30px;">
-                        <div>
-                            <div style="font-size:0.85rem; font-weight:700;">${p.name}</div>
-                            <div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.selected_by}%</div>
-                        </div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:0.9rem; font-weight:800; color:var(--primary);">${p.form}</div>
-                        <div style="font-size:0.6rem; color:var(--text-sub);">FORM</div>
-                    </div>
-                </div>`;
-        });
-        html += `</div><div style="height:40px;"></div>`;
-
-        container.innerHTML = html;
-    }, 600);
-}
+                        container.innerHTML = html;
+                    }, 500);
+                }
+            },
             
             // PROXY ENGINE
             fetchUrl: async (targetUrl) => {
@@ -591,7 +586,6 @@ const MarketBot = {
                             id: p.id,
                             name: p.web_name, team: teamShort[p.team], team_id: p.team,
                             pos: p.element_type, price: p.now_cost / 10,
-                            total_points: p.total_points, transfers_in: p.transfers_in_event,
                             event_points: p.event_points, team_code: p.team_code,
                             status: p.status, // a, d, i, s, u
                             chance: p.chance_of_playing_next_round,
@@ -599,6 +593,8 @@ const MarketBot = {
                             sel: parseFloat(p.selected_by_percent),
                             form: p.form,
                             ict_index: p.ict_index
+                            transfers_in: p.transfers_in_event,
+                            total_points: p.total_points
                         };
                     });
                     
