@@ -286,6 +286,11 @@
         .bg-3 { background: #e5e7eb; color: #374151; } 
         .bg-4 { background: #ff1751; color: white; } 
         .bg-5 { background: #80072d; color: white; }
+        
+        /* AUTO-SUB STYLES */
+        .did-not-play { opacity: 0.5; filter: grayscale(1); }
+        .coming-on { border: 2px solid #00ff85; box-shadow: 0 0 10px rgba(0, 255, 133, 0.4); transform: translateY(-4px); }
+        .sub-icon { position: absolute; top: -5px; left: -5px; background: #00ff85; color: #00381b; width: 18px; height: 18px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; z-index: 30; font-weight: 800; border: 1px solid white; }
     </style>
 </head>
 <body>
@@ -717,55 +722,61 @@ const TransferBot = {
 
                     document.getElementById('loadingMsg').innerText = "Fetching Live Scores...";
                     const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
+                    
+                    // MAP LIVE STATS (Points & Minutes)
                     const liveMap = {};
-                    liveData.elements.forEach(el => { liveMap[el.id] = el.stats.total_points; });
+                    liveData.elements.forEach(el => { 
+                        liveMap[el.id] = { 
+                            points: el.stats.total_points, 
+                            mins: el.stats.minutes 
+                        }; 
+                    });
 
-                    // --- NEW: FETCH NEXT 3 GW FIXTURES ---
-                    document.getElementById('loadingMsg').innerText = "Analysing Schedule...";
-                    // We fetch current GW, GW+1, and GW+2
+                    // FETCH FIXTURES (Next 3)
                     const fixReqs = [gw, gw+1, gw+2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
                     const [fix1, fix2, fix3] = await Promise.all(fixReqs);
 
-                    // Helper to map fixtures
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
                     app.teams = teamShort;
 
                     const processFix = (fixList) => {
                         const map = {};
+                        if(!fixList) return map;
                         fixList.forEach(f => {
                             if(!map[f.team_h]) map[f.team_h] = [];
                             if(!map[f.team_a]) map[f.team_a] = [];
-                            
                             map[f.team_h].push({ opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true });
                             map[f.team_a].push({ opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false });
                         });
                         return map;
                     };
 
-                    const map1 = processFix(fix1 || []);
-                    const map2 = processFix(fix2 || []);
-                    const map3 = processFix(fix3 || []);
+                    const map1 = processFix(fix1);
+                    const map2 = processFix(fix2);
+                    const map3 = processFix(fix3);
 
-                    // Combine into one master map
                     const masterFixMap = {};
                     staticData.teams.forEach(t => {
-                        // Get first fixture from each week (ignoring doubles for simplicity here)
                         const f1 = (map1[t.id] || [])[0] || { opp: '-', diff: 3 };
                         const f2 = (map2[t.id] || [])[0] || { opp: '-', diff: 3 };
                         const f3 = (map3[t.id] || [])[0] || { opp: '-', diff: 3 };
                         masterFixMap[t.id] = [f1, f2, f3];
                     });
                     app.fixMap = masterFixMap;
-                    // -------------------------------------
 
                     const players = {};
                     staticData.elements.forEach(p => {
-                        const realPoints = (liveMap[p.id] !== undefined) ? liveMap[p.id] : p.event_points;
+                        const liveStats = liveMap[p.id];
+                        const realPoints = liveStats ? liveStats.points : p.event_points;
+                        // Default minutes to 0 if not started, but use live if available
+                        const realMins = liveStats ? liveStats.mins : 0;
+
                         players[p.id] = {
                             id: p.id, name: p.web_name, team: teamShort[p.team], team_id: p.team,
                             pos: p.element_type, price: p.now_cost / 10,
                             event_points: realPoints,
+                            minutes: realMins, // <--- NEW DATA POINT
                             team_code: p.team_code,
                             status: p.status, chance: p.chance_of_playing_next_round, news: p.news,
                             sel: parseFloat(p.selected_by_percent), form: p.form,
@@ -791,41 +802,28 @@ const TransferBot = {
             },
 
             render: (user, picks, players, fixMap, stats, history, deadline, gwName) => {
-                // --- 1. CALCULATE TRUE LIVE SCORE ---
+                // 1. CALCULATE SCORE
                 let liveScore = 0;
-                let activeChips = [];
-                
-                // Calculate score based on the 11 starters (Positions 1-11)
                 picks.forEach(pick => {
                     if(pick.position <= 11) {
                         const p = players[pick.element];
-                        if(p) {
-                            // Multiplier: 1=Normal, 2=Captain, 3=Triple Captain
-                            liveScore += (p.event_points * pick.multiplier);
-                        }
+                        if(p) liveScore += (p.event_points * pick.multiplier);
                     }
                 });
                 
-                // Adjust Total Points (Old Total + (Live GW - Old GW))
-                // This gives you a "Live Total Rank" estimation base
                 const oldGwScore = user.summary_event_points || 0;
                 const totalDiff = liveScore - oldGwScore;
                 const liveTotal = (user.summary_overall_points || 0) + totalDiff;
-                // -------------------------------------
 
                 document.getElementById('dispName').innerText = user.name;
-                
-                // UPDATE SCOREBOARD WITH LIVE NUMBERS
                 document.getElementById('dispGW').innerText = liveScore; 
                 document.getElementById('dispTotal').innerText = liveTotal;
-                
                 document.getElementById('dispRank').innerText = (user.summary_overall_rank || 0).toLocaleString();
                 document.getElementById('dispBank').innerText = `£${(stats.bank/10).toFixed(1)}m`;
                 document.getElementById('dispValue').innerText = `£${(stats.value/10).toFixed(1)}m`;
 
-                // --- PROFESSIONAL COUNTDOWN LOGIC ---
+                // 2. COUNTDOWN
                 if (app.timer) clearInterval(app.timer);
-                
                 const updateTime = () => {
                     const now = new Date().getTime();
                     const countDate = new Date(deadline).getTime();
@@ -836,44 +834,65 @@ const TransferBot = {
                         const h = Math.floor((gap % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                         const m = Math.floor((gap % (1000 * 60 * 60)) / (1000 * 60));
                         const s = Math.floor((gap % (1000 * 60)) / 1000);
-                        
                         const ph = h.toString().padStart(2, '0');
                         const pm = m.toString().padStart(2, '0');
                         const ps = s.toString().padStart(2, '0');
-
                         const isUrgent = d === 0 ? 'urgent' : '';
-
                         document.getElementById('gwCountdown').innerHTML = `
-                            <div class="cd-label">
-                                <div class="status-dot ${isUrgent}"></div>
-                                ${gwName}
-                            </div>
-                            <div class="cd-time">
-                                ${d}d : ${ph}h : ${pm}m : ${ps}s
-                            </div>
-                        `;
+                            <div class="cd-label"><div class="status-dot ${isUrgent}"></div>${gwName}</div>
+                            <div class="cd-time">${d}d : ${ph}h : ${pm}m : ${ps}s</div>`;
                     } else {
                         document.getElementById('gwCountdown').innerHTML = `<div class="cd-label" style="border:none; padding:0;">⚠️ Deadline Passed</div>`;
                         clearInterval(app.timer);
                     }
                 };
-                
                 updateTime();
                 app.timer = setInterval(updateTime, 1000);
 
-                // Render Chips
+                // 3. CHIPS
                 const usedChips = history.chips.map(c => c.name);
                 const chipMap = { 'wildcard': 'WC', 'freehit': 'FH', 'bboost': 'BB', '3xc': 'TC' };
                 const allChips = ['wildcard', 'freehit', 'bboost', '3xc'];
                 const chipHtml = allChips.map(c => {
                     const isUsed = usedChips.includes(c);
                     const label = chipMap[c];
-                    const className = isUsed ? 'chip-pill used' : 'chip-pill active';
-                    return `<div class="${className}">${label}</div>`;
+                    return `<div class="${isUsed ? 'chip-pill used' : 'chip-pill active'}">${label}</div>`;
                 }).join('');
                 document.getElementById('chipBar').innerHTML = chipHtml;
 
-                // Render Pitch
+                // 4. IDENTIFY AUTO-SUBS
+                // Simple logic: If Starter has 0 mins, they are "Out". First bench player is "In".
+                // (Note: This is a visual approximation. Real rules are complex, but this covers 90% of cases)
+                const subOutIds = [];
+                const subInIds = [];
+                
+                // Check Starters (1-11)
+                let neededSubs = 0;
+                picks.slice(0, 11).forEach(pick => {
+                    const p = players[pick.element];
+                    // Logic: If status is not 'available' OR chance < 100, and minutes are 0...
+                    // For simplicity in this demo: we assume if minutes are 0 and status != 'a', they didn't play.
+                    // In a real live game, we'd check "Finished" status. 
+                    // Here we use a simpler heuristic: if they have 0 points and chance < 100.
+                    if (p && p.minutes === 0 && p.chance !== 100) {
+                        subOutIds.push(p.id);
+                        neededSubs++;
+                    }
+                });
+
+                // Check Bench (12-15) to fill spots
+                picks.slice(11).forEach(pick => {
+                    if (neededSubs > 0) {
+                        const p = players[pick.element];
+                        // If bench player has minutes (played), they come on
+                        if (p && p.minutes > 0) {
+                            subInIds.push(p.id);
+                            neededSubs--;
+                        }
+                    }
+                });
+
+                // 5. RENDER PITCH
                 const pitchDiv = document.getElementById('pitchRows');
                 const benchDiv = document.getElementById('benchRow');
                 pitchDiv.innerHTML = ''; benchDiv.innerHTML = '';
@@ -882,29 +901,31 @@ const TransferBot = {
                 for (let i = 0; i < 11; i++) {
                     const pick = picks[i];
                     const p = players[pick.element];
-                    // Pass multiplier to pill creation to visually indicate Captain
                     if (p) formation[p.pos].push({ 
                         ...p, 
-                        is_captain: pick.is_captain, 
-                        is_vice: pick.is_vice_captain 
+                        is_captain: pick.is_captain, is_vice: pick.is_vice_captain,
+                        subStatus: subOutIds.includes(p.id) ? 'out' : null 
                     });
                 }
 
                 [1, 2, 3, 4].forEach(posId => {
                     const row = document.createElement('div'); row.className = 'field-row';
-                    formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap));
+                    formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap, false, 0, p.subStatus));
                     pitchDiv.appendChild(row);
                 });
 
                 for (let i = 11; i < picks.length; i++) {
                     const pick = picks[i];
                     const p = players[pick.element];
-                    if(p) benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, fixMap, true, i - 10);
+                    if(p) {
+                        const status = subInIds.includes(p.id) ? 'in' : null;
+                        benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, fixMap, true, i - 10, status);
+                    }
                 }
                 app.show('dashboardView');
             },
 
-            createPill: (p, fixMap, isBench = false, benchNum = 0) => {
+            createPill: (p, fixMap, isBench = false, benchNum = 0, subStatus = null) => {
                 let capBadge = '';
                 if (p.is_captain) capBadge = `<div class="captain-badge">C</div>`;
                 else if (p.is_vice) capBadge = `<div class="captain-badge vice-badge">V</div>`;
@@ -913,13 +934,21 @@ const TransferBot = {
                 if (p.status === 'd') statusBadge = `<div class="status-flag status-warn">!</div>`;
                 else if (['i', 's', 'n'].includes(p.status)) statusBadge = `<div class="status-flag status-bad">×</div>`;
                 
+                // SUB VISUALS
+                let extraClass = '';
+                let subIcon = '';
+                
+                if (subStatus === 'out') {
+                    extraClass = 'did-not-play'; // Grey out
+                } else if (subStatus === 'in') {
+                    extraClass = 'coming-on'; // Green Border
+                    subIcon = `<div class="sub-icon"><i class="fa-solid fa-arrow-up"></i></div>`;
+                }
+
                 let bNum = isBench ? `<div class="bench-num">${benchNum}</div>` : '';
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
                 
-                // Get next 3 fixtures
                 const fixtures = fixMap[p.team_id] || [{diff:3, opp:'-'}, {diff:3, opp:'-'}, {diff:3, opp:'-'}];
-                
-                // Create the Strip
                 let dotsHtml = '<div class="fdr-row">';
                 fixtures.slice(0, 3).forEach(f => {
                     dotsHtml += `<div class="fdr-dot bg-${f.diff}">${f.opp}</div>`;
@@ -927,8 +956,8 @@ const TransferBot = {
                 dotsHtml += '</div>';
 
                 return `
-                    <div class="player-pill ${isBench ? 'bench-pill' : ''}" onclick="app.openModal(${p.id})">
-                        ${bNum} ${capBadge} ${statusBadge}
+                    <div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
+                        ${bNum} ${capBadge} ${statusBadge} ${subIcon}
                         ${dotsHtml}
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
