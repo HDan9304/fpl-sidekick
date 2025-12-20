@@ -251,6 +251,31 @@
         .sim-new { border: 2px solid #fbbf24 !important; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); animation: pulseGlow 2s infinite; z-index: 30; }
         .new-badge { position: absolute; top: -8px; right: -8px; background: #fbbf24; color: #78350f; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
+        /* --- TRANSFER SCOUT SEARCH --- */
+        .search-container { position: sticky; top: 0; background: var(--bg-body); padding: 0 0 15px 0; z-index: 40; }
+        .search-box {
+            display: flex; align-items: center; background: white; 
+            border: 1px solid var(--border); border-radius: 12px; 
+            padding: 10px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .search-box i { color: var(--text-sub); margin-right: 10px; }
+        .search-input { 
+            border: none; outline: none; width: 100%; font-size: 0.95rem; font-weight: 500; padding: 0; margin: 0; text-align: left;
+        }
+        
+        /* SEARCH RESULTS */
+        .scout-list { display: none; margin-bottom: 20px; } /* Hidden by default */
+        .scout-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: white; padding: 12px; border-radius: 12px; 
+            margin-bottom: 8px; border: 1px solid var(--border); cursor: pointer;
+        }
+        .scout-left { display: flex; align-items: center; gap: 12px; }
+        .scout-info div:first-child { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+        .scout-info div:last-child { font-size: 0.75rem; color: var(--text-sub); }
+        .scout-right { text-align: right; }
+        .scout-price { font-weight: 800; color: var(--primary); font-size: 0.9rem; }
+
         /* =========================================
            7. MODALS & UTILITIES
            ========================================= */
@@ -494,10 +519,21 @@
             </div> 
 
             <div id="transfersView" class="hidden">
-                <div class="welcome-card">
-                    <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
-                    <h2>Transfer Hub</h2>
-                    <p>Coming next...</p>
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" class="search-input" placeholder="Scout players (e.g. Palmer)..." onkeyup="app.searchScout(this.value)">
+                    </div>
+                </div>
+
+                <div id="scoutResults" class="scout-list"></div>
+
+                <div id="transferContent">
+                    <div class="welcome-card">
+                        <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
+                        <h2>Transfer Hub</h2>
+                        <p>Loading market data...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -608,7 +644,7 @@
             userData: null, playersCache: {}, fixMap: {}, currentPicks: [], currentBank: 0,
             teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
             currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
-            viewMode: 'live', // 'live' or 'next'
+            viewMode: 'live',
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
@@ -667,7 +703,13 @@
                     }
                 } else {
                     app.show('transfersView');
-                    const container = document.getElementById('transfersView');
+                    
+                    // Clear search input on entry
+                    document.querySelector('.search-input').value = '';
+                    document.getElementById('scoutResults').style.display = 'none';
+                    document.getElementById('transferContent').style.display = 'block';
+
+                    const container = document.getElementById('transferContent');
                     container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Finding Best Move...</p></div>';
 
                     setTimeout(() => {
@@ -738,14 +780,69 @@
                 }
             },
 
-            // --- VIEW TOGGLE LOGIC ---
+            // --- SEARCH FUNCTION (THE SCOUT) ---
+            searchScout: (query) => {
+                const resultsContainer = document.getElementById('scoutResults');
+                const mainContent = document.getElementById('transferContent');
+                
+                if (!query || query.length < 2) {
+                    resultsContainer.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    return;
+                }
+
+                mainContent.style.display = 'none';
+                resultsContainer.style.display = 'block';
+                
+                const q = query.toLowerCase();
+                const players = Object.values(app.playersCache);
+                
+                // Filter matches
+                const matches = players.filter(p => 
+                    p.name.toLowerCase().includes(q) || 
+                    (p.team && p.team.toLowerCase().includes(q))
+                );
+
+                // Sort by Form (Hot players first)
+                matches.sort((a,b) => parseFloat(b.form) - parseFloat(a.form));
+                
+                // Limit results
+                const top20 = matches.slice(0, 20);
+                
+                let html = '';
+                if(top20.length === 0) {
+                    html = '<div style="text-align:center; color:#888; padding:20px;">No players found.</div>';
+                } else {
+                    top20.forEach(p => {
+                        const fixtures = app.fixMap[p.team_id] || [];
+                        let dots = '<div class="t-fdr" style="margin-top:4px;">';
+                        fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
+                        dots += '</div>';
+
+                        html += `
+                            <div class="scout-item" onclick="app.openModal(${p.id})">
+                                <div class="scout-left">
+                                    <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;">
+                                    <div class="scout-info">
+                                        <div>${p.name}</div>
+                                        <div>${p.team} • ${p.form} Form</div>
+                                    </div>
+                                </div>
+                                <div class="scout-right">
+                                    <div class="scout-price">£${p.price}m</div>
+                                    ${dots}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                resultsContainer.innerHTML = html;
+            },
+
             toggleView: (mode) => {
                 app.viewMode = mode;
-                // Update Buttons
                 document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
                 document.getElementById(`btn-${mode}`).classList.add('active');
-                
-                // Re-render pitch
                 app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
             },
 
@@ -1007,7 +1104,6 @@
 
                 // --- LIVE BADGE LOGIC ---
                 let matchBadge = '';
-                // Only show badge in Live Mode
                 if (app.viewMode === 'live' && !app.isSimulating && statusMap && statusMap[p.team_id]) {
                     const m = statusMap[p.team_id];
                     let badgeClass = 'ms-fix';
@@ -1021,7 +1117,6 @@
                 }
 
                 let evtHtml = '';
-                // Show events only in Live Mode
                 if (app.viewMode === 'live' && p.stats) {
                     evtHtml += '<div class="event-row">';
                     for (let i = 0; i < p.stats.goals; i++) evtHtml += `<div class="evt-icon evt-goal"><i class="fa-regular fa-futbol"></i></div>`;
@@ -1043,10 +1138,9 @@
                 let bottomBar = `<div class="pill-data"><span>£${p.price}</span><span class="points-badge">${displayPoints}</span></div>`;
                 
                 if (app.viewMode === 'next') {
-                    // Hide dots, hide events, replace bottom bar with next fixture
                     dotsHtml = '';
                     evtHtml = '';
-                    const nextF = fixtures[1] || { opp: '-', diff: 3 }; // Get GW+1
+                    const nextF = fixtures[1] || { opp: '-', diff: 3 }; 
                     bottomBar = `<div class="next-fix-pill bg-${nextF.diff}">${nextF.opp}</div>`;
                 }
 
