@@ -421,6 +421,25 @@
             padding: 2px 6px; border-radius: 6px; 
             z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
         }
+        
+        /* MODAL ACTIONS */
+        .modal-actions { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
+        .action-btn { 
+            width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; 
+        }
+        .btn-buy { background: #00ff85; color: #00381b; box-shadow: 0 4px 15px rgba(0, 255, 133, 0.3); }
+        .btn-buy:active { transform: scale(0.98); }
+
+        /* REPLACEMENT LIST (Hidden by default) */
+        .rep-list { display: none; margin-top: 15px; animation: slideUp 0.3s ease; }
+        .rep-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 12px; background: #f9fafb; border: 1px solid var(--border); 
+            border-radius: 10px; margin-bottom: 8px; cursor: pointer;
+        }
+        .rep-item:hover { background: #fee2e2; border-color: #fca5a5; } /* Red tint on hover (Sell) */
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -484,6 +503,7 @@
             <div id="modalFixtures" class="fix-list">
                 <div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>
             </div>
+            <div id="modalActions"></div>
             <div style="height:20px;"></div> 
         </div>
     </div>
@@ -889,6 +909,49 @@ const TransferBot = {
                 dash.insertAdjacentHTML('afterbegin', bannerHtml);
             },
             
+            // --- SHOW MANUAL TRANSFER OPTIONS ---
+            showReplacements: (buyId, buyPos) => {
+                const list = document.getElementById(`repList_${buyId}`);
+                if(!list) return;
+                
+                // Toggle visibility
+                if(list.style.display === 'block') { list.style.display = 'none'; return; }
+                
+                // Find candidates to sell (Same Position)
+                const candidates = app.currentPicks.filter(pick => {
+                    const p = app.playersCache[pick.element];
+                    return p.pos === buyPos;
+                });
+
+                let html = `<div style="font-size:0.8rem; font-weight:700; color:#666; margin:10px 0 5px 0;">Replace who?</div>`;
+                
+                candidates.forEach(pick => {
+                    const p = app.playersCache[pick.element];
+                    const bankAfter = (app.currentBank + p.price - app.playersCache[buyId].price).toFixed(1);
+                    const color = bankAfter >= 0 ? '#16a34a' : '#ef4444'; // Green if affordable, Red if not
+                    
+                    // We use the existing simulate function!
+                    // Note: simulate expects arrays [id]
+                    html += `
+                        <div class="rep-item" onclick="app.closeModal(); app.simulate([${p.id}], [${buyId}])">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:25px;">
+                                <div style="font-weight:700; font-size:0.9rem;">${p.name}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:0.7rem; color:#888;">Sell: £${p.price}m</div>
+                                <div style="font-size:0.75rem; font-weight:800; color:${color};">Bank: £${bankAfter}m</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                list.innerHTML = html;
+                list.style.display = 'block';
+            },
+            
+            closeModal: () => { document.getElementById('playerModalOverlay').classList.remove('open'); },
+            
             // PROXY ENGINE
             fetchUrl: async (targetUrl) => {
                 const proxies = [(url) => `https://corsproxy.io/?${encodeURIComponent(url)}`, (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`];
@@ -1251,9 +1314,8 @@ const TransferBot = {
                 if(!p) return;
 
                 const overlay = document.getElementById('playerModalOverlay');
-                const content = document.getElementById('modalFixtures');
                 
-                // Fill Static Info
+                // Static Info
                 document.getElementById('modalName').innerText = p.name;
                 document.getElementById('modalTeam').innerText = `${p.team} • £${p.price}m`;
                 document.getElementById('modalForm').innerText = p.form;
@@ -1261,52 +1323,52 @@ const TransferBot = {
                 document.getElementById('modalPts').innerText = p.event_points;
 
                 const newsEl = document.getElementById('modalNews');
-                if(p.news) {
-                    newsEl.style.display = 'block';
-                    newsEl.innerText = p.news;
-                } else {
-                    newsEl.style.display = 'none';
-                }
+                if(p.news) { newsEl.style.display = 'block'; newsEl.innerText = p.news; } 
+                else { newsEl.style.display = 'none'; }
 
-                // Show Modal
+                // --- NEW: ACTION BUTTONS ---
+                const actionContainer = document.getElementById('modalActions');
+                // Check if we already own this player
+                const isOwned = app.currentPicks.some(pick => pick.element == p.id);
+                
+                if (isOwned) {
+                    actionContainer.innerHTML = `<div style="text-align:center; color:#888; font-size:0.8rem;">You own this player</div>`;
+                } else {
+                    // Logic for buying: Find players in same position to swap
+                    actionContainer.innerHTML = `
+                        <button class="action-btn btn-buy" onclick="app.showReplacements(${p.id}, ${p.pos})">
+                            <i class="fa-solid fa-arrow-right-arrow-left"></i> Transfer In
+                        </button>
+                        <div id="repList_${p.id}" class="rep-list"></div>
+                    `;
+                }
+                // ---------------------------
+
+                // Fixtures Logic (Standard)
                 overlay.classList.add('open');
+                const content = document.getElementById('modalFixtures');
                 content.innerHTML = '<div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>';
 
-                // Fetch Deep Dive Data (Element Summary)
                 try {
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
-                    
-                    // Render Upcoming Fixtures
                     let html = '';
-                    // First 5 fixtures
                     data.fixtures.slice(0, 5).forEach(f => {
                         const diff = f.difficulty;
-                        const colorClass = `fdr-${diff}`;
-                        
-                        // Calculate Opponent
                         const isHome = f.is_home;
                         const oppId = isHome ? f.team_a : f.team_h;
-                        const oppName = app.teams ? app.teams[oppId] : '---'; // Get Name
-                        
+                        const oppName = app.teams ? app.teams[oppId] : '---';
                         html += `
                             <div class="fix-item">
                                 <div style="font-size:0.6rem; color:#888; font-weight:700;">GW${f.event}</div>
                                 <div style="font-weight:800; font-size:0.9rem; margin:2px 0; color:var(--primary);">
                                     ${oppName} <span style="font-weight:400; color:#666; font-size:0.7rem;">${isHome ? '(H)' : '(A)'}</span>
                                 </div>
-                                <div style="margin-top:2px;">
-                                    <span class="fix-diff-dot ${colorClass}"></span>
-                                </div>
-                            </div>
-                        `;
+                                <div><span class="fix-diff-dot fdr-${diff}"></span></div>
+                            </div>`;
                     });
                     content.innerHTML = html;
-
-                } catch (e) {
-                    content.innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>';
-                }
-            }            
-        };
+                } catch (e) { content.innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>'; }
+            },
 
         function toggleMenu() { app.toggleMenu(); }
         function switchTool(t) { app.switchTool(t); }
