@@ -404,6 +404,23 @@
         }
         .preview-btn:hover { background: #e5e7eb; }
         .best-pick .preview-btn { background: #fef3c7; color: #78350f; } /* Gold button for best pick */
+        
+        /* SIMULATION HIGHLIGHTS */
+        .sim-new { 
+            border: 2px solid #fbbf24 !important; /* Gold Border */
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); 
+            animation: pulseGlow 2s infinite;
+            z-index: 30;
+        }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 5px rgba(251, 191, 36, 0.4); } 50% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.6); } 100% { box-shadow: 0 0 5px rgba(251, 191, 36, 0.4); } }
+        
+        .new-badge { 
+            position: absolute; top: -8px; right: -8px; 
+            background: #fbbf24; color: #78350f; 
+            font-size: 0.6rem; font-weight: 800; 
+            padding: 2px 6px; border-radius: 6px; 
+            z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+        }
     </style>
 </head>
 <body>
@@ -742,10 +759,16 @@ const TransferBot = {
                 document.getElementById('nav-' + t).classList.add('active');
                 
                 if (t === 'squad') {
-                    // Reset sim mode when clicking Squad manually
+                    // 1. RESET SIMULATION STATE
                     app.isSimulating = false;
+                    app.simNewIds = []; // Clear highlighted players
+                    
+                    // 2. FORCE REMOVE BANNER
+                    const banner = document.querySelector('.sim-banner');
+                    if(banner) banner.remove();
+
+                    // 3. RELOAD REAL DATA
                     if(Object.keys(app.playersCache).length > 0) {
-                        // Re-render real data
                         app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.currentStats, app.historyData, app.deadline, app.gwName);
                     } else {
                         app.load(localStorage.getItem('fpl_id_final'));
@@ -774,8 +797,6 @@ const TransferBot = {
                                     return;
                                 }
 
-                                // PREPARE DATA FOR SIMULATION BUTTON
-                                // We store the IDs as JSON string in the onclick attribute
                                 const outIds = JSON.stringify(s.out.map(p => p.id));
                                 const inIds = JSON.stringify(s.in.map(p => p.id));
 
@@ -790,8 +811,7 @@ const TransferBot = {
                                         </div>
                                         <div class="t-body">
                                             <div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                                            <div class="t-half t-out"><span class="t-label lbl-out">SELL</span>
-                                `;
+                                            <div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
                                 s.out.forEach(p => {
                                     const fixtures = app.fixMap[p.team_id] || [];
                                     let dots = '<div class="t-fdr">';
@@ -831,51 +851,41 @@ const TransferBot = {
             
             // --- SIMULATE TRANSFER ---
             simulate: (outIds, inIds) => {
-                // 1. Clone current picks to avoid breaking real data
-                // We use JSON parse/stringify for deep clone
                 const simPicks = JSON.parse(JSON.stringify(app.currentPicks));
                 let simBank = app.currentBank;
 
-                // 2. Perform the swaps
                 outIds.forEach((outId, idx) => {
                     const inId = inIds[idx];
-                    
-                    // Find the index in the squad
                     const pickIdx = simPicks.findIndex(p => p.element === outId);
                     if(pickIdx !== -1) {
-                        simPicks[pickIdx].element = inId; // Swap ID
-                        
-                        // Update Bank logic
+                        simPicks[pickIdx].element = inId; 
                         const pOut = app.playersCache[outId];
                         const pIn = app.playersCache[inId];
                         simBank = simBank + pOut.price - pIn.price;
                     }
                 });
 
-                // 3. Switch to Squad View with SIM flag
                 app.currentTool = 'squad';
                 app.isSimulating = true;
                 
-                // Update Menu highlighting
+                // SAVE NEW IDs FOR HIGHLIGHTING
+                app.simNewIds = inIds; 
+
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-squad').classList.add('active');
 
-                // 4. Render with Simulated Data
-                // We pass the new picks and new stats
-                const simStats = { ...app.currentStats, bank: simBank * 10, value: app.currentStats.value }; // Estimate
+                const simStats = { ...app.currentStats, bank: simBank * 10, value: app.currentStats.value }; 
                 app.render(app.userData, simPicks, app.playersCache, app.fixMap, simStats, app.historyData, app.deadline, app.gwName);
                 
-                // 5. Inject the "Simulation Mode" Banner at the top
                 const bannerHtml = `
                     <div class="sim-banner">
                         <div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div>
                         <div class="sim-btn" onclick="app.switchTool('squad')">Reset</div>
                     </div>
                 `;
-                // Insert banner before countdown
                 const dash = document.getElementById('dashboardView');
                 const existingBanner = dash.querySelector('.sim-banner');
-                if(existingBanner) existingBanner.remove(); // Prevent duplicates
+                if(existingBanner) existingBanner.remove(); 
                 dash.insertAdjacentHTML('afterbegin', bannerHtml);
             },
             
@@ -1195,30 +1205,23 @@ const TransferBot = {
                 if (subStatus === 'out') extraClass = 'did-not-play'; 
                 else if (subStatus === 'in') { extraClass = 'coming-on'; subIcon = `<div class="sub-icon"><i class="fa-solid fa-arrow-up"></i></div>`; }
 
-                // --- ICONS UPDATE ---
+                // --- HIGHLIGHT NEW TRANSFER ---
+                let newBadge = '';
+                if (app.isSimulating && app.simNewIds && app.simNewIds.includes(p.id)) {
+                    extraClass += ' sim-new'; // Add Gold Glow
+                    newBadge = `<div class="new-badge">NEW</div>`; // Add Badge
+                }
+                // ------------------------------
+
                 let evtHtml = '';
                 if(p.stats) {
                     evtHtml += '<div class="event-row">';
-                    
-                    // Goals (Ball Icon)
-                    for(let i=0; i<p.stats.goals; i++) 
-                        evtHtml += `<div class="evt-icon evt-goal"><i class="fa-regular fa-futbol"></i></div>`;
-                    
-                    // Assists (Handshake/Pass Icon)
-                    for(let i=0; i<p.stats.assists; i++) 
-                        evtHtml += `<div class="evt-icon evt-assist"><i class="fa-solid fa-share" style="transform: scaleX(-1);"></i></div>`;
-                    
-                    // Red Cards (Red Square)
-                    if(p.stats.red_cards > 0) 
-                        evtHtml += `<div class="evt-icon evt-red"><i class="fa-solid fa-square-full"></i></div>`;
-                        
-                    // Own Goals (Red Ball)
-                    if(p.stats.own_goals > 0) 
-                         evtHtml += `<div class="evt-icon evt-own"><i class="fa-solid fa-futbol"></i></div>`;
-
+                    for(let i=0; i<p.stats.goals; i++) evtHtml += `<div class="evt-icon evt-goal"><i class="fa-regular fa-futbol"></i></div>`;
+                    for(let i=0; i<p.stats.assists; i++) evtHtml += `<div class="evt-icon evt-assist"><i class="fa-solid fa-share" style="transform: scaleX(-1);"></i></div>`;
+                    if(p.stats.red_cards > 0) evtHtml += `<div class="evt-icon evt-red"><i class="fa-solid fa-square-full"></i></div>`;
+                    if(p.stats.own_goals > 0) evtHtml += `<div class="evt-icon evt-own"><i class="fa-solid fa-futbol"></i></div>`;
                     evtHtml += '</div>';
                 }
-                // ---------------------
 
                 let bNum = isBench ? `<div class="bench-num">${benchNum}</div>` : '';
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
@@ -1229,7 +1232,7 @@ const TransferBot = {
 
                 return `
                     <div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
-                        ${bNum} ${capBadge} ${statusBadge} ${subIcon}
+                        ${bNum} ${capBadge} ${statusBadge} ${subIcon} ${newBadge}
                         ${dotsHtml}
                         ${evtHtml}
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
