@@ -9,27 +9,43 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        /* =========================================
+           1. VARIABLES & RESET
+           ========================================= */
         :root {
-            --primary: #37003c; --accent: #00ff85;
-            --bg-body: #f0f2f5; --bg-app: #ffffff;
-            --text-main: #111827; --text-sub: #6b7280;
-            --border: #e5e7eb; --red: #e90052;
+            --primary: #37003c;
+            --accent: #00ff85;
+            --bg-body: #f0f2f5;
+            --bg-app: #ffffff;
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --border: #e5e7eb;
+            --red: #e90052;
             
-            /* PITCH COLORS */
-            --grass-1: #059669; --grass-2: #047857;
+            /* Pitch Colors */
+            --grass-1: #059669;
+            --grass-2: #047857;
             
             /* FDR Colors */
-            --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e7e7e7; --fdr-4: #ff1751; --fdr-5: #80072d;
-            --fdr-text-dark: #00381b; --fdr-text-light: white;
+            --fdr-1: #375523;
+            --fdr-2: #01fc7a;
+            --fdr-3: #e7e7e7;
+            --fdr-4: #ff1751;
+            --fdr-5: #80072d;
+            --fdr-text-dark: #00381b;
+            --fdr-text-light: white;
 
-            /* STATUS COLORS */
-            --status-warn: #fbbf24; --status-bad: #ef4444;
+            /* Status Colors */
+            --status-warn: #fbbf24;
+            --status-bad: #ef4444;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; }
 
-        /* APP SHELL */
+        /* =========================================
+           2. APP SHELL & LAYOUT
+           ========================================= */
         .app-container {
             width: 100%; max-width: 600px; background-color: var(--bg-app);
             min-height: 100vh; position: relative; display: flex; flex-direction: column;
@@ -43,7 +59,7 @@
             }
         }
 
-        /* HEADER */
+        /* Header */
         header {
             background: var(--bg-app); height: 60px; padding: 0 20px;
             display: flex; justify-content: space-between; align-items: center;
@@ -58,8 +74,16 @@
             border: 1px solid var(--border); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
         .user-avatar.active { background: var(--primary); color: var(--accent); border-color: var(--primary); }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .trophy-btn { font-size: 1.2rem; color: #fbbf24; cursor: pointer; padding: 5px; }
 
-        /* SIDEBAR */
+        /* Content Area */
+        .content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        .hidden { display: none !important; }
+
+        /* =========================================
+           3. SIDEBAR & NAVIGATION
+           ========================================= */
         .sidebar {
             position: fixed; top: 0; left: 0; height: 100%; width: 280px;
             background: var(--bg-app); z-index: 200; transform: translateX(-100%);
@@ -85,16 +109,9 @@
         .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
         .menu-overlay.open { opacity: 1; visibility: visible; }
 
-        /* CONTENT */
-        .content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
-        
-        .welcome-card { text-align: center; padding: 40px 20px; background: #fafafa; border-radius: 20px; border: 1px solid var(--border); margin-top: 20px; }
-        input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: white; font-size: 1rem; }
-        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
-        
-        .demo-alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 15px; border: 1px solid #ffeeba; }
-
-        /* SCOREBOARD */
+        /* =========================================
+           4. SCOREBOARD & DASHBOARD UI
+           ========================================= */
         .scoreboard { background: var(--primary); color: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2); }
         .manager-name { font-size: 1.1rem; font-weight: 800; text-align: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; }
@@ -103,10 +120,35 @@
         .stat-val { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
         .stat-val-small { font-size: 0.9rem; font-weight: 700; color: white; }
 
-        /* PITCH */
+        /* Countdown & Chips */
+        .countdown-container { display: flex; justify-content: center; margin-bottom: 20px; }
+        .countdown-pill { 
+            background: white; border: 1px solid #e5e7eb; border-radius: 100px;
+            padding: 8px 20px; display: inline-flex; align-items: center; gap: 15px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
+        }
+        .cd-label { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid #e5e7eb; padding-right: 15px; }
+        .cd-time { font-family: 'Courier New', monospace; font-weight: 800; color: var(--primary); font-size: 1rem; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+        .status-dot.urgent { background: #e90052; box-shadow: 0 0 0 3px rgba(233, 0, 82, 0.15); }
+
+        .chip-bar { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .chip-pill { background: #e5e7eb; color: #9ca3af; padding: 6px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #d1d5db; letter-spacing: 0.5px; }
+        .chip-pill.active { background: #fff; color: var(--primary); border-color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .chip-pill.used { text-decoration: line-through; opacity: 0.6; }
+
+        /* Rank Arrows */
+        .rank-wrap { display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .r-arrow { font-size: 0.8rem; }
+        .r-green { color: #00ff85; } .r-red { color: #ef4444; } .r-grey { color: #9ca3af; }
+
+        /* =========================================
+           5. PITCH & PLAYERS
+           ========================================= */
         .pitch-wrapper { background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 20px; }
         .budget-bar { background: white; padding: 8px 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 0.75rem; font-weight: 600; color: var(--text-sub); }
         .budget-val { color: var(--primary); font-weight: 800; }
+        
         .pitch-container { background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 20px, var(--grass-2) 20px, var(--grass-2) 40px); padding: 25px 5px; position: relative; min-height: 480px; }
         .pitch-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.6; }
         .pitch-circle { width: 80px; height: 80px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
@@ -114,225 +156,55 @@
         .box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-top: none; }
         .box-bot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-bottom: none; }
         .field-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 20px; position: relative; z-index: 10; }
-        
-        /* PLAYER PILL */
-        .player-pill {
-            background: rgba(255,255,255,0.95); width: 68px; padding: 6px 2px; border-radius: 6px; text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s;
-        }
-        .player-pill:active { transform: scale(0.95); }
-        
-        .kit-img { width: 36px; height: 46px; object-fit: contain; margin-bottom: -2px; margin-top: 2px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
-        .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; background: white; margin-top: 2px; padding: 1px 0; }
-        .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding-bottom: 2px; }
-        .points-badge { background: var(--primary); color: white; padding: 0 4px; border-radius: 3px; font-weight: 700; }
-        .fix-badge { font-size: 0.5rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; }
-        
-        /* FDR Colors */
-        .fdr-1, .fdr-2 { background: var(--fdr-2); color: var(--fdr-text-dark); }
-        .fdr-3 { background: var(--fdr-3); color: #333; }
-        .fdr-4 { background: var(--fdr-4); color: white; }
-        .fdr-5 { background: var(--fdr-5); color: white; }
 
-        /* BADGES */
-        .captain-badge { position: absolute; bottom: 30px; right: -4px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
-        .vice-badge { background: #666; }
-        
-        /* STATUS FLAGS */
-        .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
-        .status-warn { background: var(--status-warn); color: #78350f; }
-        .status-bad { background: var(--status-bad); color: white; }
-
-        /* BENCH */
         .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
         .bench-header { background: #f8f9fa; padding: 8px 15px; font-size: 0.7rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
         .bench-row { display: flex; justify-content: space-around; padding: 15px; background: #fdfdfd; }
         .bench-pill { opacity: 0.85; }
         .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
 
-        /* MODAL */
-        .modal-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.5); z-index: 1000; 
-            /* Fix: Flexbox pushes content to bottom */
-            display: flex; justify-content: center; align-items: flex-end; 
-            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); 
+        /* Player Pill Components */
+        .player-pill {
+            background: rgba(255,255,255,0.95); width: 68px; padding: 6px 2px; border-radius: 6px; text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s;
         }
-        .modal-overlay.open { opacity: 1; visibility: visible; }
+        .player-pill:active { transform: scale(0.95); }
+        .kit-img { width: 36px; height: 46px; object-fit: contain; margin-bottom: -2px; margin-top: 2px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+        .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; background: white; margin-top: 2px; padding: 1px 0; }
+        .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding-bottom: 2px; }
+        .points-badge { background: var(--primary); color: white; padding: 0 4px; border-radius: 3px; font-weight: 700; }
+        
+        /* Badges & Status */
+        .captain-badge { position: absolute; bottom: 30px; right: -4px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
+        .vice-badge { background: #666; }
+        .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
+        .status-warn { background: var(--status-warn); color: #78350f; }
+        .status-bad { background: var(--status-bad); color: white; }
 
-        .modal-card {
-            background: white; 
-            width: 100%; /* Fix: Full width */
-            max-width: 600px; /* Constrain on desktop */
-            border-radius: 20px 20px 0 0; /* Fix: Only top corners rounded */
-            padding: 25px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
-            margin: 0; /* Fix: No margins */
-            transform: translateY(100%); 
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .modal-overlay.open .modal-card { transform: translateY(0); }
-
-        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-        .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
-        .m-player-team { font-size: 0.9rem; color: var(--text-sub); }
-        .close-modal { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; color: #666; }
-        
-        .m-stats-row { display: flex; gap: 15px; margin-bottom: 20px; }
-        .m-stat-box { background: #f9fafb; padding: 10px; border-radius: 10px; flex: 1; text-align: center; border: 1px solid var(--border); }
-        .m-stat-label { font-size: 0.65rem; text-transform: uppercase; color: #888; font-weight: 700; }
-        .m-stat-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
-        
-        .m-section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 10px; color: var(--text-main); }
-        .fix-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
-        .fix-item { min-width: 80px; background: #fff; border: 1px solid var(--border); padding: 8px; border-radius: 8px; text-align: center; }
-        .fix-opp { font-weight: 800; font-size: 0.9rem; }
-        .fix-diff-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
-        
-        .m-news { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #ffeeba; display: none; }
-
-        .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .hidden { display: none !important; }
-
-        /* --- LOGOUT MODAL STYLES --- */
-        .logout-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.5); z-index: 2000; 
-            display: flex; justify-content: center; align-items: center; 
-            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px); 
-        }
-        .logout-overlay.open { opacity: 1; visibility: visible; }
-        .logout-card { 
-            background: white; width: 90%; max-width: 320px; 
-            border-radius: 20px; padding: 24px; text-align: center; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform: scale(0.95); transition: 0.2s;
-        }
-        .logout-overlay.open .logout-card { transform: scale(1); }
-        .logout-actions { display: flex; gap: 10px; margin-top: 24px; }
-        .l-btn { flex: 1; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; border: none; }
-        .l-btn-cancel { background: #f3f4f6; color: #374151; }
-        .l-btn-confirm { background: #ef4444; color: white; }
-        
-        /* MANAGER CONSOLE (CHIPS) */
-        .chip-bar { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-        .chip-pill { background: #e5e7eb; color: #9ca3af; padding: 6px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #d1d5db; letter-spacing: 0.5px; }
-        .chip-pill.active { background: #fff; color: var(--primary); border-color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .chip-pill.used { text-decoration: line-through; opacity: 0.6; }
-        
-        /* PROFESSIONAL COUNTDOWN */
-        .countdown-container { display: flex; justify-content: center; margin-bottom: 20px; }
-        
-        .countdown-pill { 
-            background: white; 
-            border: 1px solid #e5e7eb; 
-            border-radius: 100px; /* Full rounded pill shape */
-            padding: 8px 20px; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 15px; 
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
-        }
-
-        .cd-label { 
-            display: flex; align-items: center; gap: 8px; 
-            font-size: 0.75rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px;
-            border-right: 1px solid #e5e7eb; padding-right: 15px;
-        }
-
-        .cd-time { 
-            font-family: 'Courier New', monospace; /* Monospace keeps numbers steady */
-            font-weight: 800; 
-            color: var(--primary); 
-            font-size: 1rem; 
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.5px;
-        }
-
-        .status-dot { 
-            width: 8px; height: 8px; background: #10b981; /* Green for active */
-            border-radius: 50%; 
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
-        }
-        .status-dot.urgent { background: #e90052; box-shadow: 0 0 0 3px rgba(233, 0, 82, 0.15); }
-        
-        /* FDR TICKER STRIP */
-        .fdr-row { 
-            position: absolute; 
-            top: -6px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            display: flex; 
-            gap: 1px; /* Tighter gap */
-            z-index: 20;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            border-radius: 4px;
-            overflow: hidden; /* Keeps corners rounded */
-        }
-        .fdr-dot { 
-            width: 22px; /* Wider to fit text */
-            height: 12px; 
-            font-size: 0.5rem; 
-            font-weight: 800; 
-            color: rgba(0,0,0,0.7);
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            line-height: 1;
-        }
-        /* FDR Colors */
-        .bg-1 { background: #375523; color: white; } 
-        .bg-2 { background: #01fc7a; color: #00381b; } 
-        .bg-3 { background: #e5e7eb; color: #374151; } 
-        .bg-4 { background: #ff1751; color: white; } 
-        .bg-5 { background: #80072d; color: white; }
-        
-        /* AUTO-SUB STYLES */
+        /* Subs & Live Events */
         .did-not-play { opacity: 0.5; filter: grayscale(1); }
         .coming-on { border: 2px solid #00ff85; box-shadow: 0 0 10px rgba(0, 255, 133, 0.4); transform: translateY(-4px); }
         .sub-icon { position: absolute; top: -5px; left: -5px; background: #00ff85; color: #00381b; width: 18px; height: 18px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; z-index: 30; font-weight: 800; border: 1px solid white; }
         
-        /* LIVE EVENT ICONS */
-        .event-row { 
-            position: absolute; 
-            bottom: 38px; 
-            left: 50%; transform: translateX(-50%);
-            display: flex; gap: 4px; z-index: 25;
-        }
-        .evt-icon { 
-            width: 16px; height: 16px; 
-            border-radius: 50%; 
-            font-size: 0.65rem; 
-            display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3); 
-            border: 1px solid white; 
-        }
-        .evt-goal { background: #fff; color: #111; } 
-        .evt-assist { background: #3b82f6; color: white; } 
+        .event-row { position: absolute; bottom: 38px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 25; }
+        .evt-icon { width: 16px; height: 16px; border-radius: 50%; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 1px solid white; }
+        .evt-goal { background: #fff; color: #111; }
+        .evt-assist { background: #3b82f6; color: white; }
         .evt-red { background: #ef4444; color: white; }
-        .evt-own { background: #111; color: #ef4444; } /* Own Goal */
-        
-        /* LEAGUE MODAL STYLES */
-        .league-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
-        .league-item:last-child { border-bottom: none; }
-        .lg-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
-        .lg-rank-box { text-align: right; }
-        .lg-rank { font-weight: 800; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
-        .rank-arrow { font-size: 0.8rem; }
-        .arrow-up { color: #16a34a; }   /* Green */
-        .arrow-down { color: #ef4444; } /* Red */
-        .arrow-same { color: #d1d5db; } /* Grey */
-        .header-right { display: flex; align-items: center; gap: 12px; }
-        .trophy-btn { font-size: 1.2rem; color: #fbbf24; cursor: pointer; padding: 5px; } /* Gold Trophy */
-        
-        /* RANK ARROWS */
-        .rank-wrap { display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .r-arrow { font-size: 0.8rem; }
-        .r-green { color: #00ff85; } /* Bright Green */
-        .r-red { color: #ef4444; }   /* Red */
-        .r-grey { color: #9ca3af; }  /* Grey */
-        
-        /* TRANSFER CARD UI */
+        .evt-own { background: #111; color: #ef4444; }
+
+        /* FDR Ticker */
+        .fdr-row { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); display: flex; gap: 1px; z-index: 20; box-shadow: 0 1px 2px rgba(0,0,0,0.2); border-radius: 4px; overflow: hidden; }
+        .fdr-dot { width: 22px; height: 12px; font-size: 0.5rem; font-weight: 800; color: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .bg-1 { background: #375523; color: white; }
+        .bg-2 { background: #01fc7a; color: #00381b; }
+        .bg-3 { background: #e5e7eb; color: #374151; }
+        .bg-4 { background: #ff1751; color: white; }
+        .bg-5 { background: #80072d; color: white; }
+
+        /* =========================================
+           6. TRANSFERS & CARDS
+           ========================================= */
         .t-card { background: white; border-radius: 16px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .t-header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: #f9fafb; }
         .t-type { font-size: 0.75rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -340,7 +212,6 @@
         
         .t-body { display: flex; position: relative; }
         .t-mid-arrow { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid var(--border); color: var(--text-sub); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        
         .t-half { flex: 1; padding: 15px 10px; display: flex; flex-direction: column; align-items: center; text-align: center; }
         .t-out { background: #fff5f5; border-right: 1px solid #fee2e2; }
         .t-in { background: #f0fdf4; }
@@ -349,83 +220,81 @@
         .lbl-out { background: #fee2e2; color: #ef4444; }
         .lbl-in { background: #dcfce7; color: #16a34a; }
 
-        /* Reuse standard pill styles but tweak for list */
+        /* Transfer Styles specific */
         .t-kit { width: 40px; height: 50px; object-fit: contain; margin: 5px 0; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2)); }
         .t-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 2px; line-height: 1.2; }
         .t-meta { font-size: 0.7rem; color: var(--text-sub); font-weight: 500; }
-        
         .t-fdr { display: flex; gap: 2px; margin-top: 8px; }
-        .t-dot { width: 18px; height: 6px; border-radius: 2px; } /* Slimmer dots for transfer view */
+        .t-dot { width: 18px; height: 6px; border-radius: 2px; }
         
-        /* RECOMMENDED CARD STYLES */
-        .t-card.best-pick { 
-            border: 2px solid #fbbf24; /* Gold Border */
-            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.15); 
-            transform: scale(1.02); /* Slightly larger */
-            margin-bottom: 30px; /* Separation from others */
-        }
-        .t-card.best-pick .t-header { background: #fffbeb; } /* Light Gold BG */
-        
-        .rec-badge { 
-            background: #fbbf24; color: #78350f; 
-            font-size: 0.7rem; font-weight: 800; 
-            padding: 4px 12px; border-radius: 20px; 
-            display: inline-flex; align-items: center; gap: 6px;
-            margin-bottom: 10px;
-        }
-        
-        /* SIMULATION MODE BANNER */
-        .sim-banner {
-            background: #e90052; color: white;
-            padding: 10px 20px;
-            text-align: center;
-            font-weight: 700;
-            display: flex; justify-content: space-between; align-items: center;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(233, 0, 82, 0.3);
-            animation: slideDown 0.3s ease;
-        }
-        .sim-btn {
-            background: rgba(255,255,255,0.2); 
-            border: 1px solid rgba(255,255,255,0.4); 
-            color: white; padding: 4px 12px; border-radius: 6px; 
-            font-size: 0.75rem; cursor: pointer; font-weight: 800;
-        }
-        @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .t-card.best-pick { border: 2px solid #fbbf24; box-shadow: 0 10px 30px rgba(251, 191, 36, 0.15); transform: scale(1.02); margin-bottom: 30px; }
+        .t-card.best-pick .t-header { background: #fffbeb; }
+        .rec-badge { background: #fbbf24; color: #78350f; font-size: 0.7rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; }
 
-        /* PREVIEW BUTTON (ON TRANSFER CARD) */
-        .preview-btn {
-            width: 100%; margin-top: 15px;
-            padding: 10px; border-radius: 8px; border: none;
-            background: #f3f4f6; color: #111; font-weight: 700; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: 0.2s;
-        }
+        /* Simulation Banner */
+        .sim-banner { background: #e90052; color: white; padding: 10px 20px; text-align: center; font-weight: 700; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(233, 0, 82, 0.3); animation: slideDown 0.3s ease; }
+        .sim-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 800; }
+        .preview-btn { width: 100%; margin-top: 15px; padding: 10px; border-radius: 8px; border: none; background: #f3f4f6; color: #111; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         .preview-btn:hover { background: #e5e7eb; }
-        .best-pick .preview-btn { background: #fef3c7; color: #78350f; } /* Gold button for best pick */
+        .best-pick .preview-btn { background: #fef3c7; color: #78350f; }
         
-        /* SIMULATION HIGHLIGHTS */
-        .sim-new { 
-            border: 2px solid #fbbf24 !important; /* Gold Border */
-            box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); 
-            animation: pulseGlow 2s infinite;
-            z-index: 30;
-        }
-        @keyframes pulseGlow { 0% { box-shadow: 0 0 5px rgba(251, 191, 36, 0.4); } 50% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.6); } 100% { box-shadow: 0 0 5px rgba(251, 191, 36, 0.4); } }
+        .sim-new { border: 2px solid #fbbf24 !important; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); animation: pulseGlow 2s infinite; z-index: 30; }
+        .new-badge { position: absolute; top: -8px; right: -8px; background: #fbbf24; color: #78350f; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* =========================================
+           7. MODALS & UTILITIES
+           ========================================= */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: flex-end; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+        .modal-card { background: white; width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 25px; box-shadow: 0 -10px 40px rgba(0,0,0,0.3); margin: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-overlay.open .modal-card { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         
-        .new-badge { 
-            position: absolute; top: -8px; right: -8px; 
-            background: #fbbf24; color: #78350f; 
-            font-size: 0.6rem; font-weight: 800; 
-            padding: 2px 6px; border-radius: 6px; 
-            z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
-        }
+        .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
+        .m-player-team { font-size: 0.9rem; color: var(--text-sub); }
+        .close-modal { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; color: #666; }
+        
+        .m-stats-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .m-stat-box { background: #f9fafb; padding: 10px; border-radius: 10px; flex: 1; text-align: center; border: 1px solid var(--border); }
+        .m-stat-label { font-size: 0.65rem; text-transform: uppercase; color: #888; font-weight: 700; }
+        .m-stat-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .m-news { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #ffeeba; display: none; }
+        
+        .fix-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
+        .fix-item { min-width: 80px; background: #fff; border: 1px solid var(--border); padding: 8px; border-radius: 8px; text-align: center; }
+        .fix-diff-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+        
+        /* Leagues Modal */
+        .league-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
+        .league-item:last-child { border-bottom: none; }
+        .lg-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
+        .lg-rank-box { text-align: right; }
+        .lg-rank { font-weight: 800; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+        .arrow-up { color: #16a34a; } .arrow-down { color: #ef4444; } .arrow-same { color: #d1d5db; }
+        
+        /* Utilities */
+        .welcome-card { text-align: center; padding: 40px 20px; background: #fafafa; border-radius: 20px; border: 1px solid var(--border); margin-top: 20px; }
+        input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: white; font-size: 1rem; }
+        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
+        .demo-alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 15px; border: 1px solid #ffeeba; }
+        .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Logout Overlay Specific */
+        .logout-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px); }
+        .logout-overlay.open { opacity: 1; visibility: visible; }
+        .logout-card { background: white; width: 90%; max-width: 320px; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform: scale(0.95); transition: 0.2s; }
+        .logout-overlay.open .logout-card { transform: scale(1); }
+        .logout-actions { display: flex; gap: 10px; margin-top: 24px; }
+        .l-btn { flex: 1; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; border: none; }
+        .l-btn-cancel { background: #f3f4f6; color: #374151; }
+        .l-btn-confirm { background: #ef4444; color: white; }
     </style>
 </head>
+
 <body>
 
-         <div id="leaguesModalOverlay" class="modal-overlay" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">
+    <div id="leaguesModalOverlay" class="modal-overlay" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div class="m-player-name">My Leagues</div>
@@ -435,24 +304,6 @@
         </div>
     </div>
     
-    <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
-    <div id="sideMenu" class="sidebar">
-        <div class="menu-header">FPL Hub</div>
-        <div class="menu-items">
-            <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
-                <i class="fa-solid fa-shirt"></i> Squad
-            </div>
-            <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
-                <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
-            </div>
-        </div>
-        <div class="menu-footer">
-            <button class="logout-btn" onclick="clearData()">
-                <i class="fa-solid fa-power-off"></i> Logout
-            </button>
-        </div>
-    </div>
-
     <div id="playerModalOverlay" class="modal-overlay" onclick="closeModal()">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -484,6 +335,7 @@
             <div id="modalFixtures" class="fix-list">
                 <div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>
             </div>
+            <div id="modalActions" class="modal-actions"></div>
             <div style="height:20px;"></div> 
         </div>
     </div>
@@ -500,7 +352,26 @@
         </div>
     </div>
 
+    <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
+    <div id="sideMenu" class="sidebar">
+        <div class="menu-header">FPL Hub</div>
+        <div class="menu-items">
+            <div id="nav-squad" class="menu-item active" onclick="switchTool('squad')">
+                <i class="fa-solid fa-shirt"></i> Squad
+            </div>
+            <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
+            </div>
+        </div>
+        <div class="menu-footer">
+            <button class="logout-btn" onclick="clearData()">
+                <i class="fa-solid fa-power-off"></i> Logout
+            </button>
+        </div>
+    </div>
+
     <div class="app-container">
+        
         <header>
             <div class="header-left">
                 <div class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></div>
@@ -513,6 +384,7 @@
         </header>
 
         <div class="content">
+            
             <div id="welcomeView" class="welcome-card hidden">
                 <div style="font-size: 3rem; margin-bottom: 10px;">👋</div>
                 <h2>Link Team</h2>
@@ -577,6 +449,7 @@
                     <div id="benchRow" class="bench-row"></div>
                 </div>
             </div> 
+
             <div id="transfersView" class="hidden">
                 <div class="welcome-card">
                     <div style="font-size: 2.5rem; margin-bottom: 15px;">🔮</div>
@@ -584,9 +457,14 @@
                     <p>Coming next...</p>
                 </div>
             </div>
-
+        </div>
+    </div>
+    
     <script>
-        // --- MOCK DATA ---
+        // =========================================
+        // 1. DATA & HELPERS
+        // =========================================
+        
         const MOCK_DATA = {
             user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
             bank: 5, value: 1024,
@@ -604,171 +482,130 @@
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
-const TransferBot = {
-    getScore: (p, fixtures) => {
-        // FIX: Check if fixtures is an array (new format) or object (old format)
-        // We want the first fixture (Next Gameweek)
-        const teamFix = fixtures[p.team_id];
-        const nextFix = Array.isArray(teamFix) ? teamFix[0] : (teamFix || { diff: 3 });
-        
-        // Calculate Score: Form minus Fixture Difficulty
-        // Higher Form + Lower Difficulty = Higher Score
-        let score = parseFloat(p.form) - (nextFix.diff * 2);
-        
-        // Penalty for injured/suspended players
-        if (p.status !== 'a' && p.chance < 75) score -= 50;
-        
-        return score;
-    },
+        const TransferBot = {
+            getScore: (p, fixtures) => {
+                const teamFix = fixtures[p.team_id];
+                const nextFix = Array.isArray(teamFix) ? teamFix[0] : (teamFix || { diff: 3 });
+                let score = parseFloat(p.form) - (nextFix.diff * 2);
+                if (p.status !== 'a' && p.chance < 75) score -= 50;
+                return score;
+            },
+            analyze: (myPicks, allPlayers, bank, fixtures) => {
+                let singleMoves = [];
+                let finalSuggestions = [];
 
-    analyze: (myPicks, allPlayers, bank, fixtures) => {
-        let singleMoves = [];
-        let finalSuggestions = [];
+                // 1. Sell Candidates
+                const squadScores = myPicks.map(pick => {
+                    const p = allPlayers[pick.element];
+                    if(!p || p.pos === 1) return null;
+                    return { p: p, score: TransferBot.getScore(p, fixtures) };
+                }).filter(x => x).sort((a,b) => a.score - b.score);
 
-        // 1. Identify Sell Candidates (Sort squad by lowest score)
-        const squadScores = myPicks.map(pick => {
-            const p = allPlayers[pick.element];
-            if(!p || p.pos === 1) return null; // Skip GK
-            return { p: p, score: TransferBot.getScore(p, fixtures) };
-        }).filter(x => x).sort((a,b) => a.score - b.score);
+                // 2. Buy Candidates
+                const marketScores = Object.values(allPlayers)
+                    .filter(p => p.status === 'a' && p.pos > 1)
+                    .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
+                    .sort((a,b) => b.score - a.score).slice(0, 50);
 
-        // 2. Identify Buy Candidates (Sort market by highest score)
-        const marketScores = Object.values(allPlayers)
-            .filter(p => p.status === 'a' && p.pos > 1)
-            .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
-            .sort((a,b) => b.score - a.score)
-            .slice(0, 50);
+                // 3. Find Single Moves
+                for(let i=0; i<Math.min(5, squadScores.length); i++) {
+                    const sell = squadScores[i];
+                    const maxBudget = bank + sell.p.price;
+                    for(let j=0; j<marketScores.length; j++) {
+                        const buy = marketScores[j];
+                        if(buy.p.pos !== sell.p.pos) continue; 
+                        if(buy.p.price > maxBudget) continue; 
+                        if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
 
-        // 3. STRATEGY A: Find Top Single Moves
-        // We iterate the bottom 5 players to ensure we find at least 3 valid distinct moves
-        for(let i=0; i<Math.min(5, squadScores.length); i++) {
-            const sell = squadScores[i];
-            const maxBudget = bank + sell.p.price;
-
-            for(let j=0; j<marketScores.length; j++) {
-                const buy = marketScores[j];
-                
-                // Rules: Same Position, Affordable, Not already owned
-                if(buy.p.pos !== sell.p.pos) continue; 
-                if(buy.p.price > maxBudget) continue; 
-                if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
-
-                const diff = (buy.score - sell.score).toFixed(1);
-                
-                // Allow even small improvements (diff > -1) to ensure we always show options
-                // The bot will prioritize the best ones anyway due to sorting
-                if(parseFloat(diff) > -20) { 
-                    singleMoves.push({ 
-                        type: 'Single Move', 
-                        out: [sell.p], 
-                        in: [buy.p], 
-                        diff: parseFloat(diff)
-                    });
-                    break; // Found best replacement for this specific sell candidate
+                        const diff = (buy.score - sell.score).toFixed(1);
+                        if(parseFloat(diff) > -20) { 
+                            singleMoves.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff) });
+                            break;
+                        }
+                    }
                 }
-            }
-        }
+                singleMoves.sort((a,b) => b.diff - a.diff);
+                finalSuggestions.push(...singleMoves.slice(0, 3));
 
-        // Sort single moves by best difference and take TOP 3
-        singleMoves.sort((a,b) => b.diff - a.diff);
-        finalSuggestions.push(...singleMoves.slice(0, 3));
-
-        // 4. STRATEGY B: The "How many transfers" Option (Double Move)
-        if(singleMoves.length > 0) {
-            const bestMove = singleMoves[0];
-            const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
-            
-            // Find a second player to sell (who isn't the first one)
-            const secondSell = squadScores.find(s => s.p.id !== bestMove.out[0].id);
-            
-            if(secondSell) {
-                const budget2 = newBank + secondSell.p.price;
-                const secondBuy = marketScores.find(m => 
-                    m.p.id !== bestMove.in[0].id && 
-                    !myPicks.some(pick => pick.element === m.p.id) && 
-                    m.p.pos === secondSell.p.pos && 
-                    m.p.price <= budget2
-                );
-
-                if(secondBuy) {
-                    const diff2 = secondBuy.score - secondSell.score;
-                    const totalDiff = (bestMove.diff + diff2 - 4).toFixed(1); // Subtract 4 pts cost
-                    
-                    finalSuggestions.push({ 
-                        type: 'Double Move (-4)', 
-                        out: [bestMove.out[0], secondSell.p], 
-                        in: [bestMove.in[0], secondBuy.p], 
-                        diff: parseFloat(totalDiff) 
-                    });
+                // 4. Double Moves
+                if(singleMoves.length > 0) {
+                    const bestMove = singleMoves[0];
+                    const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
+                    const secondSell = squadScores.find(s => s.p.id !== bestMove.out[0].id);
+                    if(secondSell) {
+                        const budget2 = newBank + secondSell.p.price;
+                        const secondBuy = marketScores.find(m => m.p.id !== bestMove.in[0].id && !myPicks.some(pick => pick.element === m.p.id) && m.p.pos === secondSell.p.pos && m.p.price <= budget2);
+                        if(secondBuy) {
+                            const diff2 = secondBuy.score - secondSell.score;
+                            const totalDiff = (bestMove.diff + diff2 - 4).toFixed(1);
+                            finalSuggestions.push({ type: 'Double Move (-4)', out: [bestMove.out[0], secondSell.p], in: [bestMove.in[0], secondBuy.p], diff: parseFloat(totalDiff) });
+                        }
+                    }
                 }
+                // 5. Roll Option
+                finalSuggestions.push({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
+                return finalSuggestions;
             }
-        }
+        };
 
-        // 5. STRATEGY C: No Transfer Option
-        finalSuggestions.push({
-            type: 'Roll Transfer',
-            out: [],
-            in: [],
-            diff: 0.0
-        });
-
-        return finalSuggestions;
-    }
-};
-
-        // --- NEW: MarketBot (Trending Players) ---
         const MarketBot = {
             getTrends: (allPlayers) => {
                 const players = Object.values(allPlayers);
-                
-                // Sort by transfers_in
-                const movers = [...players]
-                    .sort((a, b) => b.transfers_in - a.transfers_in)
-                    .slice(0, 3);
-
-                // Sort by differentials (Low own, High form)
-                const differentials = [...players]
-                    .filter(p => p.sel < 5 && p.status === 'a')
-                    .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))
-                    .slice(0, 3);
-
+                const movers = [...players].sort((a, b) => b.transfers_in - a.transfers_in).slice(0, 3);
+                const differentials = [...players].filter(p => p.sel < 5 && p.status === 'a').sort((a, b) => parseFloat(b.form) - parseFloat(a.form)).slice(0, 3);
                 return { movers, differentials };
             }
         };
 
+        // =========================================
+        // 2. MAIN APPLICATION
+        // =========================================
+
         const app = {
-            currentTool: 'squad',
-            playersCache: {}, // Store full player objects
+            userData: null, playersCache: {}, fixMap: {}, currentPicks: [], currentBank: 0,
+            teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
+            currentStats: null, isSimulating: false, simNewIds: [], timer: null,
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
-                if(savedId) {
-                    document.getElementById('userIcon').classList.add('active');
+                if (savedId) {
                     document.getElementById('teamID').value = savedId;
                     app.load(savedId);
-                } else { app.show('welcomeView'); }
+                }
             },
+
+            fetchUrl: async (url) => {
+                const proxy = 'https://api.allorigins.win/get?url=';
+                const res = await fetch(proxy + encodeURIComponent(url));
+                if (!res.ok) throw new Error('Network error');
+                const data = await res.json();
+                return JSON.parse(data.contents);
+            },
+
             show: (viewId) => {
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
                 ['welcomeView', 'loadingView', 'dashboardView', 'transfersView'].forEach(v => document.getElementById(v).classList.add('hidden'));
                 document.getElementById(viewId).classList.remove('hidden');
             },
-            toggleMenu: () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); },
+
+            toggleMenu: () => {
+                document.getElementById('sideMenu').classList.toggle('open');
+                document.getElementById('menuOverlay').classList.toggle('open');
+            },
+
             switchTool: (t) => {
-                app.toggleMenu(); app.currentTool = t;
+                app.toggleMenu();
+                app.currentTool = t;
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-' + t).classList.add('active');
-                
-                if (t === 'squad') {
-                    // 1. RESET SIMULATION STATE
-                    app.isSimulating = false;
-                    app.simNewIds = []; // Clear highlighted players
-                    
-                    // 2. FORCE REMOVE BANNER
-                    const banner = document.querySelector('.sim-banner');
-                    if(banner) banner.remove();
 
-                    // 3. RELOAD REAL DATA
-                    if(Object.keys(app.playersCache).length > 0) {
+                if (t === 'squad') {
+                    app.isSimulating = false;
+                    app.simNewIds = [];
+                    const banner = document.querySelector('.sim-banner');
+                    if (banner) banner.remove();
+
+                    if (Object.keys(app.playersCache).length > 0) {
                         app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.currentStats, app.historyData, app.deadline, app.gwName);
                     } else {
                         app.load(localStorage.getItem('fpl_id_final'));
@@ -777,7 +614,7 @@ const TransferBot = {
                     app.show('transfersView');
                     const container = document.getElementById('transfersView');
                     container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Finding Best Move...</p></div>';
-                    
+
                     setTimeout(() => {
                         const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
                         const market = MarketBot.getTrends(app.playersCache);
@@ -788,34 +625,31 @@ const TransferBot = {
                                 const isBest = index === 0;
                                 const cardClass = isBest ? 't-card best-pick' : 't-card';
                                 const badge = isBest ? '<div class="rec-badge"><i class="fa-solid fa-star"></i> AI RECOMMENDED</div>' : '';
-                                
-                                if(index === 0) html += `<div style="font-size:1.1rem; font-weight:800; margin-bottom:10px; padding-left:5px;">Best Move</div>`;
-                                else if(index === 1) html += `<div style="font-size:0.9rem; font-weight:700; color:#888; margin:20px 0 10px 0; padding-left:5px;">Other Options</div>`;
+                                if (index === 0) html += `<div style="font-size:1.1rem; font-weight:800; margin-bottom:10px; padding-left:5px;">Best Move</div>`;
+                                else if (index === 1) html += `<div style="font-size:0.9rem; font-weight:700; color:#888; margin:20px 0 10px 0; padding-left:5px;">Other Options</div>`;
 
-                                if(s.type === 'Roll Transfer') {
+                                if (s.type === 'Roll Transfer') {
                                     html += `<div class="${cardClass}" style="padding:25px; text-align:center;">${badge}<div style="font-weight:800; margin-bottom:5px;">Save Free Transfer</div><div style="font-size:0.8rem; color:#888;">No high-value moves found.</div></div>`;
                                     return;
                                 }
 
                                 const outIds = JSON.stringify(s.out.map(p => p.id));
                                 const inIds = JSON.stringify(s.in.map(p => p.id));
-
-                                html += `
-                                    <div class="${cardClass}">
-                                        <div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">
-                                            ${badge}
-                                            <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-                                                <div class="t-type">${s.type}</div>
-                                                <div class="t-gain">+${s.diff} pts</div>
-                                            </div>
+                                html += `<div class="${cardClass}">
+                                    <div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">
+                                        ${badge}
+                                        <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                                            <div class="t-type">${s.type}</div>
+                                            <div class="t-gain">+${s.diff} pts</div>
                                         </div>
-                                        <div class="t-body">
-                                            <div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                                            <div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                                    </div>
+                                    <div class="t-body">
+                                        <div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                        <div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
                                 s.out.forEach(p => {
                                     const fixtures = app.fixMap[p.team_id] || [];
                                     let dots = '<div class="t-fdr">';
-                                    fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
+                                    fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
                                     dots += '</div>';
                                     html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
                                 });
@@ -823,7 +657,7 @@ const TransferBot = {
                                 s.in.forEach(p => {
                                     const fixtures = app.fixMap[p.team_id] || [];
                                     let dots = '<div class="t-fdr">';
-                                    fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
+                                    fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
                                     dots += '</div>';
                                     html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
                                 });
@@ -848,63 +682,37 @@ const TransferBot = {
                     }, 100);
                 }
             },
-            
-            // --- SIMULATE TRANSFER ---
+
             simulate: (outIds, inIds) => {
                 const simPicks = JSON.parse(JSON.stringify(app.currentPicks));
                 let simBank = app.currentBank;
-
                 outIds.forEach((outId, idx) => {
                     const inId = inIds[idx];
                     const pickIdx = simPicks.findIndex(p => p.element === outId);
-                    if(pickIdx !== -1) {
-                        simPicks[pickIdx].element = inId; 
+                    if (pickIdx !== -1) {
+                        simPicks[pickIdx].element = inId;
                         const pOut = app.playersCache[outId];
                         const pIn = app.playersCache[inId];
                         simBank = simBank + pOut.price - pIn.price;
                     }
                 });
-
                 app.currentTool = 'squad';
                 app.isSimulating = true;
-                
-                // SAVE NEW IDs FOR HIGHLIGHTING
-                app.simNewIds = inIds; 
-
+                app.simNewIds = inIds;
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-squad').classList.add('active');
-
-                const simStats = { ...app.currentStats, bank: simBank * 10, value: app.currentStats.value }; 
+                const simStats = { ...app.currentStats, bank: simBank * 10, value: app.currentStats.value };
                 app.render(app.userData, simPicks, app.playersCache, app.fixMap, simStats, app.historyData, app.deadline, app.gwName);
-                
-                const bannerHtml = `
-                    <div class="sim-banner">
-                        <div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div>
-                        <div class="sim-btn" onclick="app.switchTool('squad')">Reset</div>
-                    </div>
-                `;
+                const bannerHtml = `<div class="sim-banner"><div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div><div class="sim-btn" onclick="app.switchTool('squad')">Reset</div></div>`;
                 const dash = document.getElementById('dashboardView');
                 const existingBanner = dash.querySelector('.sim-banner');
-                if(existingBanner) existingBanner.remove(); 
+                if (existingBanner) existingBanner.remove();
                 dash.insertAdjacentHTML('afterbegin', bannerHtml);
-            },
-            
-            // PROXY ENGINE
-            fetchUrl: async (targetUrl) => {
-                const proxies = [(url) => `https://corsproxy.io/?${encodeURIComponent(url)}`, (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`];
-                for (let i = 0; i < proxies.length; i++) {
-                    try {
-                        const c = new AbortController(); const id = setTimeout(() => c.abort(), 8000);
-                        const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); clearTimeout(id);
-                        if(r.ok) return await r.json();
-                    } catch (e) {}
-                }
-                throw new Error("Failed");
             },
 
             load: async (savedId = null) => {
                 const id = savedId || document.getElementById('teamID').value;
-                if(!id) return alert("Enter ID");
+                if (!id) return alert("Enter ID");
                 localStorage.setItem('fpl_id_final', id);
                 document.getElementById('userIcon').classList.add('active');
                 app.show('loadingView');
@@ -914,47 +722,36 @@ const TransferBot = {
                     const staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                     app.userData = user;
-                    
                     const history = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`);
-                    app.historyData = history; // SAVE GLOBAL
+                    app.historyData = history;
 
                     const gwEvent = staticData.events.find(e => e.is_current) || staticData.events[0];
                     const gw = gwEvent.id;
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
-
                     const nextEvent = staticData.events.find(e => e.is_next);
-                    const deadline = nextEvent ? nextEvent.deadline_time : null;
-                    const nextGwName = nextEvent ? nextEvent.name : 'GW-';
-                    
-                    // SAVE GLOBALS FOR SIMULATOR
-                    app.deadline = deadline;
-                    app.gwName = nextGwName;
+                    app.deadline = nextEvent ? nextEvent.deadline_time : null;
+                    app.gwName = nextEvent ? nextEvent.name : 'GW-';
                     app.currentStats = picks.entry_history;
 
                     document.getElementById('loadingMsg').innerText = "Fetching Live Scores...";
                     const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
                     const liveMap = {};
-                    liveData.elements.forEach(el => { 
-                        liveMap[el.id] = { 
-                            points: el.stats.total_points, mins: el.stats.minutes,
-                            goals: el.stats.goals_scored, assists: el.stats.assists,
-                            red_cards: el.stats.red_cards, own_goals: el.stats.own_goals
-                        }; 
+                    liveData.elements.forEach(el => {
+                        liveMap[el.id] = { points: el.stats.total_points, mins: el.stats.minutes, goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, own_goals: el.stats.own_goals };
                     });
 
-                    const fixReqs = [gw, gw+1, gw+2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
+                    const fixReqs = [gw, gw + 1, gw + 2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
                     const [fix1, fix2, fix3] = await Promise.all(fixReqs);
-
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
                     app.teams = teamShort;
 
                     const processFix = (fixList) => {
                         const map = {};
-                        if(!fixList) return map;
+                        if (!fixList) return map;
                         fixList.forEach(f => {
-                            if(!map[f.team_h]) map[f.team_h] = [];
-                            if(!map[f.team_a]) map[f.team_a] = [];
+                            if (!map[f.team_h]) map[f.team_h] = [];
+                            if (!map[f.team_a]) map[f.team_a] = [];
                             map[f.team_h].push({ opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true });
                             map[f.team_a].push({ opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false });
                         });
@@ -973,147 +770,72 @@ const TransferBot = {
                     const players = {};
                     staticData.elements.forEach(p => {
                         const live = liveMap[p.id];
-                        const realPoints = live ? live.points : p.event_points;
-                        const realMins = live ? live.mins : 0;
-
                         players[p.id] = {
                             id: p.id, name: p.web_name, team: teamShort[p.team], team_id: p.team,
                             pos: p.element_type, price: p.now_cost / 10,
-                            event_points: realPoints,
-                            minutes: realMins,
-                            stats: live || { goals:0, assists:0, red_cards:0 }, 
-                            team_code: p.team_code,
-                            status: p.status, chance: p.chance_of_playing_next_round, news: p.news,
-                            sel: parseFloat(p.selected_by_percent), form: p.form,
-                            transfers_in: p.transfers_in_event, total_points: p.total_points, ict_index: p.ict_index
+                            event_points: live ? live.points : p.event_points,
+                            minutes: live ? live.mins : 0,
+                            stats: live || { goals: 0, assists: 0, red_cards: 0 },
+                            team_code: p.team_code, status: p.status, chance: p.chance_of_playing_next_round, news: p.news,
+                            sel: parseFloat(p.selected_by_percent), form: p.form, transfers_in: p.transfers_in_event, total_points: p.total_points, ict_index: p.ict_index
                         };
                     });
-                    
+
                     app.playersCache = players;
                     app.currentPicks = picks.picks;
                     app.currentBank = picks.entry_history.bank / 10;
-                    
                     document.getElementById('demoAlert').classList.add('hidden');
-                    app.render(user, picks.picks, players, masterFixMap, picks.entry_history, history, deadline, nextGwName);
+                    app.render(user, picks.picks, players, masterFixMap, picks.entry_history, history, app.deadline, app.gwName);
 
                 } catch (error) {
                     console.error(error);
                     document.getElementById('demoAlert').classList.remove('hidden');
-                    const mPlayers = {}; 
-                    Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = {...MOCK_DATA.players[k], id:k, team:'MOCK'});
+                    const mPlayers = {};
+                    Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = { ...MOCK_DATA.players[k], id: k, team: 'MOCK' });
                     app.playersCache = mPlayers;
-                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, {}, {bank:5, value:1000}, {chips:[]}, new Date().toISOString(), "GW Demo"); }, 500);
+                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, {}, { bank: 5, value: 1000 }, { chips: [] }, new Date().toISOString(), "GW Demo"); }, 500);
                 }
             },
 
-            openLeagues: async () => {
-                const id = localStorage.getItem('fpl_id_final') || document.getElementById('teamID').value;
-                if(!id) return alert("Please log in first.");
-
-                // 1. If data is missing, fetch it immediately (Self-Repairing)
-                if(!app.userData) {
-                    try {
-                        // Show a temporary loading state in the button if you want, or just wait
-                        const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
-                        app.userData = user;
-                    } catch(e) {
-                        return alert("Could not load leagues. Check network.");
-                    }
-                }
-
-                // 2. Now render the modal
-                if(!app.userData.leagues) return alert("No league data found.");
-                
-                const leagues = app.userData.leagues.classic;
-                const container = document.getElementById('leaguesList');
-                let html = '';
-
-                if(leagues.length === 0) {
-                    html = '<div style="text-align:center; padding:20px; color:#888;">No Classic Leagues found.</div>';
-                } else {
-                    leagues.forEach(lg => {
-                        let arrow = '<i class="fa-solid fa-minus arrow-same"></i>';
-                        if(lg.entry_rank < lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-up arrow-up"></i>';
-                        else if(lg.entry_rank > lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-down arrow-down"></i>';
-
-                        html += `
-                            <div class="league-item">
-                                <div class="lg-name">${lg.name}</div>
-                                <div class="lg-rank-box">
-                                    <div class="lg-rank">
-                                        ${arrow} <span>${lg.entry_rank.toLocaleString()}</span>
-                                    </div>
-                                    <div style="font-size:0.65rem; color:#888;">Rank</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-                
-                container.innerHTML = html;
-                document.getElementById('leaguesModalOverlay').classList.add('open');
-            },
-            
             render: (user, picks, players, fixMap, stats, history, deadline, gwName) => {
-                // 1. CALCULATE SCORE
                 let liveScore = 0;
                 picks.forEach(pick => {
-                    if(pick.position <= 11) {
+                    if (pick.position <= 11) {
                         const p = players[pick.element];
-                        if(p) liveScore += (p.event_points * pick.multiplier);
+                        if (p) liveScore += (p.event_points * pick.multiplier);
                     }
                 });
-                
                 const oldGwScore = user.summary_event_points || 0;
                 const totalDiff = liveScore - oldGwScore;
                 const liveTotal = (user.summary_overall_points || 0) + totalDiff;
 
                 document.getElementById('dispName').innerText = user.name;
-                document.getElementById('dispGW').innerText = liveScore; 
+                document.getElementById('dispGW').innerText = liveScore;
                 document.getElementById('dispTotal').innerText = liveTotal;
-                
-                // --- RANK ARROW LOGIC ---
-                // We compare current rank vs the last recorded rank in history
-                let rankArrow = '<i class="fa-solid fa-minus r-grey"></i>'; // Default
+
+                let rankArrow = '<i class="fa-solid fa-minus r-grey"></i>';
                 const currentRank = user.summary_overall_rank || 0;
-                
-                // Get last GW rank from history
                 const lastGwData = history.current && history.current.length > 0 ? history.current[history.current.length - 1] : null;
                 const lastRank = lastGwData ? lastGwData.overall_rank : 0;
-
                 if (currentRank < lastRank) rankArrow = '<i class="fa-solid fa-arrow-up r-green"></i>';
                 else if (currentRank > lastRank) rankArrow = '<i class="fa-solid fa-arrow-down r-red"></i>';
-                
-                // Update HTML with Arrow
-                document.getElementById('dispRank').innerHTML = `
-                    <div class="rank-wrap">
-                        ${rankArrow} <span>${currentRank.toLocaleString()}</span>
-                    </div>
-                `;
-                // ------------------------
+                document.getElementById('dispRank').innerHTML = `<div class="rank-wrap">${rankArrow} <span>${currentRank.toLocaleString()}</span></div>`;
 
-                document.getElementById('dispBank').innerText = `£${(stats.bank/10).toFixed(1)}m`;
-                document.getElementById('dispValue').innerText = `£${(stats.value/10).toFixed(1)}m`;
+                document.getElementById('dispBank').innerText = `£${(stats.bank / 10).toFixed(1)}m`;
+                document.getElementById('dispValue').innerText = `£${(stats.value / 10).toFixed(1)}m`;
 
-                // 2. COUNTDOWN
                 if (app.timer) clearInterval(app.timer);
                 const updateTime = () => {
                     const now = new Date().getTime();
                     const countDate = new Date(deadline).getTime();
                     const gap = countDate - now;
-
                     if (gap > 0) {
                         const d = Math.floor(gap / (1000 * 60 * 60 * 24));
                         const h = Math.floor((gap % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                         const m = Math.floor((gap % (1000 * 60 * 60)) / (1000 * 60));
                         const s = Math.floor((gap % (1000 * 60)) / 1000);
-                        const ph = h.toString().padStart(2, '0');
-                        const pm = m.toString().padStart(2, '0');
-                        const ps = s.toString().padStart(2, '0');
                         const isUrgent = d === 0 ? 'urgent' : '';
-                        document.getElementById('gwCountdown').innerHTML = `
-                            <div class="cd-label"><div class="status-dot ${isUrgent}"></div>${gwName}</div>
-                            <div class="cd-time">${d}d : ${ph}h : ${pm}m : ${ps}s</div>`;
+                        document.getElementById('gwCountdown').innerHTML = `<div class="cd-label"><div class="status-dot ${isUrgent}"></div>${gwName}</div><div class="cd-time">${d}d : ${h.toString().padStart(2, '0')}h : ${m.toString().padStart(2, '0')}m : ${s.toString().padStart(2, '0')}s</div>`;
                     } else {
                         document.getElementById('gwCountdown').innerHTML = `<div class="cd-label" style="border:none; padding:0;">⚠️ Deadline Passed</div>`;
                         clearInterval(app.timer);
@@ -1122,18 +844,15 @@ const TransferBot = {
                 updateTime();
                 app.timer = setInterval(updateTime, 1000);
 
-                // 3. CHIPS
                 const usedChips = history.chips.map(c => c.name);
                 const chipMap = { 'wildcard': 'WC', 'freehit': 'FH', 'bboost': 'BB', '3xc': 'TC' };
                 const allChips = ['wildcard', 'freehit', 'bboost', '3xc'];
                 const chipHtml = allChips.map(c => {
                     const isUsed = usedChips.includes(c);
-                    const label = chipMap[c];
-                    return `<div class="${isUsed ? 'chip-pill used' : 'chip-pill active'}">${label}</div>`;
+                    return `<div class="${isUsed ? 'chip-pill used' : 'chip-pill active'}">${chipMap[c]}</div>`;
                 }).join('');
                 document.getElementById('chipBar').innerHTML = chipHtml;
 
-                // 4. IDENTIFY AUTO-SUBS
                 const subOutIds = [];
                 const subInIds = [];
                 const played = (p) => p && p.minutes > 0;
@@ -1158,32 +877,24 @@ const TransferBot = {
                     }
                 }
 
-                // 5. RENDER PITCH
                 const pitchDiv = document.getElementById('pitchRows');
                 const benchDiv = document.getElementById('benchRow');
                 pitchDiv.innerHTML = ''; benchDiv.innerHTML = '';
                 const formation = { 1: [], 2: [], 3: [], 4: [] };
-
                 for (let i = 0; i < 11; i++) {
                     const pick = picks[i];
                     const p = players[pick.element];
-                    if (p) formation[p.pos].push({ 
-                        ...p, 
-                        is_captain: pick.is_captain, is_vice: pick.is_vice_captain,
-                        subStatus: subOutIds.includes(p.id) ? 'out' : null 
-                    });
+                    if (p) formation[p.pos].push({ ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain, subStatus: subOutIds.includes(p.id) ? 'out' : null });
                 }
-
                 [1, 2, 3, 4].forEach(posId => {
                     const row = document.createElement('div'); row.className = 'field-row';
                     formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap, false, 0, p.subStatus));
                     pitchDiv.appendChild(row);
                 });
-
                 for (let i = 11; i < picks.length; i++) {
                     const pick = picks[i];
                     const p = players[pick.element];
-                    if(p) {
+                    if (p) {
                         const status = subInIds.includes(p.id) ? 'in' : null;
                         benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, fixMap, true, i - 10, status);
                     }
@@ -1192,134 +903,122 @@ const TransferBot = {
             },
 
             createPill: (p, fixMap, isBench = false, benchNum = 0, subStatus = null) => {
-                let capBadge = '';
-                if (p.is_captain) capBadge = `<div class="captain-badge">C</div>`;
-                else if (p.is_vice) capBadge = `<div class="captain-badge vice-badge">V</div>`;
-                
-                let statusBadge = '';
-                if (p.status === 'd') statusBadge = `<div class="status-flag status-warn">!</div>`;
-                else if (['i', 's', 'n'].includes(p.status)) statusBadge = `<div class="status-flag status-bad">×</div>`;
-                
-                let extraClass = '';
-                let subIcon = '';
-                if (subStatus === 'out') extraClass = 'did-not-play'; 
-                else if (subStatus === 'in') { extraClass = 'coming-on'; subIcon = `<div class="sub-icon"><i class="fa-solid fa-arrow-up"></i></div>`; }
-
-                // --- HIGHLIGHT NEW TRANSFER ---
-                let newBadge = '';
-                if (app.isSimulating && app.simNewIds && app.simNewIds.includes(p.id)) {
-                    extraClass += ' sim-new'; // Add Gold Glow
-                    newBadge = `<div class="new-badge">NEW</div>`; // Add Badge
-                }
-                // ------------------------------
+                let capBadge = p.is_captain ? `<div class="captain-badge">C</div>` : (p.is_vice ? `<div class="captain-badge vice-badge">V</div>` : '');
+                let statusBadge = p.status === 'd' ? `<div class="status-flag status-warn">!</div>` : (['i', 's', 'n'].includes(p.status) ? `<div class="status-flag status-bad">×</div>` : '');
+                let extraClass = subStatus === 'out' ? 'did-not-play' : (subStatus === 'in' ? 'coming-on' : '');
+                let subIcon = subStatus === 'in' ? `<div class="sub-icon"><i class="fa-solid fa-arrow-up"></i></div>` : '';
+                let newBadge = (app.isSimulating && app.simNewIds && app.simNewIds.includes(p.id)) ? `<div class="new-badge">NEW</div>` : '';
+                if(newBadge) extraClass += ' sim-new';
 
                 let evtHtml = '';
-                if(p.stats) {
+                if (p.stats) {
                     evtHtml += '<div class="event-row">';
-                    for(let i=0; i<p.stats.goals; i++) evtHtml += `<div class="evt-icon evt-goal"><i class="fa-regular fa-futbol"></i></div>`;
-                    for(let i=0; i<p.stats.assists; i++) evtHtml += `<div class="evt-icon evt-assist"><i class="fa-solid fa-share" style="transform: scaleX(-1);"></i></div>`;
-                    if(p.stats.red_cards > 0) evtHtml += `<div class="evt-icon evt-red"><i class="fa-solid fa-square-full"></i></div>`;
-                    if(p.stats.own_goals > 0) evtHtml += `<div class="evt-icon evt-own"><i class="fa-solid fa-futbol"></i></div>`;
+                    for (let i = 0; i < p.stats.goals; i++) evtHtml += `<div class="evt-icon evt-goal"><i class="fa-regular fa-futbol"></i></div>`;
+                    for (let i = 0; i < p.stats.assists; i++) evtHtml += `<div class="evt-icon evt-assist"><i class="fa-solid fa-share" style="transform: scaleX(-1);"></i></div>`;
+                    if (p.stats.red_cards > 0) evtHtml += `<div class="evt-icon evt-red"><i class="fa-solid fa-square-full"></i></div>`;
+                    if (p.stats.own_goals > 0) evtHtml += `<div class="evt-icon evt-own"><i class="fa-solid fa-futbol"></i></div>`;
                     evtHtml += '</div>';
                 }
 
-                let bNum = isBench ? `<div class="bench-num">${benchNum}</div>` : '';
-                const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
-                const fixtures = fixMap[p.team_id] || [{diff:3, opp:'-'}, {diff:3, opp:'-'}, {diff:3, opp:'-'}];
+                const fixtures = fixMap[p.team_id] || [{ diff: 3, opp: '-' }, { diff: 3, opp: '-' }, { diff: 3, opp: '-' }];
                 let dotsHtml = '<div class="fdr-row">';
                 fixtures.slice(0, 3).forEach(f => { dotsHtml += `<div class="fdr-dot bg-${f.diff}">${f.opp}</div>`; });
                 dotsHtml += '</div>';
+                const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
 
-                return `
-                    <div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
-                        ${bNum} ${capBadge} ${statusBadge} ${subIcon} ${newBadge}
-                        ${dotsHtml}
-                        ${evtHtml}
+                return `<div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
+                        ${isBench ? `<div class="bench-num">${benchNum}</div>` : ''} ${capBadge} ${statusBadge} ${subIcon} ${newBadge} ${dotsHtml} ${evtHtml}
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
-                        <div class="pill-data">
-                            <span>£${p.price}</span>
-                            <span class="points-badge">${p.event_points}</span>
-                        </div>
-                    </div>
-                `;
+                        <div class="pill-data"><span>£${p.price}</span><span class="points-badge">${p.event_points}</span></div>
+                    </div>`;
             },
 
-            // --- MODAL LOGIC ---
             openModal: async (playerId) => {
                 const p = app.playersCache[playerId];
-                if(!p) return;
-
+                if (!p) return;
                 const overlay = document.getElementById('playerModalOverlay');
-                const content = document.getElementById('modalFixtures');
-                
-                // Fill Static Info
                 document.getElementById('modalName').innerText = p.name;
                 document.getElementById('modalTeam').innerText = `${p.team} • £${p.price}m`;
                 document.getElementById('modalForm').innerText = p.form;
                 document.getElementById('modalSel').innerText = `${p.sel}%`;
                 document.getElementById('modalPts').innerText = p.event_points;
-
                 const newsEl = document.getElementById('modalNews');
-                if(p.news) {
-                    newsEl.style.display = 'block';
-                    newsEl.innerText = p.news;
+                if (p.news) { newsEl.style.display = 'block'; newsEl.innerText = p.news; } else { newsEl.style.display = 'none'; }
+
+                const actionContainer = document.getElementById('modalActions');
+                const isOwned = app.currentPicks.some(pick => pick.element == p.id);
+                if (isOwned) {
+                    actionContainer.innerHTML = `<div style="text-align:center; color:#888; font-size:0.8rem;">You own this player</div>`;
                 } else {
-                    newsEl.style.display = 'none';
+                    actionContainer.innerHTML = `<button class="action-btn btn-buy" onclick="app.showReplacements(${p.id}, ${p.pos})"><i class="fa-solid fa-arrow-right-arrow-left"></i> Transfer In</button><div id="repList_${p.id}" class="rep-list"></div>`;
                 }
 
-                // Show Modal
                 overlay.classList.add('open');
-                content.innerHTML = '<div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>';
-
-                // Fetch Deep Dive Data (Element Summary)
+                document.getElementById('modalFixtures').innerHTML = '<div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>';
                 try {
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
-                    
-                    // Render Upcoming Fixtures
                     let html = '';
-                    // First 5 fixtures
                     data.fixtures.slice(0, 5).forEach(f => {
-                        const diff = f.difficulty;
-                        const colorClass = `fdr-${diff}`;
-                        
-                        // Calculate Opponent
                         const isHome = f.is_home;
-                        const oppId = isHome ? f.team_a : f.team_h;
-                        const oppName = app.teams ? app.teams[oppId] : '---'; // Get Name
-                        
-                        html += `
-                            <div class="fix-item">
-                                <div style="font-size:0.6rem; color:#888; font-weight:700;">GW${f.event}</div>
-                                <div style="font-weight:800; font-size:0.9rem; margin:2px 0; color:var(--primary);">
-                                    ${oppName} <span style="font-weight:400; color:#666; font-size:0.7rem;">${isHome ? '(H)' : '(A)'}</span>
-                                </div>
-                                <div style="margin-top:2px;">
-                                    <span class="fix-diff-dot ${colorClass}"></span>
-                                </div>
-                            </div>
-                        `;
+                        const oppName = app.teams ? app.teams[isHome ? f.team_a : f.team_h] : '---';
+                        html += `<div class="fix-item"><div style="font-size:0.6rem; color:#888; font-weight:700;">GW${f.event}</div><div style="font-weight:800; font-size:0.9rem; margin:2px 0; color:var(--primary);">${oppName} <span style="font-weight:400; color:#666; font-size:0.7rem;">${isHome ? '(H)' : '(A)'}</span></div><div><span class="fix-diff-dot fdr-${f.difficulty}"></span></div></div>`;
                     });
-                    content.innerHTML = html;
+                    document.getElementById('modalFixtures').innerHTML = html;
+                } catch (e) { document.getElementById('modalFixtures').innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>'; }
+            },
 
-                } catch (e) {
-                    content.innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>';
+            showReplacements: (buyId, buyPos) => {
+                const list = document.getElementById(`repList_${buyId}`);
+                if (!list) return;
+                if (list.style.display === 'block') { list.style.display = 'none'; return; }
+                const candidates = app.currentPicks.filter(pick => app.playersCache[pick.element].pos === buyPos);
+                let html = `<div style="font-size:0.8rem; font-weight:700; color:#666; margin:10px 0 5px 0;">Replace who?</div>`;
+                candidates.forEach(pick => {
+                    const p = app.playersCache[pick.element];
+                    const bankAfter = (app.currentBank + p.price - app.playersCache[buyId].price).toFixed(1);
+                    const color = bankAfter >= 0 ? '#16a34a' : '#ef4444';
+                    html += `<div class="rep-item" onclick="app.closeModal(); app.simulate([${p.id}], [${buyId}])"><div style="display:flex; align-items:center; gap:10px;"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:25px;"><div style="font-weight:700; font-size:0.9rem;">${p.name}</div></div><div style="text-align:right;"><div style="font-size:0.7rem; color:#888;">Sell: £${p.price}m</div><div style="font-size:0.75rem; font-weight:800; color:${color};">Bank: £${bankAfter}m</div></div></div>`;
+                });
+                list.innerHTML = html;
+                list.style.display = 'block';
+            },
+
+            openLeagues: async () => {
+                const id = localStorage.getItem('fpl_id_final') || document.getElementById('teamID').value;
+                if (!id) return alert("Please log in first.");
+                if (!app.userData) {
+                    try { app.userData = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`); } 
+                    catch (e) { return alert("Could not load leagues. Check network."); }
                 }
-            }            
+                if (!app.userData.leagues) return alert("No league data found.");
+                const leagues = app.userData.leagues.classic;
+                const container = document.getElementById('leaguesList');
+                let html = '';
+                if (leagues.length === 0) {
+                    html = '<div style="text-align:center; padding:20px; color:#888;">No Classic Leagues found.</div>';
+                } else {
+                    leagues.forEach(lg => {
+                        let arrow = lg.entry_rank < lg.entry_last_rank ? '<i class="fa-solid fa-arrow-up arrow-up"></i>' : (lg.entry_rank > lg.entry_last_rank ? '<i class="fa-solid fa-arrow-down arrow-down"></i>' : '<i class="fa-solid fa-minus arrow-same"></i>');
+                        html += `<div class="league-item"><div class="lg-name">${lg.name}</div><div class="lg-rank-box"><div class="lg-rank">${arrow} <span>${lg.entry_rank.toLocaleString()}</span></div><div style="font-size:0.65rem; color:#888;">Rank</div></div></div>`;
+                    });
+                }
+                container.innerHTML = html;
+                document.getElementById('leaguesModalOverlay').classList.add('open');
+            },
+            closeModal: () => { document.getElementById('playerModalOverlay').classList.remove('open'); }
         };
 
+        // =========================================
+        // 3. GLOBAL HELPERS & EVENTS
+        // =========================================
         function toggleMenu() { app.toggleMenu(); }
         function switchTool(t) { app.switchTool(t); }
         function clearData() { document.getElementById('logoutOverlay').classList.add('open'); app.toggleMenu(); }
         function closeLogout() { document.getElementById('logoutOverlay').classList.remove('open'); }
         function confirmLogout() { localStorage.removeItem('fpl_id_final'); location.reload(); }
-        function closeModal() { document.getElementById('playerModalOverlay').classList.remove('open'); }
-        
-        // Close modal on background click
-        document.getElementById('playerModalOverlay').addEventListener('click', (e) => {
-            if (e.target.id === 'playerModalOverlay') closeModal();
-        });
-
+        function closeModal() { app.closeModal(); }
+        document.getElementById('playerModalOverlay').addEventListener('click', (e) => { if (e.target.id === 'playerModalOverlay') closeModal(); });
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
 </body>
