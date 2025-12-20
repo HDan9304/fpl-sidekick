@@ -295,14 +295,22 @@
         /* LIVE EVENT ICONS */
         .event-row { 
             position: absolute; 
-            bottom: 38px; /* Sits just above the name */
+            bottom: 38px; 
             left: 50%; transform: translateX(-50%);
-            display: flex; gap: 2px; z-index: 25;
+            display: flex; gap: 4px; z-index: 25;
         }
-        .evt-icon { width: 14px; height: 14px; border-radius: 50%; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; }
-        .evt-goal { background: white; } /* Football emoji handles color */
-        .evt-assist { background: #3b82f6; color: white; font-weight: 800; } /* Blue A */
-        .evt-red { background: #ef4444; color: white; font-weight: 800; } /* Red Card */
+        .evt-icon { 
+            width: 16px; height: 16px; 
+            border-radius: 50%; 
+            font-size: 0.65rem; 
+            display: flex; align-items: center; justify-content: center; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3); 
+            border: 1px solid white; 
+        }
+        .evt-goal { background: #fff; color: #111; } 
+        .evt-assist { background: #3b82f6; color: white; } 
+        .evt-red { background: #ef4444; color: white; }
+        .evt-own { background: #111; color: #ef4444; } /* Own Goal */
     </style>
 </head>
 <body>
@@ -875,37 +883,43 @@ const TransferBot = {
                 }).join('');
                 document.getElementById('chipBar').innerHTML = chipHtml;
 
-                // 4. IDENTIFY AUTO-SUBS
-                // Simple logic: If Starter has 0 mins, they are "Out". First bench player is "In".
-                // (Note: This is a visual approximation. Real rules are complex, but this covers 90% of cases)
+                // 4. IDENTIFY AUTO-SUBS (FIXED LOGIC)
                 const subOutIds = [];
                 const subInIds = [];
-                
-                // Check Starters (1-11)
-                let neededSubs = 0;
-                picks.slice(0, 11).forEach(pick => {
-                    const p = players[pick.element];
-                    // Logic: If status is not 'available' OR chance < 100, and minutes are 0...
-                    // For simplicity in this demo: we assume if minutes are 0 and status != 'a', they didn't play.
-                    // In a real live game, we'd check "Finished" status. 
-                    // Here we use a simpler heuristic: if they have 0 points and chance < 100.
-                    if (p && p.minutes === 0 && p.chance !== 100) {
-                        subOutIds.push(p.id);
-                        neededSubs++;
-                    }
-                });
 
-                // Check Bench (12-15) to fill spots
-                picks.slice(11).forEach(pick => {
-                    if (neededSubs > 0) {
-                        const p = players[pick.element];
-                        // If bench player has minutes (played), they come on
-                        if (p && p.minutes > 0) {
-                            subInIds.push(p.id);
-                            neededSubs--;
+                // Helper to check if player played
+                const played = (p) => p && p.minutes > 0;
+                const didntPlay = (p) => p && p.minutes === 0 && p.chance !== 100;
+
+                // A. GK Check (Pick 0 vs Pick 11)
+                const startGK = players[picks[0].element];
+                const subGK = players[picks[11].element];
+
+                if (didntPlay(startGK) && played(subGK)) {
+                    subOutIds.push(startGK.id);
+                    subInIds.push(subGK.id);
+                }
+
+                // B. Outfield Check (Picks 1-10 vs Picks 12-14)
+                const outfieldBench = [12, 13, 14].map(i => players[picks[i].element]);
+                let usedBenchIdx = 0;
+
+                for (let i = 1; i <= 10; i++) {
+                    const starter = players[picks[i].element];
+                    
+                    if (didntPlay(starter)) {
+                        // Find first available outfield sub
+                        for (let j = usedBenchIdx; j < outfieldBench.length; j++) {
+                            const sub = outfieldBench[j];
+                            if (played(sub)) {
+                                subOutIds.push(starter.id);
+                                subInIds.push(sub.id);
+                                usedBenchIdx = j + 1; // Mark this sub as used
+                                break; // Move to next missing starter
+                            }
                         }
                     }
-                });
+                }
 
                 // 5. RENDER PITCH
                 const pitchDiv = document.getElementById('pitchRows');
@@ -954,19 +968,30 @@ const TransferBot = {
                 if (subStatus === 'out') extraClass = 'did-not-play'; 
                 else if (subStatus === 'in') { extraClass = 'coming-on'; subIcon = `<div class="sub-icon"><i class="fa-solid fa-arrow-up"></i></div>`; }
 
-                // --- NEW: EVENT ICONS ---
+                // --- ICONS UPDATE ---
                 let evtHtml = '';
                 if(p.stats) {
                     evtHtml += '<div class="event-row">';
-                    // Goals
-                    for(let i=0; i<p.stats.goals; i++) evtHtml += `<div class="evt-icon evt-goal">⚽</div>`;
-                    // Assists
-                    for(let i=0; i<p.stats.assists; i++) evtHtml += `<div class="evt-icon evt-assist">A</div>`;
-                    // Red Cards
-                    if(p.stats.red_cards > 0) evtHtml += `<div class="evt-icon evt-red">R</div>`;
+                    
+                    // Goals (Ball Icon)
+                    for(let i=0; i<p.stats.goals; i++) 
+                        evtHtml += `<div class="evt-icon evt-goal"><i class="fa-regular fa-futbol"></i></div>`;
+                    
+                    // Assists (Handshake/Pass Icon)
+                    for(let i=0; i<p.stats.assists; i++) 
+                        evtHtml += `<div class="evt-icon evt-assist"><i class="fa-solid fa-share" style="transform: scaleX(-1);"></i></div>`;
+                    
+                    // Red Cards (Red Square)
+                    if(p.stats.red_cards > 0) 
+                        evtHtml += `<div class="evt-icon evt-red"><i class="fa-solid fa-square-full"></i></div>`;
+                        
+                    // Own Goals (Red Ball)
+                    if(p.stats.own_goals > 0) 
+                         evtHtml += `<div class="evt-icon evt-own"><i class="fa-solid fa-futbol"></i></div>`;
+
                     evtHtml += '</div>';
                 }
-                // ------------------------
+                // ---------------------
 
                 let bNum = isBench ? `<div class="bench-num">${benchNum}</div>` : '';
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
@@ -979,7 +1004,8 @@ const TransferBot = {
                     <div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
                         ${bNum} ${capBadge} ${statusBadge} ${subIcon}
                         ${dotsHtml}
-                        ${evtHtml} <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
+                        ${evtHtml}
+                        <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
                         <div class="pill-data">
                             <span>£${p.price}</span>
