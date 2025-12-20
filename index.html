@@ -580,14 +580,14 @@
                 if (p.status !== 'a' && p.chance < 75) score -= 50;
                 return score;
             },
-            analyze: (myPicks, allPlayers, bank, fixtures) => {
+            analyze: (myPicks, allPlayers, bank, fixtures, ftCount) => {
                 let singleMoves = [];
                 let finalSuggestions = [];
 
                 // 1. Identify Sell Candidates
                 const squadScores = myPicks.map(pick => {
                     const p = allPlayers[pick.element];
-                    if(!p || p.pos === 1) return null; // Skip GK for simplicity
+                    if(!p || p.pos === 1) return null;
                     return { p: p, score: TransferBot.getScore(p, fixtures) };
                 }).filter(x => x).sort((a,b) => a.score - b.score);
 
@@ -595,14 +595,12 @@
                 const marketScores = Object.values(allPlayers)
                     .filter(p => p.status === 'a' && p.pos > 1)
                     .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
-                    .sort((a,b) => b.score - a.score)
-                    .slice(0, 50);
+                    .sort((a,b) => b.score - a.score).slice(0, 50);
 
                 // 3. Find Single Moves
                 for(let i=0; i<Math.min(5, squadScores.length); i++) {
                     const sell = squadScores[i];
                     const maxBudget = bank + sell.p.price;
-
                     for(let j=0; j<marketScores.length; j++) {
                         const buy = marketScores[j];
                         if(buy.p.pos !== sell.p.pos) continue; 
@@ -610,50 +608,34 @@
                         if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
 
                         const diff = (buy.score - sell.score).toFixed(1);
-                        
-                        // We allow slightly negative moves if they free up massive funds, 
-                        // but generally we look for positive diff
                         if(parseFloat(diff) > -2) { 
-                            singleMoves.push({ 
-                                type: 'Single Move', 
-                                out: [sell.p], 
-                                in: [buy.p], 
-                                diff: parseFloat(diff)
-                            });
+                            singleMoves.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff) });
                             break; 
                         }
                     }
                 }
-
-                // Sort single moves by impact
                 singleMoves.sort((a,b) => b.diff - a.diff);
-                
-                // Add Top 3 Single Moves
                 finalSuggestions.push(...singleMoves.slice(0, 3));
 
-                // 4. Double Move Logic (Hit -4)
+                // 4. Double Move Logic
                 if(singleMoves.length > 0) {
                     const bestMove = singleMoves[0];
                     const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
                     const secondSell = squadScores.find(s => s.p.id !== bestMove.out[0].id);
-                    
                     if(secondSell) {
                         const budget2 = newBank + secondSell.p.price;
-                        const secondBuy = marketScores.find(m => 
-                            m.p.id !== bestMove.in[0].id && 
-                            !myPicks.some(pick => pick.element === m.p.id) && 
-                            m.p.pos === secondSell.p.pos && 
-                            m.p.price <= budget2
-                        );
-
+                        const secondBuy = marketScores.find(m => m.p.id !== bestMove.in[0].id && !myPicks.some(pick => pick.element === m.p.id) && m.p.pos === secondSell.p.pos && m.p.price <= budget2);
                         if(secondBuy) {
                             const diff2 = secondBuy.score - secondSell.score;
-                            const totalDiff = (bestMove.diff + diff2 - 4).toFixed(1); // Subtract 4 for hit
+                            // Cost is 4 if we only have 1 FT, but 0 if we have 2+ FTs. 
+                            // Simplified: We assume taking a double move always eats into FTs or costs points.
+                            // If FT >= 2, cost is 0. If FT = 1, cost is 4.
+                            const hitCost = ftCount >= 2 ? 0 : 4;
+                            const totalDiff = (bestMove.diff + diff2 - hitCost).toFixed(1);
                             
-                            // Only suggest double move if it's actually worth it
                             if (parseFloat(totalDiff) > 1.0) {
                                 finalSuggestions.push({ 
-                                    type: 'Double Move (-4)', 
+                                    type: `Double Move (-${hitCost})`, 
                                     out: [bestMove.out[0], secondSell.p], 
                                     in: [bestMove.in[0], secondBuy.p], 
                                     diff: parseFloat(totalDiff) 
@@ -663,22 +645,13 @@
                     }
                 }
 
-                // 5. SMART ROLL LOGIC (Only if no valuable transfers)
-                // If the best move gives less than 4 points gain, suggest rolling first.
-                // If we have no moves at all, suggest rolling.
+                // 5. SMART ROLL LOGIC
+                // Only suggest rolling if we are NOT at max cap (5) AND moves are weak
                 const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
                 
-                if (bestDiff < 4.0) {
-                    // Prepend "Roll" to the top if moves are weak
-                    finalSuggestions.unshift({
-                        type: 'Roll Transfer',
-                        out: [],
-                        in: [],
-                        diff: 0.0
-                    });
-                } 
-                // If moves are strong (> 4.0), we DO NOT add Roll Transfer, 
-                // because the user *should* make that move.
+                if (ftCount < 5 && bestDiff < 4.0) {
+                    finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
+                }
 
                 return finalSuggestions;
             }
@@ -701,7 +674,7 @@
             userData: null, playersCache: {}, fixMap: {}, currentPicks: [], currentBank: 0,
             teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
             currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
-            viewMode: 'live',
+            viewMode: 'live', ftCount: 1,
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
@@ -726,6 +699,33 @@
                     } catch (e) {}
                 }
                 throw new Error("Failed");
+            },
+
+            // --- CALCULATE FREE TRANSFERS AUTOMATICALLY ---
+            calcFreeTransfers: () => {
+                if (!app.historyData || !app.historyData.current) return 1;
+                
+                let saved = 0;
+                // Loop through history to simulate FT banking
+                app.historyData.current.forEach(gw => {
+                    // You get 1 FT per week
+                    let available = 1 + saved;
+                    // Cap availability at 5 (New FPL Rule)
+                    if (available > 5) available = 5;
+                    
+                    // Subtract used transfers
+                    const used = gw.event_transfers;
+                    saved = available - used;
+                    
+                    // You can't have negative saved transfers
+                    if (saved < 0) saved = 0;
+                });
+                
+                // Add 1 for the upcoming gameweek
+                let current = saved + 1;
+                if (current > 5) current = 5;
+                
+                return current;
             },
 
             show: (viewId) => {
@@ -763,14 +763,14 @@
                     document.getElementById('scoutResults').style.display = 'none';
                     document.getElementById('transferContent').style.display = 'block';
 
-                    // --- NEW: Header with Bank & Transfers Made ---
-                    const txMade = app.currentStats ? app.currentStats.event_transfers : 0;
+                    // Calculate FTs
+                    app.ftCount = app.calcFreeTransfers();
                     const bankTxt = app.currentStats ? (app.currentStats.bank/10).toFixed(1) : '0.0';
                     
                     const headerHtml = `
                         <div style="display:flex; justify-content:space-between; padding:15px; background:white; border-bottom:1px solid var(--border); margin:-15px -15px 15px -15px;">
-                            <div style="font-size:0.8rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
-                            <div style="font-size:0.8rem; font-weight:700; color:var(--text-sub);">Transfers Made: <span style="color:${txMade > 0 ? 'var(--red)' : 'var(--accent)'};">${txMade}</span></div>
+                            <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
+                            <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Free Transfers: <span style="color:${app.ftCount === 5 ? 'var(--primary)' : '#00ff85'}; font-weight:800;">${app.ftCount}</span></div>
                         </div>
                         <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Finding Best Move...</p></div>
                     `;
@@ -779,15 +779,15 @@
                     container.innerHTML = headerHtml;
 
                     setTimeout(() => {
-                        const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
+                        const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap, app.ftCount);
                         const market = MarketBot.getTrends(app.playersCache);
                         let html = '';
 
-                        // Re-add Header so it doesn't disappear
+                        // Header persist
                         html += `
                         <div style="display:flex; justify-content:space-between; padding:10px 15px; background:white; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
                             <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
-                            <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Tx Made: <span style="color:${txMade > 0 ? '#e90052' : '#00ff85'};">${txMade}</span></div>
+                            <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Free Transfers: <span style="color:${app.ftCount === 5 ? '#e90052' : '#00ff85'}; font-weight:800;">${app.ftCount}</span></div>
                         </div>`;
 
                         if (suggestions.length > 0) {
@@ -806,7 +806,7 @@
                                             <div style="font-size:2rem; margin:10px 0;">🛡️</div>
                                             <div style="font-weight:800; margin-bottom:5px; font-size:1.1rem;">Save Free Transfer</div>
                                             <div style="font-size:0.85rem; color:#666; line-height:1.4;">
-                                                Your team is looking strong. No high-value transfers found (> 4.0 pts gain).
+                                                Your team is looking strong. You have ${app.ftCount} FTs. Saving one gives you flexibility next week.
                                             </div>
                                         </div>`;
                                     return;
@@ -1000,6 +1000,8 @@
                         fix1.forEach(f => {
                             let status = 'FIX';
                             let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            
+                            // CHECK BOTH FINISHED STATES (Provisional & Final)
                             if (f.finished || f.finished_provisional) { 
                                 status = 'FT'; 
                                 label = 'FT'; 
