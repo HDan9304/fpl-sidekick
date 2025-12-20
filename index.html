@@ -255,6 +255,21 @@
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
         }
         .status-dot.urgent { background: #e90052; box-shadow: 0 0 0 3px rgba(233, 0, 82, 0.15); }
+        
+        /* FDR TICKER DOTS */
+        .fdr-row { display: flex; gap: 3px; justify-content: center; margin-top: 2px; }
+        .fdr-dot { 
+            width: 14px; height: 14px; 
+            border-radius: 4px; 
+            font-size: 0.5rem; font-weight: 800; color: rgba(0,0,0,0.7);
+            display: flex; align-items: center; justify-content: center;
+        }
+        /* FDR Colors */
+        .bg-1 { background: #375523; color: white; } /* Dark Green (Very Easy) */
+        .bg-2 { background: #01fc7a; color: #00381b; } /* Green (Easy) */
+        .bg-3 { background: #e5e7eb; color: #374151; } /* Grey (Average) */
+        .bg-4 { background: #ff1751; color: white; } /* Red (Hard) */
+        .bg-5 { background: #80072d; color: white; } /* Dark Red (Very Hard) */
     </style>
 </head>
 <body>
@@ -662,49 +677,65 @@ const TransferBot = {
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                     const history = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`);
                     
-                    // 1. Determine Current GW
                     const gwEvent = staticData.events.find(e => e.is_current) || staticData.events[0];
                     const gw = gwEvent.id;
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
 
-                    // 2. Get Next Deadline
                     const nextEvent = staticData.events.find(e => e.is_next);
                     const deadline = nextEvent ? nextEvent.deadline_time : null;
                     const nextGwName = nextEvent ? nextEvent.name : 'GW-';
 
-                    // 3. --- NEW: FETCH LIVE POINTS DATA ---
                     document.getElementById('loadingMsg').innerText = "Fetching Live Scores...";
                     const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
                     const liveMap = {};
-                    // Map live points to player ID for quick lookup
-                    liveData.elements.forEach(el => {
-                        liveMap[el.id] = el.stats.total_points;
-                    });
-                    // -------------------------------------
+                    liveData.elements.forEach(el => { liveMap[el.id] = el.stats.total_points; });
 
-                    document.getElementById('loadingMsg').innerText = "Checking Fixtures...";
-                    const fixtures = await app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`);
+                    // --- NEW: FETCH NEXT 3 GW FIXTURES ---
+                    document.getElementById('loadingMsg').innerText = "Analysing Schedule...";
+                    // We fetch current GW, GW+1, and GW+2
+                    const fixReqs = [gw, gw+1, gw+2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
+                    const [fix1, fix2, fix3] = await Promise.all(fixReqs);
 
-                    // 4. Map Data
-                    const fixMap = {};
+                    // Helper to map fixtures
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
-                    app.teams = teamShort; 
-                    fixtures.forEach(f => {
-                        fixMap[f.team_h] = { opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true };
-                        fixMap[f.team_a] = { opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false };
+                    app.teams = teamShort;
+
+                    const processFix = (fixList) => {
+                        const map = {};
+                        fixList.forEach(f => {
+                            if(!map[f.team_h]) map[f.team_h] = [];
+                            if(!map[f.team_a]) map[f.team_a] = [];
+                            
+                            map[f.team_h].push({ opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true });
+                            map[f.team_a].push({ opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false });
+                        });
+                        return map;
+                    };
+
+                    const map1 = processFix(fix1 || []);
+                    const map2 = processFix(fix2 || []);
+                    const map3 = processFix(fix3 || []);
+
+                    // Combine into one master map
+                    const masterFixMap = {};
+                    staticData.teams.forEach(t => {
+                        // Get first fixture from each week (ignoring doubles for simplicity here)
+                        const f1 = (map1[t.id] || [])[0] || { opp: '-', diff: 3 };
+                        const f2 = (map2[t.id] || [])[0] || { opp: '-', diff: 3 };
+                        const f3 = (map3[t.id] || [])[0] || { opp: '-', diff: 3 };
+                        masterFixMap[t.id] = [f1, f2, f3];
                     });
-                    app.fixMap = fixMap;
+                    app.fixMap = masterFixMap;
+                    // -------------------------------------
 
                     const players = {};
                     staticData.elements.forEach(p => {
-                        // USE LIVE POINTS IF AVAILABLE, OTHERWISE FALLBACK TO STATIC
                         const realPoints = (liveMap[p.id] !== undefined) ? liveMap[p.id] : p.event_points;
-
                         players[p.id] = {
                             id: p.id, name: p.web_name, team: teamShort[p.team], team_id: p.team,
                             pos: p.element_type, price: p.now_cost / 10,
-                            event_points: realPoints, // <--- UPDATED HERE
+                            event_points: realPoints,
                             team_code: p.team_code,
                             status: p.status, chance: p.chance_of_playing_next_round, news: p.news,
                             sel: parseFloat(p.selected_by_percent), form: p.form,
@@ -717,16 +748,15 @@ const TransferBot = {
                     app.currentBank = picks.entry_history.bank / 10;
                     
                     document.getElementById('demoAlert').classList.add('hidden');
-                    app.render(user, picks.picks, players, fixMap, picks.entry_history, history, deadline, nextGwName);
+                    app.render(user, picks.picks, players, masterFixMap, picks.entry_history, history, deadline, nextGwName);
 
                 } catch (error) {
                     console.error(error);
                     document.getElementById('demoAlert').classList.remove('hidden');
-                    // Mock Fallback
                     const mPlayers = {}; 
                     Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = {...MOCK_DATA.players[k], id:k, team:'MOCK'});
                     app.playersCache = mPlayers;
-                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, MOCK_DATA.fixtures, {bank:5, value:1000}, {chips:[]}, new Date().toISOString(), "GW Demo"); }, 500);
+                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, {}, {bank:5, value:1000}, {chips:[]}, new Date().toISOString(), "GW Demo"); }, 500);
                 }
             },
 
@@ -849,26 +879,32 @@ const TransferBot = {
                 if (p.is_captain) capBadge = `<div class="captain-badge">C</div>`;
                 else if (p.is_vice) capBadge = `<div class="captain-badge vice-badge">V</div>`;
                 
-                // STATUS FLAGS
                 let statusBadge = '';
                 if (p.status === 'd') statusBadge = `<div class="status-flag status-warn">!</div>`;
-                else if (['i', 's'].includes(p.status)) statusBadge = `<div class="status-flag status-bad">×</div>`;
+                else if (['i', 's', 'n'].includes(p.status)) statusBadge = `<div class="status-flag status-bad">×</div>`;
                 
-                // BENCH NUMBER
                 let bNum = isBench ? `<div class="bench-num">${benchNum}</div>` : '';
 
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
-                const fix = fixMap ? (fixMap[p.team_id] || { opp: '-', diff: 3, is_home: true }) : { opp: 'MOCK', diff: 3 };
-                const loc = fix.is_home ? '(H)' : '(A)';
                 
-                // Onclick triggers modal
+                // --- NEW: FDR DOTS LOGIC ---
+                // Get next 3 fixtures from map
+                const fixtures = fixMap[p.team_id] || [{diff:3, opp:'-'}, {diff:3, opp:'-'}, {diff:3, opp:'-'}];
+                
+                // Generate 3 dots
+                let dotsHtml = '<div class="fdr-row">';
+                fixtures.slice(0, 3).forEach(f => {
+                    dotsHtml += `<div class="fdr-dot bg-${f.diff}">${f.opp}</div>`;
+                });
+                dotsHtml += '</div>';
+                // ---------------------------
+
                 return `
                     <div class="player-pill ${isBench ? 'bench-pill' : ''}" onclick="app.openModal(${p.id})">
                         ${bNum} ${capBadge} ${statusBadge}
-                        <div class="fix-badge fdr-${fix.diff}">${fix.opp} ${loc}</div>
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
-                        <div class="pill-data">
+                        ${dotsHtml} <div class="pill-data">
                             <span>£${p.price}</span>
                             <span class="points-badge">${p.event_points}</span>
                         </div>
