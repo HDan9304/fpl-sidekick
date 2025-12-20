@@ -324,6 +324,13 @@
         .arrow-same { color: #d1d5db; } /* Grey */
         .header-right { display: flex; align-items: center; gap: 12px; }
         .trophy-btn { font-size: 1.2rem; color: #fbbf24; cursor: pointer; padding: 5px; } /* Gold Trophy */
+        
+        /* RANK ARROWS */
+        .rank-wrap { display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .r-arrow { font-size: 0.8rem; }
+        .r-green { color: #00ff85; } /* Bright Green */
+        .r-red { color: #ef4444; }   /* Red */
+        .r-grey { color: #9ca3af; }  /* Grey */
     </style>
 </head>
 <body>
@@ -917,7 +924,27 @@ const TransferBot = {
                 document.getElementById('dispName').innerText = user.name;
                 document.getElementById('dispGW').innerText = liveScore; 
                 document.getElementById('dispTotal').innerText = liveTotal;
-                document.getElementById('dispRank').innerText = (user.summary_overall_rank || 0).toLocaleString();
+                
+                // --- RANK ARROW LOGIC ---
+                // We compare current rank vs the last recorded rank in history
+                let rankArrow = '<i class="fa-solid fa-minus r-grey"></i>'; // Default
+                const currentRank = user.summary_overall_rank || 0;
+                
+                // Get last GW rank from history
+                const lastGwData = history.current && history.current.length > 0 ? history.current[history.current.length - 1] : null;
+                const lastRank = lastGwData ? lastGwData.overall_rank : 0;
+
+                if (currentRank < lastRank) rankArrow = '<i class="fa-solid fa-arrow-up r-green"></i>';
+                else if (currentRank > lastRank) rankArrow = '<i class="fa-solid fa-arrow-down r-red"></i>';
+                
+                // Update HTML with Arrow
+                document.getElementById('dispRank').innerHTML = `
+                    <div class="rank-wrap">
+                        ${rankArrow} <span>${currentRank.toLocaleString()}</span>
+                    </div>
+                `;
+                // ------------------------
+
                 document.getElementById('dispBank').innerText = `£${(stats.bank/10).toFixed(1)}m`;
                 document.getElementById('dispValue').innerText = `£${(stats.value/10).toFixed(1)}m`;
 
@@ -959,39 +986,26 @@ const TransferBot = {
                 }).join('');
                 document.getElementById('chipBar').innerHTML = chipHtml;
 
-                // 4. IDENTIFY AUTO-SUBS (FIXED LOGIC)
+                // 4. IDENTIFY AUTO-SUBS
                 const subOutIds = [];
                 const subInIds = [];
-
-                // Helper to check if player played
                 const played = (p) => p && p.minutes > 0;
                 const didntPlay = (p) => p && p.minutes === 0 && p.chance !== 100;
 
-                // A. GK Check (Pick 0 vs Pick 11)
                 const startGK = players[picks[0].element];
                 const subGK = players[picks[11].element];
+                if (didntPlay(startGK) && played(subGK)) { subOutIds.push(startGK.id); subInIds.push(subGK.id); }
 
-                if (didntPlay(startGK) && played(subGK)) {
-                    subOutIds.push(startGK.id);
-                    subInIds.push(subGK.id);
-                }
-
-                // B. Outfield Check (Picks 1-10 vs Picks 12-14)
                 const outfieldBench = [12, 13, 14].map(i => players[picks[i].element]);
                 let usedBenchIdx = 0;
-
                 for (let i = 1; i <= 10; i++) {
                     const starter = players[picks[i].element];
-                    
                     if (didntPlay(starter)) {
-                        // Find first available outfield sub
                         for (let j = usedBenchIdx; j < outfieldBench.length; j++) {
                             const sub = outfieldBench[j];
                             if (played(sub)) {
-                                subOutIds.push(starter.id);
-                                subInIds.push(sub.id);
-                                usedBenchIdx = j + 1; // Mark this sub as used
-                                break; // Move to next missing starter
+                                subOutIds.push(starter.id); subInIds.push(sub.id);
+                                usedBenchIdx = j + 1; break;
                             }
                         }
                     }
