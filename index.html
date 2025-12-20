@@ -662,19 +662,30 @@ const TransferBot = {
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                     const history = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`);
                     
+                    // 1. Determine Current GW
                     const gwEvent = staticData.events.find(e => e.is_current) || staticData.events[0];
                     const gw = gwEvent.id;
                     const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
-                    
-                    // NEW: Get Next Deadline
+
+                    // 2. Get Next Deadline
                     const nextEvent = staticData.events.find(e => e.is_next);
                     const deadline = nextEvent ? nextEvent.deadline_time : null;
                     const nextGwName = nextEvent ? nextEvent.name : 'GW-';
 
+                    // 3. --- NEW: FETCH LIVE POINTS DATA ---
+                    document.getElementById('loadingMsg').innerText = "Fetching Live Scores...";
+                    const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
+                    const liveMap = {};
+                    // Map live points to player ID for quick lookup
+                    liveData.elements.forEach(el => {
+                        liveMap[el.id] = el.stats.total_points;
+                    });
+                    // -------------------------------------
+
                     document.getElementById('loadingMsg').innerText = "Checking Fixtures...";
                     const fixtures = await app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`);
 
-                    // Map Fixtures & Players (Standard Logic)
+                    // 4. Map Data
                     const fixMap = {};
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
@@ -687,10 +698,14 @@ const TransferBot = {
 
                     const players = {};
                     staticData.elements.forEach(p => {
+                        // USE LIVE POINTS IF AVAILABLE, OTHERWISE FALLBACK TO STATIC
+                        const realPoints = (liveMap[p.id] !== undefined) ? liveMap[p.id] : p.event_points;
+
                         players[p.id] = {
                             id: p.id, name: p.web_name, team: teamShort[p.team], team_id: p.team,
                             pos: p.element_type, price: p.now_cost / 10,
-                            event_points: p.event_points, team_code: p.team_code,
+                            event_points: realPoints, // <--- UPDATED HERE
+                            team_code: p.team_code,
                             status: p.status, chance: p.chance_of_playing_next_round, news: p.news,
                             sel: parseFloat(p.selected_by_percent), form: p.form,
                             transfers_in: p.transfers_in_event, total_points: p.total_points, ict_index: p.ict_index
@@ -702,7 +717,6 @@ const TransferBot = {
                     app.currentBank = picks.entry_history.bank / 10;
                     
                     document.getElementById('demoAlert').classList.add('hidden');
-                    // Pass deadline info to render
                     app.render(user, picks.picks, players, fixMap, picks.entry_history, history, deadline, nextGwName);
 
                 } catch (error) {
