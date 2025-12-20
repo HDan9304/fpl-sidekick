@@ -1042,6 +1042,41 @@ const TransferBot = {
                 `;
             },
 
+            // --- LEAGUES MODAL ---
+            openLeagues: () => {
+                if(!app.userData || !app.userData.leagues) return alert("No league data found.");
+                
+                const leagues = app.userData.leagues.classic;
+                const container = document.getElementById('leaguesList');
+                let html = '';
+
+                if(leagues.length === 0) {
+                    html = '<div style="text-align:center; padding:20px; color:#888;">No Classic Leagues found.</div>';
+                } else {
+                    leagues.forEach(lg => {
+                        // Calculate movement arrows
+                        let arrow = '<i class="fa-solid fa-minus arrow-same"></i>';
+                        if(lg.entry_rank < lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-up arrow-up"></i>';
+                        else if(lg.entry_rank > lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-down arrow-down"></i>';
+
+                        html += `
+                            <div class="league-item">
+                                <div class="lg-name">${lg.name}</div>
+                                <div class="lg-rank-box">
+                                    <div class="lg-rank">
+                                        ${arrow} <span>${lg.entry_rank.toLocaleString()}</span>
+                                    </div>
+                                    <div style="font-size:0.65rem; color:#888;">Rank</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                container.innerHTML = html;
+                document.getElementById('leaguesModalOverlay').classList.add('open');
+            },
+            
             // --- MODAL LOGIC ---
             openModal: async (playerId) => {
                 const p = app.playersCache[playerId];
@@ -1104,41 +1139,7 @@ const TransferBot = {
                 }
             }            
         };
-// --- LEAGUES MODAL ---
-            openLeagues: () => {
-                if(!app.userData || !app.userData.leagues) return alert("No league data found.");
-                
-                const leagues = app.userData.leagues.classic;
-                const container = document.getElementById('leaguesList');
-                let html = '';
 
-                if(leagues.length === 0) {
-                    html = '<div style="text-align:center; padding:20px; color:#888;">No Classic Leagues found.</div>';
-                } else {
-                    leagues.forEach(lg => {
-                        // Calculate movement arrows
-                        let arrow = '<i class="fa-solid fa-minus arrow-same"></i>';
-                        if(lg.entry_rank < lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-up arrow-up"></i>';
-                        else if(lg.entry_rank > lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-down arrow-down"></i>';
-
-                        html += `
-                            <div class="league-item">
-                                <div class="lg-name">${lg.name}</div>
-                                <div class="lg-rank-box">
-                                    <div class="lg-rank">
-                                        ${arrow} <span>${lg.entry_rank.toLocaleString()}</span>
-                                    </div>
-                                    <div style="font-size:0.65rem; color:#888;">Rank</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-                
-                container.innerHTML = html;
-                document.getElementById('leaguesModalOverlay').classList.add('open');
-            },
-        
         function toggleMenu() { app.toggleMenu(); }
         function switchTool(t) { app.switchTool(t); }
         function clearData() { document.getElementById('logoutOverlay').classList.add('open'); app.toggleMenu(); }
