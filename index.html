@@ -472,15 +472,41 @@
         </div>
     </div>
 
-    <div id="playerModalOverlay" class="modal-overlay" onclick="closeModal()">
+    <div id="playerModalOverlay" class="modal-overlay" onclick="app.closeModal()">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <div>
-                    <div class="m-player-name" id="modalName">Player Name</div>
-                    <div class="m-player-team" id="modalTeam">Team • Position</div>
-                </div>
-                <button class="close-modal" onclick="closeModal()">×</button>
+                <div class="m-player-name" id="modalName">Player Name</div>
+                <button class="close-modal" onclick="app.closeModal()">×</button>
             </div>
+            
+            <div class="modal-body">
+                <div class="m-team-info" id="modalTeam">Team • £0.0m</div>
+                
+                <div class="m-stats-grid">
+                    <div class="m-stat-box">
+                        <div class="m-stat-val" id="modalForm">0.0</div>
+                        <div class="m-stat-lbl">Form</div>
+                    </div>
+                    <div class="m-stat-box">
+                        <div class="m-stat-val" id="modalSel">0%</div>
+                        <div class="m-stat-lbl">Selected</div>
+                    </div>
+                    <div class="m-stat-box">
+                        <div class="m-stat-val" id="modalPts">0</div>
+                        <div class="m-stat-lbl">GW Pts</div>
+                    </div>
+                </div>
+
+                <div id="modalNews" class="news-box" style="display:none;"></div>
+
+                <div class="fix-title">Next Fixtures</div>
+                <div id="modalFixtures" class="fix-list"></div>
+
+                <div id="modalActions" class="modal-actions"></div>
+                <div style="height:20px;"></div>
+            </div>
+        </div>
+    </div>
             
             <div id="modalNews" class="m-news"></div>
 
