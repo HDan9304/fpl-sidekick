@@ -23,21 +23,15 @@
             --red: #e90052;
             
             /* Pitch Colors */
-            --grass-1: #059669;
-            --grass-2: #047857;
+            --grass-1: #059669; --grass-2: #047857;
             
             /* FDR Colors */
-            --fdr-1: #375523;
-            --fdr-2: #01fc7a;
-            --fdr-3: #e7e7e7;
-            --fdr-4: #ff1751;
-            --fdr-5: #80072d;
-            --fdr-text-dark: #00381b;
-            --fdr-text-light: white;
+            --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e7e7e7; 
+            --fdr-4: #ff1751; --fdr-5: #80072d;
+            --fdr-text-dark: #00381b; --fdr-text-light: white;
 
             /* Status Colors */
-            --status-warn: #fbbf24;
-            --status-bad: #ef4444;
+            --status-warn: #fbbf24; --status-bad: #ef4444;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -173,6 +167,7 @@
         .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; background: white; margin-top: 2px; padding: 1px 0; }
         .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding-bottom: 2px; }
         .points-badge { background: var(--primary); color: white; padding: 0 4px; border-radius: 3px; font-weight: 700; }
+        .fix-badge { font-size: 0.5rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; }
         
         /* Badges & Status */
         .captain-badge { position: absolute; bottom: 30px; right: -4px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
@@ -264,6 +259,18 @@
         .fix-item { min-width: 80px; background: #fff; border: 1px solid var(--border); padding: 8px; border-radius: 8px; text-align: center; }
         .fix-diff-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
         
+        /* Modal Action Buttons */
+        .modal-actions { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
+        .action-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
+        .btn-buy { background: #00ff85; color: #00381b; box-shadow: 0 4px 15px rgba(0, 255, 133, 0.3); }
+        .btn-buy:active { transform: scale(0.98); }
+        
+        /* Replacement List */
+        .rep-list { display: none; margin-top: 15px; animation: slideUp 0.3s ease; }
+        .rep-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f9fafb; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+        .rep-item:hover { background: #fee2e2; border-color: #fca5a5; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         /* Leagues Modal */
         .league-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
         .league-item:last-child { border-bottom: none; }
@@ -335,7 +342,9 @@
             <div id="modalFixtures" class="fix-list">
                 <div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>
             </div>
+            
             <div id="modalActions" class="modal-actions"></div>
+            
             <div style="height:20px;"></div> 
         </div>
     </div>
