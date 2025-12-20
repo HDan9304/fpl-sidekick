@@ -220,17 +220,41 @@
         .chip-pill.active { background: #fff; color: var(--primary); border-color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .chip-pill.used { text-decoration: line-through; opacity: 0.6; }
         
-        /* COUNTDOWN TIMER */
-        .countdown-box { 
-            text-align: center; margin-bottom: 15px; 
-            background: #111; color: white; padding: 10px; 
-            border-radius: 12px; font-weight: 700; font-size: 0.9rem;
-            display: flex; justify-content: center; gap: 10px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        /* PROFESSIONAL COUNTDOWN */
+        .countdown-container { display: flex; justify-content: center; margin-bottom: 20px; }
+        
+        .countdown-pill { 
+            background: white; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 100px; /* Full rounded pill shape */
+            padding: 8px 20px; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 15px; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
         }
-        .time-part { font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
-        .live-dot { width: 8px; height: 8px; background: #e90052; border-radius: 50%; display: inline-block; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        .cd-label { 
+            display: flex; align-items: center; gap: 8px; 
+            font-size: 0.75rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px;
+            border-right: 1px solid #e5e7eb; padding-right: 15px;
+        }
+
+        .cd-time { 
+            font-family: 'Courier New', monospace; /* Monospace keeps numbers steady */
+            font-weight: 800; 
+            color: var(--primary); 
+            font-size: 1rem; 
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.5px;
+        }
+
+        .status-dot { 
+            width: 8px; height: 8px; background: #10b981; /* Green for active */
+            border-radius: 50%; 
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+        .status-dot.urgent { background: #e90052; box-shadow: 0 0 0 3px rgba(233, 0, 82, 0.15); }
     </style>
 </head>
 <body>
@@ -328,7 +352,9 @@
                     <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
                 </div>
 
-                <div id="gwCountdown">...</div>
+                <div class="countdown-container">
+                    <div id="gwCountdown" class="countdown-pill">Loading...</div>
+                </div>
                 
                 <div class="scoreboard">
                     <div class="manager-name" id="dispName">...</div>
@@ -698,8 +724,8 @@ const TransferBot = {
                 document.getElementById('dispBank').innerText = `£${(stats.bank/10).toFixed(1)}m`;
                 document.getElementById('dispValue').innerText = `£${(stats.value/10).toFixed(1)}m`;
 
-                // --- NEW: COUNTDOWN LOGIC ---
-                if (app.timer) clearInterval(app.timer); // Clear old timer
+                // --- PROFESSIONAL COUNTDOWN LOGIC ---
+                if (app.timer) clearInterval(app.timer);
                 
                 const updateTime = () => {
                     const now = new Date().getTime();
@@ -712,16 +738,31 @@ const TransferBot = {
                         const m = Math.floor((gap % (1000 * 60 * 60)) / (1000 * 60));
                         const s = Math.floor((gap % (1000 * 60)) / 1000);
                         
-                        document.getElementById('gwCountdown').innerHTML = 
-                            `<span>${gwName} Deadline</span> <span class="live-dot"></span> <span class="time-part">${d}d ${h}h ${m}m ${s}s</span>`;
+                        // Pad numbers with zero (e.g., 05 instead of 5)
+                        const ph = h.toString().padStart(2, '0');
+                        const pm = m.toString().padStart(2, '0');
+                        const ps = s.toString().padStart(2, '0');
+
+                        // Turn dot red if less than 24 hours
+                        const isUrgent = d === 0 ? 'urgent' : '';
+
+                        document.getElementById('gwCountdown').innerHTML = `
+                            <div class="cd-label">
+                                <div class="status-dot ${isUrgent}"></div>
+                                ${gwName}
+                            </div>
+                            <div class="cd-time">
+                                ${d}d : ${ph}h : ${pm}m : ${ps}s
+                            </div>
+                        `;
                     } else {
-                        document.getElementById('gwCountdown').innerHTML = "⚠️ Deadline Passed";
+                        document.getElementById('gwCountdown').innerHTML = `<div class="cd-label" style="border:none; padding:0;">⚠️ Deadline Passed</div>`;
                         clearInterval(app.timer);
                     }
                 };
                 
-                updateTime(); // Run immediately
-                app.timer = setInterval(updateTime, 1000); // Run every second
+                updateTime();
+                app.timer = setInterval(updateTime, 1000);
                 // ---------------------------
 
                 // Render Chips
