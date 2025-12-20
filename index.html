@@ -328,6 +328,16 @@
 </head>
 <body>
 
+         <div id="leaguesModalOverlay" class="modal-overlay" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="m-player-name">My Leagues</div>
+                <button class="close-modal" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">×</button>
+            </div>
+            <div id="leaguesList" style="padding-bottom: 20px;"></div>
+        </div>
+    </div>
+    
     <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
     <div id="sideMenu" class="sidebar">
         <div class="menu-header">FPL Hub</div>
@@ -356,16 +366,6 @@
                 <button class="close-modal" onclick="closeModal()">×</button>
             </div>
             
-            <div id="leaguesModalOverlay" class="modal-overlay" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">
-        <div class="modal-card" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <div class="m-player-name">My Leagues</div>
-                <button class="close-modal" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">×</button>
-            </div>
-            <div id="leaguesList" style="padding-bottom: 20px;"></div>
-        </div>
-    </div>
-    
             <div id="modalNews" class="m-news"></div>
 
             <div class="m-stats-row">
