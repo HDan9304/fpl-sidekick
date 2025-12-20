@@ -755,8 +755,12 @@ const TransferBot = {
                 try {
                     document.getElementById('loadingMsg').innerText = "Connecting...";
                     const staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
+                    
+                    // --- 1. FETCH USER & SAVE DATA ---
                     const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
-                    app.userData = user; // Save for Leagues Modal
+                    app.userData = user; // <--- CRITICAL FIX: Saves user data for the League Modal
+                    // --------------------------------
+                    
                     const history = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`);
                     
                     const gwEvent = staticData.events.find(e => e.is_current) || staticData.events[0];
@@ -770,7 +774,6 @@ const TransferBot = {
                     document.getElementById('loadingMsg').innerText = "Fetching Live Scores...";
                     const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
                     
-                    // --- MAP LIVE STATS (Points, Mins, Goals, Assists, Cards) ---
                     const liveMap = {};
                     liveData.elements.forEach(el => { 
                         liveMap[el.id] = { 
@@ -784,7 +787,6 @@ const TransferBot = {
                             pen_saved: el.stats.penalties_saved
                         }; 
                     });
-                    // ------------------------------------------------------------
 
                     const fixReqs = [gw, gw+1, gw+2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
                     const [fix1, fix2, fix3] = await Promise.all(fixReqs);
@@ -825,7 +827,6 @@ const TransferBot = {
                             pos: p.element_type, price: p.now_cost / 10,
                             event_points: realPoints,
                             minutes: realMins,
-                            // Pass stats to player object
                             stats: live || { goals:0, assists:0, red_cards:0 }, 
                             team_code: p.team_code,
                             status: p.status, chance: p.chance_of_playing_next_round, news: p.news,
@@ -851,6 +852,41 @@ const TransferBot = {
                 }
             },
 
+            openLeagues: () => {
+                // If this alert shows "Undefined", it means step 1 failed.
+                if(!app.userData) return alert("Please reload your team data first.");
+                if(!app.userData.leagues) return alert("No league data found.");
+                
+                const leagues = app.userData.leagues.classic;
+                const container = document.getElementById('leaguesList');
+                let html = '';
+
+                if(leagues.length === 0) {
+                    html = '<div style="text-align:center; padding:20px; color:#888;">No Classic Leagues found.</div>';
+                } else {
+                    leagues.forEach(lg => {
+                        let arrow = '<i class="fa-solid fa-minus arrow-same"></i>';
+                        if(lg.entry_rank < lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-up arrow-up"></i>';
+                        else if(lg.entry_rank > lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-down arrow-down"></i>';
+
+                        html += `
+                            <div class="league-item">
+                                <div class="lg-name">${lg.name}</div>
+                                <div class="lg-rank-box">
+                                    <div class="lg-rank">
+                                        ${arrow} <span>${lg.entry_rank.toLocaleString()}</span>
+                                    </div>
+                                    <div style="font-size:0.65rem; color:#888;">Rank</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                container.innerHTML = html;
+                document.getElementById('leaguesModalOverlay').classList.add('open');
+            },
+            
             render: (user, picks, players, fixMap, stats, history, deadline, gwName) => {
                 // 1. CALCULATE SCORE
                 let liveScore = 0;
@@ -1042,41 +1078,6 @@ const TransferBot = {
                 `;
             },
 
-            // --- LEAGUES MODAL ---
-            openLeagues: () => {
-                if(!app.userData || !app.userData.leagues) return alert("No league data found.");
-                
-                const leagues = app.userData.leagues.classic;
-                const container = document.getElementById('leaguesList');
-                let html = '';
-
-                if(leagues.length === 0) {
-                    html = '<div style="text-align:center; padding:20px; color:#888;">No Classic Leagues found.</div>';
-                } else {
-                    leagues.forEach(lg => {
-                        // Calculate movement arrows
-                        let arrow = '<i class="fa-solid fa-minus arrow-same"></i>';
-                        if(lg.entry_rank < lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-up arrow-up"></i>';
-                        else if(lg.entry_rank > lg.entry_last_rank) arrow = '<i class="fa-solid fa-arrow-down arrow-down"></i>';
-
-                        html += `
-                            <div class="league-item">
-                                <div class="lg-name">${lg.name}</div>
-                                <div class="lg-rank-box">
-                                    <div class="lg-rank">
-                                        ${arrow} <span>${lg.entry_rank.toLocaleString()}</span>
-                                    </div>
-                                    <div style="font-size:0.65rem; color:#888;">Rank</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-                
-                container.innerHTML = html;
-                document.getElementById('leaguesModalOverlay').classList.add('open');
-            },
-            
             // --- MODAL LOGIC ---
             openModal: async (playerId) => {
                 const p = app.playersCache[playerId];
