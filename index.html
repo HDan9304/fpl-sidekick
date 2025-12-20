@@ -852,9 +852,22 @@ const TransferBot = {
                 }
             },
 
-            openLeagues: () => {
-                // If this alert shows "Undefined", it means step 1 failed.
-                if(!app.userData) return alert("Please reload your team data first.");
+            openLeagues: async () => {
+                const id = localStorage.getItem('fpl_id_final') || document.getElementById('teamID').value;
+                if(!id) return alert("Please log in first.");
+
+                // 1. If data is missing, fetch it immediately (Self-Repairing)
+                if(!app.userData) {
+                    try {
+                        // Show a temporary loading state in the button if you want, or just wait
+                        const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
+                        app.userData = user;
+                    } catch(e) {
+                        return alert("Could not load leagues. Check network.");
+                    }
+                }
+
+                // 2. Now render the modal
                 if(!app.userData.leagues) return alert("No league data found.");
                 
                 const leagues = app.userData.leagues.classic;
