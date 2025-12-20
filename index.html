@@ -131,6 +131,14 @@
         .chip-pill.active { background: #fff; color: var(--primary); border-color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .chip-pill.used { text-decoration: line-through; opacity: 0.6; }
 
+        /* --- NEW: VIEW TOGGLE SWITCH --- */
+        .view-toggle { display: flex; background: #f3f4f6; border-radius: 12px; padding: 4px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .vt-btn { flex: 1; padding: 8px; text-align: center; font-size: 0.8rem; font-weight: 700; color: var(--text-sub); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .vt-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        /* NEXT FIXTURE PILL STYLE */
+        .next-fix-pill { font-size: 0.7rem; font-weight: 800; width: 100%; text-align: center; padding: 2px 0; border-radius: 0 0 4px 4px; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
+
         /* Rank Arrows */
         .rank-wrap { display: flex; align-items: center; justify-content: center; gap: 6px; }
         .r-arrow { font-size: 0.8rem; }
@@ -453,6 +461,15 @@
 
                 <div id="chipBar" class="chip-bar"></div>
 
+                <div class="view-toggle">
+                    <div id="btn-live" class="vt-btn active" onclick="app.toggleView('live')">
+                        <i class="fa-solid fa-bolt"></i> Live Points
+                    </div>
+                    <div id="btn-next" class="vt-btn" onclick="app.toggleView('next')">
+                        <i class="fa-regular fa-calendar"></i> Next GW
+                    </div>
+                </div>
+
                 <div class="pitch-wrapper">
                     <div class="budget-bar">
                         <span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span>
@@ -591,6 +608,7 @@
             userData: null, playersCache: {}, fixMap: {}, currentPicks: [], currentBank: 0,
             teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
             currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
+            viewMode: 'live', // 'live' or 'next'
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
@@ -600,7 +618,7 @@
                 }
             },
 
-            // --- PROXY WITH FALLBACK (USER REQUESTED) ---
+            // --- PROXY WITH FALLBACK ---
             fetchUrl: async (targetUrl) => {
                 const proxies = [
                     (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`, 
@@ -610,7 +628,7 @@
                 for (let i = 0; i < proxies.length; i++) {
                     try {
                         const c = new AbortController(); 
-                        const id = setTimeout(() => c.abort(), 8000); // 8s Timeout
+                        const id = setTimeout(() => c.abort(), 8000); 
                         const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); 
                         clearTimeout(id);
                         if(r.ok) return await r.json();
@@ -720,6 +738,17 @@
                 }
             },
 
+            // --- VIEW TOGGLE LOGIC ---
+            toggleView: (mode) => {
+                app.viewMode = mode;
+                // Update Buttons
+                document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById(`btn-${mode}`).classList.add('active');
+                
+                // Re-render pitch
+                app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
+            },
+
             simulate: (outIds, inIds) => {
                 const simPicks = JSON.parse(JSON.stringify(app.currentPicks));
                 let simBank = app.currentBank;
@@ -731,7 +760,6 @@
                         const pOut = app.playersCache[outId];
                         const pIn = app.playersCache[inId];
                         simBank = simBank + pOut.price - pIn.price;
-                        // Reset multiplier to 1 for new players
                         simPicks[pickIdx].multiplier = 1; 
                         simPicks[pickIdx].is_captain = false;
                         simPicks[pickIdx].is_vice_captain = false;
@@ -798,8 +826,6 @@
                         fix1.forEach(f => {
                             let status = 'FIX';
                             let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                            
-                            // CHECK BOTH FINISHED STATES (Provisional & Final)
                             if (f.finished || f.finished_provisional) { 
                                 status = 'FT'; 
                                 label = 'FT'; 
@@ -807,7 +833,6 @@
                                 status = 'LIVE'; 
                                 label = 'LIVE'; 
                             }
-                            
                             statusMap[f.team_h] = { status, label, id: f.id };
                             statusMap[f.team_a] = { status, label, id: f.id };
                         });
@@ -954,16 +979,7 @@
                 for (let i = 0; i < 11; i++) {
                     const pick = picks[i];
                     const p = players[pick.element];
-                    if (p) {
-                        // FIX: Pass multiplier (captain points)
-                        formation[p.pos].push({ 
-                            ...p, 
-                            is_captain: pick.is_captain, 
-                            is_vice: pick.is_vice_captain, 
-                            multiplier: pick.multiplier, 
-                            subStatus: subOutIds.includes(p.id) ? 'out' : null 
-                        });
-                    }
+                    if (p) formation[p.pos].push({ ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain, multiplier: pick.multiplier, subStatus: subOutIds.includes(p.id) ? 'out' : null });
                 }
                 [1, 2, 3, 4].forEach(posId => {
                     const row = document.createElement('div'); row.className = 'field-row';
@@ -991,14 +1007,13 @@
 
                 // --- LIVE BADGE LOGIC ---
                 let matchBadge = '';
-                if (!app.isSimulating && statusMap && statusMap[p.team_id]) {
+                // Only show badge in Live Mode
+                if (app.viewMode === 'live' && !app.isSimulating && statusMap && statusMap[p.team_id]) {
                     const m = statusMap[p.team_id];
                     let badgeClass = 'ms-fix';
                     let label = m.label;
-                    if (m.status === 'FT') { 
-                        badgeClass = 'ms-ft'; 
-                        label = 'FT'; // FORCE LABEL TO FT
-                    } else if (m.status === 'LIVE') { 
+                    if (m.status === 'FT') { badgeClass = 'ms-ft'; label = 'FT'; } 
+                    else if (m.status === 'LIVE') { 
                         badgeClass = 'ms-live'; 
                         if(p.minutes > 0) label = p.minutes + "'";
                     }
@@ -1006,7 +1021,8 @@
                 }
 
                 let evtHtml = '';
-                if (p.stats) {
+                // Show events only in Live Mode
+                if (app.viewMode === 'live' && p.stats) {
                     evtHtml += '<div class="event-row">';
                     for (let i = 0; i < p.stats.goals; i++) evtHtml += `<div class="evt-icon evt-goal"><i class="fa-regular fa-futbol"></i></div>`;
                     for (let i = 0; i < p.stats.assists; i++) evtHtml += `<div class="evt-icon evt-assist"><i class="fa-solid fa-share" style="transform: scaleX(-1);"></i></div>`;
@@ -1019,16 +1035,26 @@
                 let dotsHtml = '<div class="fdr-row">';
                 fixtures.slice(0, 3).forEach(f => { dotsHtml += `<div class="fdr-dot bg-${f.diff}">${f.opp}</div>`; });
                 dotsHtml += '</div>';
+                
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
-
-                // FIX: CALCULATE DISPLAY POINTS (Double if Captain)
                 const displayPoints = p.event_points * (p.multiplier || 1);
+
+                // --- NEXT GW MODE ---
+                let bottomBar = `<div class="pill-data"><span>£${p.price}</span><span class="points-badge">${displayPoints}</span></div>`;
+                
+                if (app.viewMode === 'next') {
+                    // Hide dots, hide events, replace bottom bar with next fixture
+                    dotsHtml = '';
+                    evtHtml = '';
+                    const nextF = fixtures[1] || { opp: '-', diff: 3 }; // Get GW+1
+                    bottomBar = `<div class="next-fix-pill bg-${nextF.diff}">${nextF.opp}</div>`;
+                }
 
                 return `<div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
                         ${isBench ? `<div class="bench-num">${benchNum}</div>` : ''} ${capBadge} ${statusBadge} ${subIcon} ${newBadge} ${matchBadge} ${dotsHtml} ${evtHtml}
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
-                        <div class="pill-data"><span>£${p.price}</span><span class="points-badge">${displayPoints}</span></div>
+                        ${bottomBar}
                     </div>`;
             },
 
