@@ -731,9 +731,34 @@ const TransferBot = {
             },
 
             render: (user, picks, players, fixMap, stats, history, deadline, gwName) => {
+                // --- 1. CALCULATE TRUE LIVE SCORE ---
+                let liveScore = 0;
+                let activeChips = [];
+                
+                // Calculate score based on the 11 starters (Positions 1-11)
+                picks.forEach(pick => {
+                    if(pick.position <= 11) {
+                        const p = players[pick.element];
+                        if(p) {
+                            // Multiplier: 1=Normal, 2=Captain, 3=Triple Captain
+                            liveScore += (p.event_points * pick.multiplier);
+                        }
+                    }
+                });
+                
+                // Adjust Total Points (Old Total + (Live GW - Old GW))
+                // This gives you a "Live Total Rank" estimation base
+                const oldGwScore = user.summary_event_points || 0;
+                const totalDiff = liveScore - oldGwScore;
+                const liveTotal = (user.summary_overall_points || 0) + totalDiff;
+                // -------------------------------------
+
                 document.getElementById('dispName').innerText = user.name;
-                document.getElementById('dispGW').innerText = user.summary_event_points || 0;
-                document.getElementById('dispTotal').innerText = user.summary_overall_points || 0;
+                
+                // UPDATE SCOREBOARD WITH LIVE NUMBERS
+                document.getElementById('dispGW').innerText = liveScore; 
+                document.getElementById('dispTotal').innerText = liveTotal;
+                
                 document.getElementById('dispRank').innerText = (user.summary_overall_rank || 0).toLocaleString();
                 document.getElementById('dispBank').innerText = `£${(stats.bank/10).toFixed(1)}m`;
                 document.getElementById('dispValue').innerText = `£${(stats.value/10).toFixed(1)}m`;
@@ -752,12 +777,10 @@ const TransferBot = {
                         const m = Math.floor((gap % (1000 * 60 * 60)) / (1000 * 60));
                         const s = Math.floor((gap % (1000 * 60)) / 1000);
                         
-                        // Pad numbers with zero (e.g., 05 instead of 5)
                         const ph = h.toString().padStart(2, '0');
                         const pm = m.toString().padStart(2, '0');
                         const ps = s.toString().padStart(2, '0');
 
-                        // Turn dot red if less than 24 hours
                         const isUrgent = d === 0 ? 'urgent' : '';
 
                         document.getElementById('gwCountdown').innerHTML = `
@@ -777,7 +800,6 @@ const TransferBot = {
                 
                 updateTime();
                 app.timer = setInterval(updateTime, 1000);
-                // ---------------------------
 
                 // Render Chips
                 const usedChips = history.chips.map(c => c.name);
@@ -800,7 +822,12 @@ const TransferBot = {
                 for (let i = 0; i < 11; i++) {
                     const pick = picks[i];
                     const p = players[pick.element];
-                    if (p) formation[p.pos].push({ ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain });
+                    // Pass multiplier to pill creation to visually indicate Captain
+                    if (p) formation[p.pos].push({ 
+                        ...p, 
+                        is_captain: pick.is_captain, 
+                        is_vice: pick.is_vice_captain 
+                    });
                 }
 
                 [1, 2, 3, 4].forEach(posId => {
