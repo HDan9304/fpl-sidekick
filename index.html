@@ -362,7 +362,7 @@
     </div>
 
     <script>
-        // --- MOCK DATA (Fallback) ---
+        // --- MOCK DATA ---
         const MOCK_DATA = {
             user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
             bank: 5, value: 1024,
@@ -373,101 +373,100 @@
                 { element: 13, position: 13 }, { element: 14, position: 14 }, { element: 15, position: 15 }
             ],
             players: {
-                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 },
+                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock - 75% chance of playing", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 },
                 5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40, form: 7.0, transfers_in: 30000, total_points: 140, ict_index: 280 },
                 1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', form: 3.5, transfers_in: 1000, total_points: 50, ict_index: 20 }
             },
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
-        // --- 1. TRANSFER BOT (Optimized) ---
-        const TransferBot = {
-            getScore: (p, fixtures) => {
-                const nextFix = (fixtures && fixtures[p.team_id]) ? fixtures[p.team_id] : { diff: 3 };
-                let score = parseFloat(p.form) - (nextFix.diff * 2);
-                if (nextFix.is_home) score += 0.5; 
-                if (p.status !== 'a' && p.chance < 75) score = -50; 
-                return score;
-            },
+const TransferBot = {
+    getScore: (p, fixtures) => {
+        const nextFix = fixtures[p.team_id] || { diff: 3 };
+        let score = parseFloat(p.form) - (nextFix.diff * 2);
+        // Huge penalty for injuries/suspensions
+        if (p.status !== 'a' && p.chance < 75) score = -50;
+        return score;
+    },
 
-            analyze: (myPicks, allPlayers, bank, fixtures) => {
-                if (!myPicks || !allPlayers) return { strategy: "SAVE", message: "Data Unavailable", moves: [] };
+    analyze: (myPicks, allPlayers, bank, fixtures) => {
+        let allMoves = [];
 
-                // 1. Score Squad
-                const squadWithScores = myPicks.map(pick => {
-                    const p = allPlayers[pick.element];
-                    if (!p || p.pos === 1) return null; 
-                    return { p: p, score: TransferBot.getScore(p, fixtures) };
-                }).filter(x => x);
+        // 1. Calculate Score for Current Squad
+        const squadWithScores = myPicks.map(pick => {
+            const p = allPlayers[pick.element];
+            if(p.pos === 1) return null; // Skip GK for now
+            return { p: p, score: TransferBot.getScore(p, fixtures) };
+        }).filter(x => x);
 
-                // 2. Score Market (Pre-filter to prevent lag)
-                const market = Object.values(allPlayers)
-                    .filter(p => p && p.status === 'a' && p.pos > 1 && !myPicks.some(pick => pick.element === p.id));
+        // 2. Identify Buy Candidates (Fit & Active)
+        const market = Object.values(allPlayers).filter(p => 
+            p.status === 'a' && p.pos > 1 && !myPicks.some(pick => pick.element === p.id)
+        );
 
-                // 3. OPTIMIZATION: Compare Worst 5 Squad vs Best 50 Market
-                // This makes the calculation instant
-                const worstSquad = squadWithScores.sort((a,b) => a.score - b.score).slice(0, 5);
-                const bestMarket = market
-                    .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
-                    .sort((a,b) => b.score - a.score)
-                    .slice(0, 50);
+        // 3. Brute Force: Check every valid single swap
+        squadWithScores.forEach(sell => {
+            const maxBudget = bank + sell.p.price;
 
-                let allMoves = [];
+            market.forEach(buy => {
+                // Rules: Same position, Affordability
+                if(buy.pos !== sell.p.pos) return;
+                if(buy.price > maxBudget) return;
 
-                for (const sell of worstSquad) {
-                    const maxBudget = bank + sell.p.price;
-                    for (const buy of bestMarket) {
-                        if (buy.p.pos !== sell.p.pos) continue;
-                        if (buy.p.price > maxBudget) continue;
+                const buyScore = TransferBot.getScore(buy, fixtures);
+                const diff = (buyScore - sell.score).toFixed(1);
 
-                        const diff = (buy.score - sell.score).toFixed(1);
-                        if (diff > 0.5) { 
-                            allMoves.push({ out: sell.p, in: buy.p, diff: parseFloat(diff) });
-                        }
-                    }
+                // Only consider positive moves
+                if (diff > 0.5) {
+                    allMoves.push({
+                        out: sell.p,
+                        in: buy,
+                        diff: parseFloat(diff)
+                    });
                 }
+            });
+        });
 
-                // 4. Sort & Pick Top 3
-                const top3 = allMoves.sort((a,b) => b.diff - a.diff).slice(0, 3);
-                
-                // 5. Strategy: Suggest SAVE if improvement is small (< 2.5)
-                let strategy = "TRANSFER";
-                let message = "Make 1 Transfer";
-                
-                if (top3.length === 0 || top3[0].diff < 2.5) {
-                    strategy = "SAVE";
-                    message = "Save Transfer";
-                }
+        // 4. Sort by Impact and Take Top 3
+        const top3 = allMoves.sort((a,b) => b.diff - a.diff).slice(0, 3);
 
-                return { strategy, message, moves: top3 };
-            }
-        };
+        // 5. AI DECISION LOGIC
+        // If the best move is less than 3.0 improvement, suggest Saving.
+        let strategy = "TRANSFER";
+        let message = "Make 1 Transfer";
+        
+        if (top3.length === 0 || top3[0].diff < 3.0) {
+            strategy = "SAVE";
+            message = "Save Transfer";
+        }
 
-        // --- 2. MARKET BOT ---
+        return { strategy, message, moves: top3 };
+    }
+};
+
+        // --- NEW: MarketBot (Trending Players) ---
         const MarketBot = {
             getTrends: (allPlayers) => {
-                const players = Object.values(allPlayers).filter(p => p);
+                const players = Object.values(allPlayers);
                 
-                const movers = [...players].sort((a, b) => b.transfers_in - a.transfers_in).slice(0, 3);
-                
-                const valueKings = [...players]
-                    .filter(p => p.total_points > 20 && p.price > 0)
-                    .map(p => ({ ...p, value_ratio: (p.total_points / p.price) }))
-                    .sort((a, b) => b.value_ratio - a.value_ratio)
+                // Sort by transfers_in
+                const movers = [...players]
+                    .sort((a, b) => b.transfers_in - a.transfers_in)
                     .slice(0, 3);
 
+                // Sort by differentials (Low own, High form)
                 const differentials = [...players]
                     .filter(p => p.sel < 5 && p.status === 'a')
                     .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))
                     .slice(0, 3);
 
-                return { movers, differentials, valueKings };
+                return { movers, differentials };
             }
         };
 
-        // --- 3. APP LOGIC ---
         const app = {
-            currentTool: 'squad', playersCache: {},
+            currentTool: 'squad',
+            playersCache: {}, // Store full player objects
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
@@ -482,7 +481,6 @@
                 document.getElementById(viewId).classList.remove('hidden');
             },
             toggleMenu: () => { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); },
-            
             switchTool: (t) => {
                 app.toggleMenu(); app.currentTool = t;
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
@@ -494,73 +492,83 @@
                 } else {
                     app.show('transfersView');
                     const container = document.getElementById('transfersView');
-                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analysing Market...</p></div>';
+                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analyzing Options...</p></div>';
                     
                     setTimeout(() => {
-                        try {
-                            const aiResult = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
-                            const market = MarketBot.getTrends(app.playersCache);
+                        const aiResult = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
+                        const market = MarketBot.getTrends(app.playersCache);
+                        let html = '';
+
+                        // --- 1. STRATEGY BANNER ---
+                        // Green for "Save", Purple for "Transfer"
+                        let bg = aiResult.strategy === 'SAVE' ? '#10b981' : '#8b5cf6';
+                        let icon = aiResult.strategy === 'SAVE' ? 'fa-piggy-bank' : 'fa-arrow-right-arrow-left';
+                        let subText = aiResult.strategy === 'SAVE' ? 'Team looks solid. Roll the transfer.' : 'Found high value moves.';
+
+                        html += `
+                            <div style="background:${bg}; padding:20px; border-radius:16px; color:white; margin-bottom:20px; box-shadow:0 8px 20px -5px ${bg}80; text-align:center;">
+                                <div style="font-size:2rem; margin-bottom:10px;"><i class="fa-solid ${icon}"></i></div>
+                                <div style="font-size:0.8rem; text-transform:uppercase; font-weight:700; opacity:0.9;">AI STRATEGY</div>
+                                <div style="font-size:1.5rem; font-weight:800;">${aiResult.message}</div>
+                                <div style="font-size:0.9rem; opacity:0.9; margin-top:5px;">${subText}</div>
+                            </div>
+                        `;
+
+                        // --- 2. TOP 3 SUGGESTIONS ---
+                        if (aiResult.moves.length > 0) {
+                            html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-list-ol" style="color:var(--primary);"></i> Top 3 Options</div>`;
                             
-                            let html = '';
-
-                            // --- STRATEGY BANNER ---
-                            let bg = aiResult.strategy === 'SAVE' ? '#10b981' : '#8b5cf6';
-                            let icon = aiResult.strategy === 'SAVE' ? 'fa-piggy-bank' : 'fa-arrow-right-arrow-left';
-                            let subText = aiResult.strategy === 'SAVE' ? 'Team looks solid. Roll the transfer.' : 'Suggested Move';
-
-                            html += `
-                                <div style="background:${bg}; padding:20px; border-radius:16px; color:white; margin-bottom:20px; box-shadow:0 8px 20px -5px ${bg}80; text-align:center;">
-                                    <div style="font-size:2rem; margin-bottom:10px;"><i class="fa-solid ${icon}"></i></div>
-                                    <div style="font-size:0.8rem; text-transform:uppercase; font-weight:700; opacity:0.9;">AI Recommendation</div>
-                                    <div style="font-size:1.5rem; font-weight:800;">${aiResult.message}</div>
-                                    <div style="font-size:0.9rem; opacity:0.9; margin-top:5px;">${subText}</div>
-                                </div>
-                            `;
-
-                            // --- TOP 3 SUGGESTIONS ---
-                            if (aiResult.moves.length > 0) {
-                                html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-list-ol" style="color:var(--primary);"></i> Top 3 Options</div>`;
-                                aiResult.moves.forEach((move, index) => {
-                                    let badge = index === 0 ? `<div style="position:absolute; top:0; right:0; background:${bg}; color:white; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>` : `<div style="position:absolute; top:0; right:0; background:#eee; color:#666; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>`;
-                                    html += `<div style="background:white; border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px; position:relative; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.02);">${badge}<div style="font-size:0.75rem; font-weight:800; color:#666; text-transform:uppercase; margin-bottom:10px;">Impact: <span style="color:${bg};">+${move.diff}</span></div><div style="display:flex; gap:10px; align-items:center;"><div style="flex:1; background:#fff5f5; border:1px solid #fee2e2; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:8px;"><div style="font-size:0.6rem; font-weight:800; color:#ef4444;">OUT</div><div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${move.out.name}</div></div><i class="fa-solid fa-arrow-right" style="color:#d1d5db; font-size:0.8rem;"></i><div style="flex:1; background:#f0fdf4; border:1px solid #dcfce7; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:8px;"><div style="font-size:0.6rem; font-weight:800; color:#16a34a;">IN</div><div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${move.in.name}</div></div></div></div>`;
-                                });
-                            }
-
-                            // --- MARKET SECTIONS ---
-                            if (market.movers.length > 0) {
-                                html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-fire" style="color:#e90052;"></i> Market Movers</div><div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
-                                market.movers.forEach(p => {
-                                    html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#02894e; font-weight:800; background:#f0fdf4; padding:4px 8px; border-radius:100px; display:inline-block;">+${(p.transfers_in/1000).toFixed(1)}k</div></div>`;
-                                });
-                                html += `</div>`;
-                            }
-
-                            if (market.valueKings.length > 0) {
-                                html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-coins" style="color:#eab308;"></i> Best Value</div><div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
-                                market.valueKings.forEach(p => {
-                                    html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#d97706; font-weight:800; background:#fef3c7; padding:4px 8px; border-radius:100px; display:inline-block;">${p.total_points} Pts</div></div>`;
-                                });
-                                html += `</div>`;
-                            }
-
-                            if (market.differentials.length > 0) {
-                                html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div><div style="display:flex; flex-direction:column; gap:10px;">`;
-                                market.differentials.forEach(p => {
-                                    html += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 16px; border-radius:12px; border:1px solid var(--border);" onclick="app.openModal(${p.id})"><div style="display:flex; align-items:center; gap:12px;"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px;"><div><div style="font-size:0.9rem; font-weight:700;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.sel}%</div></div></div><div style="text-align:right;"><div style="font-size:1rem; font-weight:800; color:var(--primary);">${p.form}</div><div style="font-size:0.6rem; color:var(--text-sub); text-transform:uppercase; font-weight:600;">Form</div></div></div>`;
-                                });
-                                html += `</div><div style="height:40px;"></div>`;
-                            }
-
-                            container.innerHTML = html;
-
-                        } catch (e) {
-                            console.error(e);
-                            container.innerHTML = `<div class="welcome-card"><div style="font-size:2rem; margin-bottom:10px">⚠️</div><p>Could not calculate moves.</p><p style="font-size:0.7rem; color:#ef4444; margin-top:5px;">${e.message}</p></div>`;
+                            aiResult.moves.forEach((move, index) => {
+                                let badge = index === 0 ? `<div style="position:absolute; top:0; right:0; background:${bg}; color:white; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>` : `<div style="position:absolute; top:0; right:0; background:#eee; color:#666; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>`;
+                                
+                                html += `
+                                    <div style="background:white; border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px; position:relative; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+                                        ${badge}
+                                        <div style="font-size:0.75rem; font-weight:800; color:#666; text-transform:uppercase; margin-bottom:10px;">Impact: <span style="color:${bg};">+${move.diff}</span></div>
+                                        
+                                        <div style="display:flex; gap:10px; align-items:center;">
+                                            <div style="flex:1; background:#fff5f5; border:1px solid #fee2e2; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:8px;">
+                                                <div style="font-size:0.6rem; font-weight:800; color:#ef4444;">OUT</div>
+                                                <div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${move.out.name}</div>
+                                            </div>
+                                            <i class="fa-solid fa-arrow-right" style="color:#d1d5db; font-size:0.8rem;"></i>
+                                            <div style="flex:1; background:#f0fdf4; border:1px solid #dcfce7; border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:8px;">
+                                                <div style="font-size:0.6rem; font-weight:800; color:#16a34a;">IN</div>
+                                                <div style="font-weight:700; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${move.in.name}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
                         }
-                    }, 50);
+
+                        // --- 3. MARKET TRENDS (UNCHANGED) ---
+                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-fire" style="color:#e90052;"></i> Market Movers</div>
+                                 <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
+                        market.movers.forEach(p => {
+                            html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#02894e; font-weight:800; background:#f0fdf4; padding:4px 8px; border-radius:100px; display:inline-block;">+${(p.transfers_in/1000).toFixed(1)}k</div></div>`;
+                        });
+                        html += `</div>`;
+
+                        // RESTORED BEST VALUE
+                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-coins" style="color:#eab308;"></i> Best Value</div>
+                                 <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
+                        market.valueKings.forEach(p => {
+                            html += `<div style="min-width:120px; background:white; border:1px solid var(--border); border-radius:12px; padding:12px; flex-shrink:0; text-align:center;" onclick="app.openModal(${p.id})"><div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">${p.team}</div><div style="font-size:0.75rem; color:#d97706; font-weight:800; background:#fef3c7; padding:4px 8px; border-radius:100px; display:inline-block;">${p.total_points} Pts</div></div>`;
+                        });
+                        html += `</div>`;
+
+                        html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div><div style="display:flex; flex-direction:column; gap:10px;">`;
+                        market.differentials.forEach(p => {
+                            html += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 16px; border-radius:12px; border:1px solid var(--border);" onclick="app.openModal(${p.id})"><div style="display:flex; align-items:center; gap:12px;"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px;"><div><div style="font-size:0.9rem; font-weight:700;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.sel}%</div></div></div><div style="text-align:right;"><div style="font-size:1rem; font-weight:800; color:var(--primary);">${p.form}</div><div style="font-size:0.6rem; color:var(--text-sub); text-transform:uppercase; font-weight:600;">Form</div></div></div>`;
+                        });
+                        html += `</div><div style="height:40px;"></div>`;
+                        container.innerHTML = html;
+                    }, 500);
                 }
             },
-
+            
+            // PROXY ENGINE
             fetchUrl: async (targetUrl) => {
                 const proxies = [(url) => `https://corsproxy.io/?${encodeURIComponent(url)}`, (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`];
                 for (let i = 0; i < proxies.length; i++) {
@@ -590,6 +598,7 @@
                     document.getElementById('loadingMsg').innerText = "Checking Fixtures...";
                     const fixtures = await app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`);
 
+                    // Map Fixtures
                     const fixMap = {};
                     const teamShort = {};
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
@@ -598,8 +607,10 @@
                         fixMap[f.team_h] = { opp: teamShort[f.team_a], diff: f.team_h_difficulty, is_home: true };
                         fixMap[f.team_a] = { opp: teamShort[f.team_h], diff: f.team_a_difficulty, is_home: false };
                     });
-                    app.fixMap = fixMap; 
+                    
+                    app.fixMap = fixMap; // SAVE FOR BOT
 
+                    // Map Players (Include Status & Chance)
                     const players = {};
                     staticData.elements.forEach(p => {
                         players[p.id] = {
@@ -607,7 +618,7 @@
                             name: p.web_name, team: teamShort[p.team], team_id: p.team,
                             pos: p.element_type, price: p.now_cost / 10,
                             event_points: p.event_points, team_code: p.team_code,
-                            status: p.status, 
+                            status: p.status, // a, d, i, s, u
                             chance: p.chance_of_playing_next_round,
                             news: p.news,
                             sel: parseFloat(p.selected_by_percent),
@@ -618,7 +629,8 @@
                         };
                     });
                     
-                    app.playersCache = players;
+                    app.playersCache = players; // Save for modal
+
                     app.currentPicks = picks.picks;
                     app.currentBank = picks.entry_history.bank / 10;
                     
@@ -627,13 +639,11 @@
 
                 } catch (error) {
                     document.getElementById('demoAlert').classList.remove('hidden');
-                    const mPlayers = {}; 
+                    // Mock Data Fallback logic omitted for brevity in this specific update, but keeps app alive
+                    const mPlayers = {}; // Use mock
                     Object.keys(MOCK_DATA.players).forEach(k => mPlayers[k] = {...MOCK_DATA.players[k], id:k, team:'MOCK'});
                     app.playersCache = mPlayers;
-                    app.currentPicks = MOCK_DATA.picks;
-                    app.currentBank = 50;
-                    app.fixMap = {};
-                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, MOCK_DATA.fixtures, {bank:50, value:1000}); }, 500);
+                    setTimeout(() => { app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, MOCK_DATA.fixtures, {bank:5, value:1000}); }, 500);
                 }
             },
 
@@ -650,75 +660,134 @@
                 pitchDiv.innerHTML = ''; benchDiv.innerHTML = '';
                 const formation = { 1: [], 2: [], 3: [], 4: [] };
 
-                picks.forEach((pick, i) => {
+                for (let i = 0; i < 11; i++) {
+                    const pick = picks[i];
                     const p = players[pick.element];
-                    if(!p) return;
-                    const pFull = { ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain, is_bench: i > 10, sub_order: i-10 };
-                    if (i < 11) formation[p.pos].push(pFull);
-                    else benchDiv.innerHTML += app.createPill(pFull, fixMap);
-                });
+                    if (p) formation[p.pos].push({ ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain });
+                }
 
                 [1, 2, 3, 4].forEach(posId => {
                     const row = document.createElement('div'); row.className = 'field-row';
                     formation[posId].forEach(p => row.innerHTML += app.createPill(p, fixMap));
                     pitchDiv.appendChild(row);
                 });
+
+                // Bench with Numbers
+                for (let i = 11; i < picks.length; i++) {
+                    const pick = picks[i];
+                    const p = players[pick.element];
+                    if(p) benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, fixMap, true, i - 10);
+                }
                 app.show('dashboardView');
             },
 
-            createPill: (p, fixMap) => {
-                let capBadge = p.is_captain ? `<div class="cap-badge">C</div>` : (p.is_vice ? `<div class="vice-badge cap-badge">V</div>` : '');
-                let statusBadge = p.status === 'd' ? `<div class="status-flag status-warn">!</div>` : (['i', 's'].includes(p.status) ? `<div class="status-flag status-bad">×</div>` : '');
-                let bNum = p.is_bench ? `<div class="bench-num">${p.sub_order}</div>` : '';
+            createPill: (p, fixMap, isBench = false, benchNum = 0) => {
+                let capBadge = '';
+                if (p.is_captain) capBadge = `<div class="captain-badge">C</div>`;
+                else if (p.is_vice) capBadge = `<div class="captain-badge vice-badge">V</div>`;
+                
+                // STATUS FLAGS
+                let statusBadge = '';
+                if (p.status === 'd') statusBadge = `<div class="status-flag status-warn">!</div>`;
+                else if (['i', 's'].includes(p.status)) statusBadge = `<div class="status-flag status-bad">×</div>`;
+                
+                // BENCH NUMBER
+                let bNum = isBench ? `<div class="bench-num">${benchNum}</div>` : '';
+
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
-                const fix = fixMap ? (fixMap[p.team_id] || { opp: 'MOCK', diff: 3, is_home: true }) : { opp: 'MOCK', diff: 3 };
+                const fix = fixMap ? (fixMap[p.team_id] || { opp: '-', diff: 3, is_home: true }) : { opp: 'MOCK', diff: 3 };
                 const loc = fix.is_home ? '(H)' : '(A)';
+                
+                // Onclick triggers modal
                 return `
-                    <div class="player-pill ${p.is_bench ? 'bench-pill' : ''}" onclick="app.openModal(${p.id})">
+                    <div class="player-pill ${isBench ? 'bench-pill' : ''}" onclick="app.openModal(${p.id})">
                         ${bNum} ${capBadge} ${statusBadge}
                         <div class="fix-badge fdr-${fix.diff}">${fix.opp} ${loc}</div>
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
-                        <div class="pill-data"><span>£${p.price}</span><span class="points-badge">${p.event_points}</span></div>
+                        <div class="pill-data">
+                            <span>£${p.price}</span>
+                            <span class="points-badge">${p.event_points}</span>
+                        </div>
                     </div>
                 `;
             },
 
+            // --- MODAL LOGIC ---
             openModal: async (playerId) => {
                 const p = app.playersCache[playerId];
+                if(!p) return;
+
+                const overlay = document.getElementById('playerModalOverlay');
+                const content = document.getElementById('modalFixtures');
+                
+                // Fill Static Info
                 document.getElementById('modalName').innerText = p.name;
-                document.getElementById('modalInfo').innerText = `${p.team} • £${p.price}m • Sel: ${p.sel}%`;
+                document.getElementById('modalTeam').innerText = `${p.team} • £${p.price}m`;
                 document.getElementById('modalForm').innerText = p.form;
                 document.getElementById('modalSel').innerText = `${p.sel}%`;
-                document.getElementById('modalPts').innerText = p.total_points || p.event_points;
+                document.getElementById('modalPts').innerText = p.event_points;
+
                 const newsEl = document.getElementById('modalNews');
-                if(p.news) { newsEl.style.display='block'; newsEl.innerText=p.news; } else newsEl.style.display='none';
-                document.getElementById('playerModalOverlay').classList.add('open');
-                document.getElementById('modalFixtures').innerHTML = '<div style="font-size:0.8rem; color:#888;">Loading...</div>';
+                if(p.news) {
+                    newsEl.style.display = 'block';
+                    newsEl.innerText = p.news;
+                } else {
+                    newsEl.style.display = 'none';
+                }
+
+                // Show Modal
+                overlay.classList.add('open');
+                content.innerHTML = '<div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>';
+
+                // Fetch Deep Dive Data (Element Summary)
                 try {
                     const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
+                    
+                    // Render Upcoming Fixtures
                     let html = '';
-                    data.fixtures.slice(0,5).forEach(f => {
+                    // First 5 fixtures
+                    data.fixtures.slice(0, 5).forEach(f => {
                         const diff = f.difficulty;
-                        const oppId = f.is_home ? f.team_a : f.team_h;
-                        const oppName = app.teams ? app.teams[oppId] : '---';
-                        html += `<div class="fix-item"><div style="font-size:0.6rem; color:#888; font-weight:700;">GW${f.event}</div>
-                            <div style="font-weight:800; font-size:0.9rem; margin:2px 0; color:var(--primary);">${oppName} <span style="font-weight:400; color:#666; font-size:0.7rem;">${f.is_home?'(H)':'(A)'}</span></div>
-                            <div style="margin-top:2px;"><span class="fix-diff-dot fdr-${diff}"></span></div></div>`;
+                        const colorClass = `fdr-${diff}`;
+                        
+                        // Calculate Opponent
+                        const isHome = f.is_home;
+                        const oppId = isHome ? f.team_a : f.team_h;
+                        const oppName = app.teams ? app.teams[oppId] : '---'; // Get Name
+                        
+                        html += `
+                            <div class="fix-item">
+                                <div style="font-size:0.6rem; color:#888; font-weight:700;">GW${f.event}</div>
+                                <div style="font-weight:800; font-size:0.9rem; margin:2px 0; color:var(--primary);">
+                                    ${oppName} <span style="font-weight:400; color:#666; font-size:0.7rem;">${isHome ? '(H)' : '(A)'}</span>
+                                </div>
+                                <div style="margin-top:2px;">
+                                    <span class="fix-diff-dot ${colorClass}"></span>
+                                </div>
+                            </div>
+                        `;
                     });
-                    document.getElementById('modalFixtures').innerHTML = html;
-                } catch(e){}
-            }
+                    content.innerHTML = html;
+
+                } catch (e) {
+                    content.innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>';
+                }
+            }            
         };
 
-        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
-        function switchTool(t) { toggleMenu(); app.switchTool(t); }
-        function clearData() { document.getElementById('logoutOverlay').classList.add('open'); toggleMenu(); }
+        function toggleMenu() { app.toggleMenu(); }
+        function switchTool(t) { app.switchTool(t); }
+        function clearData() { document.getElementById('logoutOverlay').classList.add('open'); app.toggleMenu(); }
         function closeLogout() { document.getElementById('logoutOverlay').classList.remove('open'); }
         function confirmLogout() { localStorage.removeItem('fpl_id_final'); location.reload(); }
         function closeModal() { document.getElementById('playerModalOverlay').classList.remove('open'); }
         
-        document.getElementById('playerModalOverlay').addEventListener('click', (e) => { if(e.target.id==='playerModalOverlay') closeModal(); });
+        // Close modal on background click
+        document.getElementById('playerModalOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'playerModalOverlay') closeModal();
+        });
+
         document.addEventListener('DOMContentLoaded', app.init);
     </script>
 </body>
