@@ -382,65 +382,83 @@
 
 const TransferBot = {
     getScore: (p, fixtures) => {
-        if (!p) return 0;
-        // Safety check: if fixtures missing, assume average difficulty (3)
+        // Safety check: if fixtures are missing, assume average difficulty (3)
         const nextFix = (fixtures && fixtures[p.team_id]) ? fixtures[p.team_id] : { diff: 3 };
         let score = parseFloat(p.form) - (nextFix.diff * 2);
+        
+        // Bonus for home games
+        if (nextFix.is_home) score += 0.5;
+        
+        // Huge penalty for injuries/suspensions
         if (p.status !== 'a' && p.chance < 75) score = -50;
+        
         return score;
     },
 
     analyze: (myPicks, allPlayers, bank, fixtures) => {
-        try {
-            let allMoves = [];
-            // optimization: Create a Set of owned IDs for instant lookup (0ms)
-            const ownedIds = new Set(myPicks.map(p => p.element));
+        // Safety check: ensure inputs exist
+        if (!myPicks || !allPlayers) return { strategy: "SAVE", message: "Data Unavailable", moves: [] };
 
-            // 1. Analyze Squad: Filter out GK (pos 1) and sort by lowest score
-            const squad = myPicks.map(pick => {
-                const p = allPlayers[pick.element];
-                if (!p || p.pos === 1) return null; 
-                return { p: p, score: TransferBot.getScore(p, fixtures) };
-            }).filter(x => x).sort((a,b) => a.score - b.score).slice(0, 5); // Bottom 5 only
+        let allMoves = [];
 
-            // 2. Analyze Market: Filter first, then score.
-            // We only look at players with Form > 3.0 to save time
-            const market = Object.values(allPlayers)
-                .filter(p => p.status === 'a' && p.pos > 1 && parseFloat(p.form) > 2.0 && !ownedIds.has(p.id))
-                .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
-                .sort((a,b) => b.score - a.score)
-                .slice(0, 30); // Top 30 only
+        // 1. Calculate Score for Current Squad
+        // We add "if (!p)" to prevent crashes if a player ID isn't found in the cache
+        const squadWithScores = myPicks.map(pick => {
+            const p = allPlayers[pick.element];
+            if (!p || p.pos === 1) return null; // Skip GK & Missing Players
+            return { p: p, score: TransferBot.getScore(p, fixtures) };
+        }).filter(x => x);
 
-            // 3. Fast Loop
-            for (const sell of squad) {
-                const maxBudget = bank + sell.p.price;
-                for (const buy of market) {
-                    if (buy.p.pos !== sell.p.pos) continue;
-                    if (buy.p.price > maxBudget) continue;
+        // 2. Identify Buy Candidates (Fit & Active)
+        const market = Object.values(allPlayers).filter(p => 
+            p && p.status === 'a' && p.pos > 1 && !myPicks.some(pick => pick.element === p.id)
+        );
 
-                    const diff = (buy.score - sell.score).toFixed(1);
-                    if (diff > 0.5) {
-                        allMoves.push({ out: sell.p, in: buy.p, diff: parseFloat(diff) });
-                    }
+        // 3. Check every valid single swap (Optimized)
+        // Only check top 5 worst players to keep it fast
+        const worstSquad = squadWithScores.sort((a,b) => a.score - b.score).slice(0, 5);
+        
+        // Only check top 50 best market options
+        const bestMarket = market
+            .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
+            .sort((a,b) => b.score - a.score)
+            .slice(0, 50);
+
+        worstSquad.forEach(sell => {
+            const maxBudget = bank + sell.p.price;
+
+            bestMarket.forEach(buy => {
+                // Rules: Same position, Affordability
+                if (buy.p.pos !== sell.p.pos) return;
+                if (buy.p.price > maxBudget) return;
+
+                const diff = (buy.score - sell.score).toFixed(1);
+
+                // Only consider positive moves > 0.5
+                if (diff > 0.5) {
+                    allMoves.push({
+                        out: sell.p,
+                        in: buy.p,
+                        diff: parseFloat(diff)
+                    });
                 }
-            }
+            });
+        });
 
-            const top3 = allMoves.sort((a,b) => b.diff - a.diff).slice(0, 3);
-            
-            // 4. Strategy Decision
-            let strategy = "TRANSFER";
-            let message = "Make 1 Transfer";
-            if (top3.length === 0 || top3[0].diff < 3.0) {
-                strategy = "SAVE";
-                message = "Save Transfer";
-            }
+        // 4. Sort by Impact and Take Top 3
+        const top3 = allMoves.sort((a,b) => b.diff - a.diff).slice(0, 3);
 
-            return { strategy, message, moves: top3 };
-
-        } catch (e) {
-            console.error("Bot Error:", e);
-            return { strategy: "SAVE", message: "Analysis Failed", moves: [] };
+        // 5. AI DECISION LOGIC
+        // If best move is weak (< 2.0 improvement), suggest holding
+        let strategy = "TRANSFER";
+        let message = "Make 1 Transfer";
+        
+        if (top3.length === 0 || top3[0].diff < 2.0) {
+            strategy = "SAVE";
+            message = "Save Transfer";
         }
+
+        return { strategy, message, moves: top3 };
     }
 };
 
@@ -492,21 +510,21 @@ const TransferBot = {
                 } else {
                     app.show('transfersView');
                     const container = document.getElementById('transfersView');
-                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analyzing...</p></div>';
+                    container.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analyzing Options...</p></div>';
                     
-                    // Reduced delay to 50ms (Instant)
                     setTimeout(() => {
                         try {
-                            if(!app.currentPicks || !app.playersCache) throw new Error("Data missing");
-
+                            // Run Analysis
                             const aiResult = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap);
                             const market = MarketBot.getTrends(app.playersCache);
+                            
                             let html = '';
 
                             // --- 1. STRATEGY BANNER ---
+                            // Green for "Save", Purple for "Transfer"
                             let bg = aiResult.strategy === 'SAVE' ? '#10b981' : '#8b5cf6';
                             let icon = aiResult.strategy === 'SAVE' ? 'fa-piggy-bank' : 'fa-arrow-right-arrow-left';
-                            let subText = aiResult.strategy === 'SAVE' ? 'Team looks solid. Roll the transfer.' : 'Found high value moves.';
+                            let subText = aiResult.strategy === 'SAVE' ? 'Squad looks solid. Roll the transfer.' : 'Found high value improvements.';
 
                             html += `
                                 <div style="background:${bg}; padding:20px; border-radius:16px; color:white; margin-bottom:20px; box-shadow:0 8px 20px -5px ${bg}80; text-align:center;">
@@ -517,12 +535,14 @@ const TransferBot = {
                                 </div>
                             `;
 
-                            // --- 2. TOP 3 SUGGESTIONS ---
+                            // --- 2. TOP 3 SUGGESTIONS (If Transfer is suggested) ---
                             if (aiResult.moves.length > 0) {
-                                html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-list-ol" style="color:var(--primary);"></i> Top 3 Options</div>`;
+                                html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-list-ol" style="color:var(--primary);"></i> Top Options</div>`;
                                 
                                 aiResult.moves.forEach((move, index) => {
-                                    let badge = index === 0 ? `<div style="position:absolute; top:0; right:0; background:${bg}; color:white; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>` : `<div style="position:absolute; top:0; right:0; background:#eee; color:#666; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>`;
+                                    let badge = index === 0 
+                                        ? `<div style="position:absolute; top:0; right:0; background:${bg}; color:white; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">BEST</div>` 
+                                        : `<div style="position:absolute; top:0; right:0; background:#f3f4f6; color:#999; font-size:0.6rem; font-weight:800; padding:4px 10px; border-radius:0 0 0 10px;">#${index+1}</div>`;
                                     
                                     html += `
                                         <div style="background:white; border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px; position:relative; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
@@ -545,7 +565,7 @@ const TransferBot = {
                                 });
                             }
 
-                            // --- 3. MARKET SECTIONS ---
+                            // --- 3. MARKET TRENDS ---
                             html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-fire" style="color:#e90052;"></i> Market Movers</div>
                                      <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
                             market.movers.forEach(p => {
@@ -553,7 +573,7 @@ const TransferBot = {
                             });
                             html += `</div>`;
 
-                            // BEST VALUE
+                            // --- 4. BEST VALUE ---
                             html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-coins" style="color:#eab308;"></i> Best Value</div>
                                      <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:5px; margin-bottom:25px; scrollbar-width:none;">`;
                             market.valueKings.forEach(p => {
@@ -561,7 +581,7 @@ const TransferBot = {
                             });
                             html += `</div>`;
 
-                            // DIFFERENTIALS
+                            // --- 5. DIFFERENTIALS ---
                             html += `<div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-gem" style="color:#7c3aed;"></i> Hidden Gems</div><div style="display:flex; flex-direction:column; gap:10px;">`;
                             market.differentials.forEach(p => {
                                 html += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 16px; border-radius:12px; border:1px solid var(--border);" onclick="app.openModal(${p.id})"><div style="display:flex; align-items:center; gap:12px;"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px;"><div><div style="font-size:0.9rem; font-weight:700;">${p.name}</div><div style="font-size:0.7rem; color:var(--text-sub);">Own: ${p.sel}%</div></div></div><div style="text-align:right;"><div style="font-size:1rem; font-weight:800; color:var(--primary);">${p.form}</div><div style="font-size:0.6rem; color:var(--text-sub); text-transform:uppercase; font-weight:600;">Form</div></div></div>`;
@@ -569,8 +589,10 @@ const TransferBot = {
                             html += `</div><div style="height:40px;"></div>`;
 
                             container.innerHTML = html;
+
                         } catch (e) {
-                            container.innerHTML = `<div class="welcome-card"><p>Couldn't load suggestions.</p><p style="font-size:0.8rem; color:red;">${e.message}</p></div>`;
+                            console.error(e);
+                            container.innerHTML = `<div class="welcome-card"><div style="font-size:2rem; margin-bottom:10px">⚠️</div><p>Could not calculate moves.</p><p style="font-size:0.7rem; color:#ef4444; margin-top:5px;">${e.message}</p></div>`;
                         }
                     }, 50);
                 }
