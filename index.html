@@ -495,10 +495,10 @@
             user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
             bank: 5, value: 1024,
             picks: [
-                { element: 1, position: 1 }, { element: 2, position: 2 }, { element: 3, position: 3 }, { element: 4, position: 4 }, 
-                { element: 5, position: 5, is_vice_captain: true }, { element: 6, position: 6 }, { element: 7, position: 7 }, { element: 8, position: 8 }, 
-                { element: 9, position: 9, is_captain: true }, { element: 10, position: 10 }, { element: 11, position: 11 }, { element: 12, position: 12 }, 
-                { element: 13, position: 13 }, { element: 14, position: 14 }, { element: 15, position: 15 }
+                { element: 1, position: 1, multiplier: 1 }, { element: 2, position: 2, multiplier: 1 }, { element: 3, position: 3, multiplier: 1 }, { element: 4, position: 4, multiplier: 1 }, 
+                { element: 5, position: 5, is_vice_captain: true, multiplier: 1 }, { element: 6, position: 6, multiplier: 1 }, { element: 7, position: 7, multiplier: 1 }, { element: 8, position: 8, multiplier: 1 }, 
+                { element: 9, position: 9, is_captain: true, multiplier: 2 }, { element: 10, position: 10, multiplier: 1 }, { element: 11, position: 11, multiplier: 1 }, { element: 12, position: 12, multiplier: 1 }, 
+                { element: 13, position: 13, multiplier: 1 }, { element: 14, position: 14, multiplier: 1 }, { element: 15, position: 15, multiplier: 1 }
             ],
             players: {
                 9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock - 75% chance of playing", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 },
@@ -731,6 +731,10 @@
                         const pOut = app.playersCache[outId];
                         const pIn = app.playersCache[inId];
                         simBank = simBank + pOut.price - pIn.price;
+                        // Reset multiplier to 1 for new players
+                        simPicks[pickIdx].multiplier = 1; 
+                        simPicks[pickIdx].is_captain = false;
+                        simPicks[pickIdx].is_vice_captain = false;
                     }
                 });
                 app.currentTool = 'squad';
@@ -788,14 +792,14 @@
                     staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
                     app.teams = teamShort;
 
-                    // --- MATCH STATUS MAP (FIXED FOR PROVISIONAL FINISH) ---
+                    // --- MATCH STATUS MAP ---
                     const statusMap = {};
                     if(fix1) {
                         fix1.forEach(f => {
                             let status = 'FIX';
                             let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                             
-                            // CHECK BOTH FINISHED STATES
+                            // CHECK BOTH FINISHED STATES (Provisional & Final)
                             if (f.finished || f.finished_provisional) { 
                                 status = 'FT'; 
                                 label = 'FT'; 
@@ -950,7 +954,16 @@
                 for (let i = 0; i < 11; i++) {
                     const pick = picks[i];
                     const p = players[pick.element];
-                    if (p) formation[p.pos].push({ ...p, is_captain: pick.is_captain, is_vice: pick.is_vice_captain, subStatus: subOutIds.includes(p.id) ? 'out' : null });
+                    if (p) {
+                        // FIX: Pass multiplier (captain points)
+                        formation[p.pos].push({ 
+                            ...p, 
+                            is_captain: pick.is_captain, 
+                            is_vice: pick.is_vice_captain, 
+                            multiplier: pick.multiplier, 
+                            subStatus: subOutIds.includes(p.id) ? 'out' : null 
+                        });
+                    }
                 }
                 [1, 2, 3, 4].forEach(posId => {
                     const row = document.createElement('div'); row.className = 'field-row';
@@ -962,7 +975,7 @@
                     const p = players[pick.element];
                     if (p) {
                         const status = subInIds.includes(p.id) ? 'in' : null;
-                        benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false }, fixMap, statusMap, true, i - 10, status);
+                        benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false, multiplier: pick.multiplier }, fixMap, statusMap, true, i - 10, status);
                     }
                 }
                 app.show('dashboardView');
@@ -976,16 +989,15 @@
                 let newBadge = (app.isSimulating && app.simNewIds && app.simNewIds.includes(p.id)) ? `<div class="new-badge">NEW</div>` : '';
                 if(newBadge) extraClass += ' sim-new';
 
-                // --- LIVE BADGE LOGIC (FIXED) ---
+                // --- LIVE BADGE LOGIC ---
                 let matchBadge = '';
                 if (!app.isSimulating && statusMap && statusMap[p.team_id]) {
                     const m = statusMap[p.team_id];
                     let badgeClass = 'ms-fix';
                     let label = m.label;
-                    
                     if (m.status === 'FT') { 
                         badgeClass = 'ms-ft'; 
-                        label = 'FT'; // Force label to FT
+                        label = 'FT'; // FORCE LABEL TO FT
                     } else if (m.status === 'LIVE') { 
                         badgeClass = 'ms-live'; 
                         if(p.minutes > 0) label = p.minutes + "'";
@@ -1009,11 +1021,14 @@
                 dotsHtml += '</div>';
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
 
+                // FIX: CALCULATE DISPLAY POINTS (Double if Captain)
+                const displayPoints = p.event_points * (p.multiplier || 1);
+
                 return `<div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
                         ${isBench ? `<div class="bench-num">${benchNum}</div>` : ''} ${capBadge} ${statusBadge} ${subIcon} ${newBadge} ${matchBadge} ${dotsHtml} ${evtHtml}
                         <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                         <div class="pill-name">${p.name}</div>
-                        <div class="pill-data"><span>£${p.price}</span><span class="points-badge">${p.event_points}</span></div>
+                        <div class="pill-data"><span>£${p.price}</span><span class="points-badge">${displayPoints}</span></div>
                     </div>`;
             },
 
