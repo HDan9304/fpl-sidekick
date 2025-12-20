@@ -555,6 +555,7 @@
         // 1. DATA & HELPERS
         // =========================================
         
+        // Mock Data Fallback
         const MOCK_DATA = {
             user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
             bank: 5, value: 1024,
@@ -565,75 +566,132 @@
                 { element: 13, position: 13, multiplier: 1 }, { element: 14, position: 14, multiplier: 1 }, { element: 15, position: 15, multiplier: 1 }
             ],
             players: {
-                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock - 75% chance of playing", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 },
-                5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40, form: 7.0, transfers_in: 30000, total_points: 140, ict_index: 280 },
-                1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', form: 3.5, transfers_in: 1000, total_points: 50, ict_index: 20 }
+                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock", sel: 70, form: "8.5", transfers_in: 50000, total_points: 150, ict_index: "300.0" },
+                5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40, form: "7.0", transfers_in: 30000, total_points: 140, ict_index: "280.0" },
+                1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', form: "3.5", transfers_in: 1000, total_points: 50, ict_index: "20.0" }
             },
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
+        // --- "GOD MODE" TRANSFER BOT ---
         const TransferBot = {
             getScore: (p, fixtures) => {
-                const teamFix = fixtures[p.team_id];
-                const nextFix = Array.isArray(teamFix) ? teamFix[0] : (teamFix || { diff: 3 });
-                let score = parseFloat(p.form) - (nextFix.diff * 2);
-                if (p.status !== 'a' && p.chance < 75) score -= 50;
+                // 1. ANALYZE NEXT 3 FIXTURES (Look Ahead)
+                const teamFix = fixtures[p.team_id] || [];
+                let fixSum = 0;
+                let count = 0;
+                
+                // Take up to 3 upcoming games
+                teamFix.slice(0, 3).forEach(f => {
+                    fixSum += f.diff;
+                    count++;
+                });
+                // Calculate Average Difficulty (Default to 3 if no data)
+                const avgDiff = count > 0 ? (fixSum / count) : 3;
+
+                // 2. GET STATS
+                const form = parseFloat(p.form) || 0;
+                const ict = parseFloat(p.ict_index) || 0; // The Secret Weapon
+
+                // 3. THE "OP" ALGORITHM
+                // Form * 5: Current performance is heavily weighted
+                // ICT / 6: Underlying threat adds baseline value even if they blanked recently
+                // (20 - avgDiff*4): Massive bonus for green fixtures (2), penalty for red (5)
+                let score = (form * 5) + (ict * 0.16) + (20 - (avgDiff * 4));
+
+                // 4. PENALTIES & BOOSTS
+                // Nuclear penalty for injuries (Avoid buying flags)
+                if (p.status !== 'a' && p.chance < 75) score -= 200;
+                
+                // Slight penalty for GK (Low ceiling)
+                if (p.pos === 1) score *= 0.85;
+                
+                // Bonus for Home games in next fixture
+                if (teamFix[0] && teamFix[0].is_home) score += 2;
+
                 return score;
             },
+
             analyze: (myPicks, allPlayers, bank, fixtures, ftCount) => {
                 let singleMoves = [];
                 let finalSuggestions = [];
 
-                // 1. Identify Sell Candidates
+                // Identify Weakest Link in Squad (Lowest OP Score)
                 const squadScores = myPicks.map(pick => {
                     const p = allPlayers[pick.element];
-                    if(!p || p.pos === 1) return null;
+                    // Skip GKs for transfer suggestions usually
+                    if(!p || p.pos === 1) return null; 
                     return { p: p, score: TransferBot.getScore(p, fixtures) };
-                }).filter(x => x).sort((a,b) => a.score - b.score);
+                }).filter(x => x).sort((a,b) => a.score - b.score); // Lowest score first
 
-                // 2. Identify Buy Candidates
+                // Identify Best Market Targets (Highest OP Score)
                 const marketScores = Object.values(allPlayers)
-                    .filter(p => p.status === 'a' && p.pos > 1)
+                    .filter(p => p.status === 'a' && p.pos > 1) // Available & Outfield
                     .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
-                    .sort((a,b) => b.score - a.score).slice(0, 50);
+                    .sort((a,b) => b.score - a.score) // Highest score first
+                    .slice(0, 60); // Look at top 60 candidates
 
-                // 3. Find Single Moves
+                // FIND BEST SINGLE MOVES
+                // We check the 5 worst players in our team to find replacements
                 for(let i=0; i<Math.min(5, squadScores.length); i++) {
                     const sell = squadScores[i];
                     const maxBudget = bank + sell.p.price;
+
                     for(let j=0; j<marketScores.length; j++) {
                         const buy = marketScores[j];
-                        if(buy.p.pos !== sell.p.pos) continue; 
-                        if(buy.p.price > maxBudget) continue; 
-                        if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
+                        
+                        // Strict Filters
+                        if(buy.p.pos !== sell.p.pos) continue; // Same position
+                        if(buy.p.price > maxBudget) continue; // Must afford
+                        if(myPicks.some(pick => pick.element === buy.p.id)) continue; // Don't own already
 
+                        // Calculate Gain
                         const diff = (buy.score - sell.score).toFixed(1);
-                        if(parseFloat(diff) > -2) { 
-                            singleMoves.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff) });
+                        
+                        // "OP" Filter: Only suggest if gain is statistically significant
+                        if(parseFloat(diff) > 5.0) { 
+                            singleMoves.push({ 
+                                type: 'Single Move', 
+                                out: [sell.p], 
+                                in: [buy.p], 
+                                diff: parseFloat(diff)
+                            });
+                            // Optimization: Once we find the best replacement for this specific "sell", 
+                            // we stop looking for this player to avoid duplicates.
                             break; 
                         }
                     }
                 }
+
+                // Sort moves by highest point gain
                 singleMoves.sort((a,b) => b.diff - a.diff);
                 finalSuggestions.push(...singleMoves.slice(0, 3));
 
-                // 4. Double Move Logic
+                // FIND DOUBLE MOVES (The "Mini Wildcard")
                 if(singleMoves.length > 0) {
                     const bestMove = singleMoves[0];
-                    const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
+                    const currentBankAfterMove = bank + bestMove.out[0].price - bestMove.in[0].price;
+                    
+                    // Find a second player to sell (next worst)
                     const secondSell = squadScores.find(s => s.p.id !== bestMove.out[0].id);
+                    
                     if(secondSell) {
-                        const budget2 = newBank + secondSell.p.price;
-                        const secondBuy = marketScores.find(m => m.p.id !== bestMove.in[0].id && !myPicks.some(pick => pick.element === m.p.id) && m.p.pos === secondSell.p.pos && m.p.price <= budget2);
+                        const budget2 = currentBankAfterMove + secondSell.p.price;
+                        // Find a partner for the double move
+                        const secondBuy = marketScores.find(m => 
+                            m.p.id !== bestMove.in[0].id && 
+                            !myPicks.some(pick => pick.element === m.p.id) && 
+                            m.p.pos === secondSell.p.pos && 
+                            m.p.price <= budget2
+                        );
+
                         if(secondBuy) {
                             const diff2 = secondBuy.score - secondSell.score;
-                            // Cost is 4 if we only have 1 FT, but 0 if we have 2+ FTs. 
-                            // Simplified: We assume taking a double move always eats into FTs or costs points.
-                            // If FT >= 2, cost is 0. If FT = 1, cost is 4.
-                            const hitCost = ftCount >= 2 ? 0 : 4;
+                            const hitCost = ftCount >= 2 ? 0 : 4; // Cost of hit logic
                             const totalDiff = (bestMove.diff + diff2 - hitCost).toFixed(1);
                             
-                            if (parseFloat(totalDiff) > 1.0) {
+                            // Only suggest Double if it beats the best Single move significantly
+                            if (parseFloat(totalDiff) > bestMove.diff + 3) {
                                 finalSuggestions.push({ 
                                     type: `Double Move (-${hitCost})`, 
                                     out: [bestMove.out[0], secondSell.p], 
@@ -645,11 +703,11 @@
                     }
                 }
 
-                // 5. SMART ROLL LOGIC
-                // Only suggest rolling if we are NOT at max cap (5) AND moves are weak
-                const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
-                
-                if (ftCount < 5 && bestDiff < 4.0) {
+                // SMART ROLL LOGIC
+                // If we aren't burning a transfer (ft < 5) AND the best move isn't "Massive" (> 15 diff),
+                // we suggest rolling.
+                const bestGain = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
+                if (ftCount < 5 && bestGain < 15.0) {
                     finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
                 }
 
@@ -661,7 +719,11 @@
             getTrends: (allPlayers) => {
                 const players = Object.values(allPlayers);
                 const movers = [...players].sort((a, b) => b.transfers_in - a.transfers_in).slice(0, 3);
-                const differentials = [...players].filter(p => p.sel < 5 && p.status === 'a').sort((a, b) => parseFloat(b.form) - parseFloat(a.form)).slice(0, 3);
+                // Differential: Low ownership (<10%), High Form, Playing
+                const differentials = [...players]
+                    .filter(p => p.sel < 10 && p.status === 'a' && p.minutes > 45)
+                    .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))
+                    .slice(0, 3);
                 return { movers, differentials };
             }
         };
@@ -701,30 +763,18 @@
                 throw new Error("Failed");
             },
 
-            // --- CALCULATE FREE TRANSFERS AUTOMATICALLY ---
             calcFreeTransfers: () => {
                 if (!app.historyData || !app.historyData.current) return 1;
-                
                 let saved = 0;
-                // Loop through history to simulate FT banking
                 app.historyData.current.forEach(gw => {
-                    // You get 1 FT per week
                     let available = 1 + saved;
-                    // Cap availability at 5 (New FPL Rule)
                     if (available > 5) available = 5;
-                    
-                    // Subtract used transfers
                     const used = gw.event_transfers;
                     saved = available - used;
-                    
-                    // You can't have negative saved transfers
                     if (saved < 0) saved = 0;
                 });
-                
-                // Add 1 for the upcoming gameweek
                 let current = saved + 1;
                 if (current > 5) current = 5;
-                
                 return current;
             },
 
@@ -763,7 +813,6 @@
                     document.getElementById('scoutResults').style.display = 'none';
                     document.getElementById('transferContent').style.display = 'block';
 
-                    // Calculate FTs
                     app.ftCount = app.calcFreeTransfers();
                     const bankTxt = app.currentStats ? (app.currentStats.bank/10).toFixed(1) : '0.0';
                     
@@ -783,7 +832,6 @@
                         const market = MarketBot.getTrends(app.playersCache);
                         let html = '';
 
-                        // Header persist
                         html += `
                         <div style="display:flex; justify-content:space-between; padding:10px 15px; background:white; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
                             <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
@@ -806,7 +854,7 @@
                                             <div style="font-size:2rem; margin:10px 0;">🛡️</div>
                                             <div style="font-weight:800; margin-bottom:5px; font-size:1.1rem;">Save Free Transfer</div>
                                             <div style="font-size:0.85rem; color:#666; line-height:1.4;">
-                                                Your team is looking strong. You have ${app.ftCount} FTs. Saving one gives you flexibility next week.
+                                                Your team is strong. You have ${app.ftCount} FTs. Saving one is the best value play.
                                             </div>
                                         </div>`;
                                     return;
@@ -1000,8 +1048,6 @@
                         fix1.forEach(f => {
                             let status = 'FIX';
                             let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                            
-                            // CHECK BOTH FINISHED STATES (Provisional & Final)
                             if (f.finished || f.finished_provisional) { 
                                 status = 'FT'; 
                                 label = 'FT'; 
