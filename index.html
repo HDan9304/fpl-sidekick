@@ -1814,7 +1814,20 @@
                                     html += `<div class="${cardClass}" style="padding:25px; text-align:center;">${badge}<div style="font-size:2rem; margin:10px 0;">🛡️</div><div style="font-weight:800; margin-bottom:5px; font-size:1.1rem;">Save Free Transfer</div><div style="font-size:0.85rem; color:#666; line-height:1.4;">Your team is strong. You have ${app.ftCount} FTs. Saving one gives you flexibility next week.</div></div>`;
                                     return;
                                 }
+                                
+                                // --- NEW: Bank Differential Logic ---
+                                const pOut = s.out.reduce((a,b) => a + b.price, 0);
+                                const pIn = s.in.reduce((a,b) => a + b.price, 0);
+                                const bDiff = (pOut - pIn).toFixed(1);
+                                const bStyle = bDiff >= 0 ? 'color:#15803d; background:#dcfce7;' : 'color:#b91c1c; background:#fee2e2;';
+                                const bBadge = `<div style="font-size:0.75rem; font-weight:800; padding:4px 8px; border-radius:6px; ${bStyle}">${bDiff >= 0 ? '+' : ''}£${bDiff}m</div>`;
 
+                                const outIds = JSON.stringify(s.out.map(p => p.id));
+                                const inIds = JSON.stringify(s.in.map(p => p.id));
+                                
+                                // MODIFIED: Added bBadge to the header HTML
+                                html += `<div class="${cardClass}"><div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">${badge}<div style="width:100%; display:flex; justify-content:space-between; align-items:center;"><div class="t-type">${s.type}</div><div style="display:flex; gap:6px; align-items:center;">${bBadge}<div class="t-gain">+${s.diff} pts</div></div></div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                               
                                 const outIds = JSON.stringify(s.out.map(p => p.id));
                                 const inIds = JSON.stringify(s.in.map(p => p.id));
                                 html += `<div class="${cardClass}"><div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">${badge}<div style="width:100%; display:flex; justify-content:space-between; align-items:center;"><div class="t-type">${s.type}</div><div class="t-gain">+${s.diff} pts</div></div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
