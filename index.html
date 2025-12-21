@@ -1736,7 +1736,7 @@
 
         recommendChips: (picks, fixMap, currentGW, history) => {
             const used = history.chips.map(c => c.name);
-            const next5 = [1,2,3,4,5].map(i => currentGW + i);
+            const next5 = [0,1,2,3,4].map(i => currentGW + i);
             let rec = null;
 
             // 1. Wildcard (Long-term Crisis Check)
@@ -2120,7 +2120,7 @@
             }
 
             let html = aiHtml;
-            for (let i = 1; i <= 5; i++) {
+            for (let i = 0; i < 5; i++) {
                 const gw = currentGW + i;
                 html += `
                     <div class="plan-row">
