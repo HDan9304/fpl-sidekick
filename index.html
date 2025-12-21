@@ -169,7 +169,7 @@
     /* =========================================
        6. TRANSFERS & CARDS (IMPROVED UI)
        ========================================= */
-    .t-card { background: white; border-radius: 16px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+    .t-card { background: white; border-radius: 16px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; flex-direction: column; }
     
     /* Improved Header */
     .t-header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid var(--border); }
@@ -544,6 +544,13 @@
                         <input type="text" class="search-input" placeholder="Scout players (e.g. Palmer)..." onkeyup="app.searchScout(this.value)">
                     </div>
                 </div>
+                
+                <div class="filter-bar" style="margin-top:10px;">
+                    <div class="filter-pill" onclick="app.filterPos(1, this)">GK</div>
+                    <div class="filter-pill" onclick="app.filterPos(2, this)">DEF</div>
+                    <div class="filter-pill" onclick="app.filterPos(3, this)">MID</div>
+                    <div class="filter-pill" onclick="app.filterPos(4, this)">FWD</div>
+                </div>
 
                 <div id="scoutResults" class="scout-list"></div>
 
@@ -673,7 +680,7 @@
 
                         if(parseFloat(totalDiff) > move1.diff + 1.0) { 
                             bestDouble = { 
-                                type: `Double Move (-${hitCost})`, 
+                                type: `Double Move`, hit: hitCost, 
                                 out: [sell1, sell2], in: [buy1, buy2], 
                                 diff: parseFloat(totalDiff),
                                 bankAfter: (budget2 - buy2.price)
@@ -701,12 +708,12 @@
                     if(buy3Obj) {
                         const buy3 = buy3Obj.p;
                         const diff3 = buy3Obj.score - sell3Obj.score;
-                        const extraHit = ftCount >= 3 ? 0 : 4; 
-                        const totalDiff3 = (move2.diff + diff3 - extraHit).toFixed(1);
+                        const extraHit = ftCount >= 3 ? 0 : (ftCount === 2 ? 4 : 8); 
+                        const totalDiff3 = (move2.diff + diff3 - (extraHit - move2.hit)).toFixed(1);
 
                         if(parseFloat(totalDiff3) > move2.diff + 2.0) {
                             finalSuggestions.push({
-                                type: `Triple Move (-${(ftCount>=3?0:4) + (ftCount>=2?0:4)})`, 
+                                type: `Triple Move`, hit: extraHit, 
                                 out: [move2.out[0], move2.out[1], sell3],
                                 in: [move2.in[0], move2.in[1], buy3],
                                 diff: parseFloat(totalDiff3)
@@ -818,6 +825,8 @@
                 }
             } else {
                 app.show('transfersView');
+                
+                // Clear UI to force a visual "Reload" effect
                 document.querySelector('.search-input').value = '';
                 document.getElementById('scoutResults').style.display = 'none';
                 document.getElementById('transferContent').style.display = 'block';
@@ -830,17 +839,13 @@
                         <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
                         <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Free Transfers: <span style="color:${app.ftCount === 5 ? 'var(--primary)' : '#00ff85'}; font-weight:800;">${app.ftCount}</span></div>
                     </div>
-                    <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analysing Market...</p></div>
+                    <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analyzing Market...</p></div>
                 `;
-                
-                const container = document.getElementById('transferContent');
-                container.innerHTML = headerHtml;
+                document.getElementById('transferContent').innerHTML = headerHtml;
 
                 setTimeout(() => {
                     try {
-                        if (!app.currentPicks || app.currentPicks.length === 0 || Object.keys(app.playersCache).length === 0) {
-                             throw new Error("No data loaded");
-                        }
+                        if (!app.currentPicks || app.currentPicks.length === 0 || Object.keys(app.playersCache).length === 0) throw new Error("No data loaded");
 
                         const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap, app.ftCount);
                         const market = MarketBot.getTrends(app.playersCache);
@@ -864,11 +869,11 @@
                                     return;
                                 }
 
-                                // --- BUDGET CALCULATION (Added Feature) ---
                                 const sellSum = s.out.reduce((sum, p) => sum + p.price, 0);
                                 const buySum = s.in.reduce((sum, p) => sum + p.price, 0);
                                 const remBank = (app.currentBank + sellSum - buySum).toFixed(1);
-                                const bankColor = remBank >= 0 ? 'var(--text-sub)' : '#ef4444';
+                                const bankColor = remBank >= 0 ? 'bank-ok' : 'bank-low';
+                                const hitTxt = s.hit > 0 ? `<span style="color:var(--red); font-size:0.7em;">(-${s.hit} pts)</span>` : '';
 
                                 const outIds = JSON.stringify(s.out.map(p => p.id));
                                 const inIds = JSON.stringify(s.in.map(p => p.id));
@@ -877,33 +882,51 @@
                                     <div class="t-header">
                                         ${badge}
                                         <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-                                            <div style="display:flex; flex-direction:column;">
-                                                <div class="t-type">${s.type}</div>
-                                                <div style="font-size:0.65rem; color:${bankColor}; font-weight:600;">Bank: £${remBank}m</div>
+                                            <div>
+                                                <div class="t-type">${s.type} ${hitTxt}</div>
                                             </div>
                                             <div class="t-gain">+${s.diff} pts</div>
                                         </div>
                                     </div>
-                                    <div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
-                                s.out.forEach(p => {
-                                    const fixtures = app.fixMap[p.team_id] || [];
-                                    let dots = '<div class="t-fdr">';
-                                    fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
-                                    dots += '</div>';
-                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
-                                });
-                                html += `</div><div class="t-half t-in"><span class="t-label lbl-in">BUY</span>`;
-                                s.in.forEach(p => {
-                                    const fixtures = app.fixMap[p.team_id] || [];
-                                    let dots = '<div class="t-fdr">';
-                                    fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
-                                    dots += '</div>';
-                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
-                                });
-                                html += `</div></div><div style="padding:0 15px 15px 15px;"><button class="preview-btn" onclick='app.simulate(${outIds}, ${inIds})'><i class="fa-solid fa-eye"></i> Preview Team</button></div></div>`;
+                                    
+                                    <div class="t-info-bar">
+                                        <span>Transfers: ${s.out.length}</span>
+                                        <span class="${bankColor}">Bank: £${remBank}m</span>
+                                    </div>
+
+                                    <div class="t-body">
+                                        <div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                        
+                                        <div class="t-half t-out">
+                                            <span class="lbl-out">SELL</span>
+                                            ${s.out.map(p => {
+                                                const fixtures = app.fixMap[p.team_id] || [];
+                                                let dots = '<div class="t-fdr">';
+                                                fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
+                                                dots += '</div>';
+                                                return `<div class="t-player"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.web_name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
+                                            }).join('')}
+                                        </div>
+
+                                        <div class="t-half t-in">
+                                            <span class="lbl-in">BUY</span>
+                                            ${s.in.map(p => {
+                                                const fixtures = app.fixMap[p.team_id] || [];
+                                                let dots = '<div class="t-fdr">';
+                                                fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
+                                                dots += '</div>';
+                                                return `<div class="t-player"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.web_name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="preview-btn" onclick='app.simulate(${outIds}, ${inIds})'>
+                                        <i class="fa-solid fa-eye"></i> PREVIEW TEAM
+                                    </button>
+                                </div>`;
                             });
                         } else {
-                            html += `<div class="welcome-card"><p>Team is optimal. Save your transfer.</p></div>`;
+                            html += `<div class="welcome-card"><p>Team is optimal. Consider rolling your transfer.</p></div>`;
                         }
 
                         html += `<div style="font-size:1.1rem; font-weight:800; margin:30px 0 15px 0; padding-left:5px;">Market Trends</div><div class="trend-scroll">`;
@@ -914,7 +937,7 @@
                         
                         container.innerHTML = html;
                     } catch (err) {
-                        console.error(err);
+                        console.error("Transfer Error", err);
                         container.innerHTML = `<div class="welcome-card" style="color:#ef4444;"><p>Analysis unavailable. Check connection.</p><button class="btn" style="margin-top:10px" onclick="app.load()">Reload Data</button></div>`;
                     }
                 }, 100); 
@@ -1051,6 +1074,7 @@
 
             try {
                 document.getElementById('loadingMsg').innerText = "Connecting...";
+                
                 const staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
                 const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                 app.userData = user;
@@ -1074,7 +1098,7 @@
                     liveMap[el.id] = { points: el.stats.total_points, mins: el.stats.minutes, goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, own_goals: el.stats.own_goals };
                 });
 
-                // Fetch 3 fixtures
+                // Fetch 3 fixtures in parallel because it's safe
                 const fixReqs = [gw, gw + 1, gw + 2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
                 const [fix1, fix2, fix3] = await Promise.all(fixReqs);
                 
@@ -1082,14 +1106,19 @@
                 staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
                 app.teams = teamShort;
 
-                // Status Map
+                // --- MATCH STATUS MAP ---
                 const statusMap = {};
                 if(fix1) {
                     fix1.forEach(f => {
                         let status = 'FIX';
                         let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        if (f.finished || f.finished_provisional) { status = 'FT'; label = 'FT'; } 
-                        else if (f.started) { status = 'LIVE'; label = 'LIVE'; }
+                        if (f.finished || f.finished_provisional) { 
+                            status = 'FT'; 
+                            label = 'FT'; 
+                        } else if (f.started) { 
+                            status = 'LIVE'; 
+                            label = 'LIVE'; 
+                        }
                         statusMap[f.team_h] = { status, label, id: f.id };
                         statusMap[f.team_a] = { status, label, id: f.id };
                     });
@@ -1253,7 +1282,7 @@
             }
             
             if (app.currentTool === 'transfers' && !app.isSimulating) {
-                app.switchTool('transfers', true);
+                app.switchTool('transfers', true); // True = Suppress menu toggle
             } else {
                 app.show('dashboardView');
             }
