@@ -820,7 +820,10 @@
             line-height: 1.2;
         }
         .t-meta { font-size: 0.7rem; color: var(--text-sub); font-weight: 500; }
-        .t-fdr { display: flex; gap: 2px; margin-top: 8px; }
+        .t-net { font-size: 0.65rem; font-weight: 700; margin-top: 2px; }
+        .t-net-pos { color: #16a34a; }
+        .t-net-neg { color: #ef4444; }
+        .t-fdr { display: flex; gap: 2px; margin-top: 6px; }
         .t-dot { width: 18px; height: 6px; border-radius: 2px; }
         
         .t-card.best-pick {
@@ -1839,7 +1842,12 @@
                                     fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
                                     dots += '</div>';
                                     const pc = p.cost_change > 0 ? '<span class="pc-arrow pc-up">▲</span>' : (p.cost_change < 0 ? '<span class="pc-arrow pc-down">▼</span>' : '');
-                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m${pc}</div>${dots}</div>`;
+                                    
+                                    const net = (p.transfers_in || 0) - (p.transfers_out || 0);
+                                    const netClass = net >= 0 ? 't-net-pos' : 't-net-neg';
+                                    const netStr = (Math.abs(net) > 999) ? (net/1000).toFixed(1) + 'k' : net;
+
+                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m${pc}</div><div class="t-net ${netClass}">${net >= 0 ? '+' : ''}${netStr}</div>${dots}</div>`;
                                 });
                                 html += `</div><div class="t-half t-in"><span class="t-label lbl-in">BUY</span>`;
                                 s.in.forEach(p => {
@@ -1848,7 +1856,12 @@
                                     fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
                                     dots += '</div>';
                                     const pc = p.cost_change > 0 ? '<span class="pc-arrow pc-up">▲</span>' : (p.cost_change < 0 ? '<span class="pc-arrow pc-down">▼</span>' : '');
-                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m${pc}</div>${dots}</div>`;
+
+                                    const net = (p.transfers_in || 0) - (p.transfers_out || 0);
+                                    const netClass = net >= 0 ? 't-net-pos' : 't-net-neg';
+                                    const netStr = (Math.abs(net) > 999) ? (net/1000).toFixed(1) + 'k' : net;
+
+                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m${pc}</div><div class="t-net ${netClass}">${net >= 0 ? '+' : ''}${netStr}</div>${dots}</div>`;
                                 });
                                 html += `</div></div><div style="padding:0 15px 15px 15px;"><button class="preview-btn" onclick='app.simulate(${outIds}, ${inIds})'><i class="fa-solid fa-eye"></i> Preview Team</button></div></div>`;
                             });
@@ -2094,7 +2107,7 @@
                         minutes: live ? live.mins : 0,
                         stats: live || { goals: 0, assists: 0, red_cards: 0 },
                         team_code: p.team_code, status: p.status, chance: p.chance_of_playing_next_round, news: p.news, cost_change: p.cost_change_event,
-                        sel: parseFloat(p.selected_by_percent), form: p.form, transfers_in: p.transfers_in_event, total_points: p.total_points, ict_index: p.ict_index
+                        sel: parseFloat(p.selected_by_percent), form: p.form, transfers_in: p.transfers_in_event, transfers_out: p.transfers_out_event, total_points: p.total_points, ict_index: p.ict_index
                     };
                 });
 
