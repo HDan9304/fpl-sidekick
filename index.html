@@ -7,365 +7,397 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-<style>
-    /* =========================================
-       1. VARIABLES & RESET
-       ========================================= */
-    :root {
-        --primary: #37003c; --accent: #00ff85; --bg-body: #f0f2f5;
-        --bg-app: #ffffff; --text-main: #111827; --text-sub: #6b7280;
-        --border: #e5e7eb; --red: #e90052;
-        --grass-1: #059669; --grass-2: #047857;
-        --status-warn: #fbbf24; --status-bad: #ef4444;
-    }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; }
+    <style>
+        /* =========================================
+           1. VARIABLES & RESET
+           ========================================= */
+        :root {
+            --primary: #37003c;
+            --accent: #00ff85;
+            --bg-body: #f0f2f5;
+            --bg-app: #ffffff;
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --border: #e5e7eb;
+            --red: #e90052;
+            
+            /* Pitch Colors */
+            --grass-1: #059669; --grass-2: #047857;
+            
+            /* FDR Colors */
+            --fdr-1: #375523; --fdr-2: #01fc7a; --fdr-3: #e7e7e7; 
+            --fdr-4: #ff1751; --fdr-5: #80072d;
+            --fdr-text-dark: #00381b; --fdr-text-light: white;
 
-    /* =========================================
-       2. APP SHELL & LAYOUT
-       ========================================= */
-    .app-container { width: 100%; max-width: 600px; background-color: var(--bg-app); min-height: 100vh; position: relative; display: flex; flex-direction: column; }
-    @media (min-width: 600px) { body { padding: 40px 0; } .app-container { min-height: auto; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); height: 90vh; overflow: hidden; } }
+            /* Status Colors */
+            --status-warn: #fbbf24; --status-bad: #ef4444;
+        }
 
-    header { background: var(--bg-app); height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50; }
-    .header-left { display: flex; align-items: center; gap: 15px; }
-    .menu-btn { font-size: 1.2rem; cursor: pointer; padding: 8px; margin-left: -8px; }
-    .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-    .brand i { color: var(--accent); }
-    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6; border: 1px solid var(--border); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-    .user-avatar.active { background: var(--primary); color: var(--accent); border-color: var(--primary); }
-    .header-right { display: flex; align-items: center; gap: 12px; }
-    .trophy-btn { font-size: 1.2rem; color: #fbbf24; cursor: pointer; padding: 5px; transition: 0.2s; }
-    .trophy-btn:active { transform: scale(0.9); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; }
 
-    .content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
-    .hidden { display: none !important; }
+        /* =========================================
+           2. APP SHELL & LAYOUT
+           ========================================= */
+        .app-container {
+            width: 100%; max-width: 600px; background-color: var(--bg-app);
+            min-height: 100vh; position: relative; display: flex; flex-direction: column;
+        }
+        @media (min-width: 600px) {
+            body { padding: 40px 0; }
+            .app-container {
+                min-height: auto; border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+                height: 90vh; overflow: hidden;
+            }
+        }
 
-    /* =========================================
-       3. SIDEBAR & NAVIGATION
-       ========================================= */
-    .sidebar { position: fixed; top: 0; left: 0; height: 100%; width: 280px; background: var(--bg-app); z-index: 200; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
-    .sidebar.open { transform: translateX(0); }
-    .menu-header { height: 60px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
-    .menu-items { flex: 1; padding-top: 10px; }
-    .menu-item { display: flex; align-items: center; gap: 16px; padding: 16px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
-    .menu-item:hover { background: #f9fafb; color: var(--primary); }
-    .menu-item.active { color: var(--primary); background: rgba(55, 0, 60, 0.04); border-left-color: var(--primary); }
-    
-    .menu-footer { padding: 20px; border-top: 1px solid var(--border); margin-top: auto; }
-    .logout-btn { width: 100%; padding: 12px; border: 1px solid #fee2e2; background: #fef2f2; color: #ef4444; border-radius: 12px; font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; }
-    .logout-btn:active { background: #fee2e2; transform: scale(0.98); }
+        /* Header */
+        header {
+            background: var(--bg-app); height: 60px; padding: 0 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .menu-btn { font-size: 1.2rem; cursor: pointer; padding: 8px; margin-left: -8px; }
+        .brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .brand i { color: var(--accent); }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6;
+            border: 1px solid var(--border); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .user-avatar.active { background: var(--primary); color: var(--accent); border-color: var(--primary); }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .trophy-btn { font-size: 1.2rem; color: #fbbf24; cursor: pointer; padding: 5px; transition: 0.2s; }
+        .trophy-btn:active { transform: scale(0.9); }
 
-    .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
-    .menu-overlay.open { opacity: 1; visibility: visible; }
+        /* Content Area */
+        .content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        .hidden { display: none !important; }
 
-    /* =========================================
-       4. SCOREBOARD & DASHBOARD UI
-       ========================================= */
-    .scoreboard { background: var(--primary); color: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2); }
-    .manager-name { font-size: 1.1rem; font-weight: 800; text-align: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; }
-    .stat-box { display: flex; flex-direction: column; }
-    .stat-label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; font-weight: 600; letter-spacing: 0.5px; }
-    .stat-val { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
-    .stat-val-small { font-size: 0.9rem; font-weight: 700; color: white; }
+        /* =========================================
+           3. SIDEBAR & NAVIGATION
+           ========================================= */
+        .sidebar {
+            position: fixed; top: 0; left: 0; height: 100%; width: 280px;
+            background: var(--bg-app); z-index: 200; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        .sidebar.open { transform: translateX(0); }
+        .menu-header { height: 60px; display: flex; align-items: center; padding-left: 24px; font-weight: 800; color: var(--primary); font-size: 1.2rem; border-bottom: 1px solid var(--border); }
+        .menu-items { flex: 1; padding-top: 10px; }
+        .menu-item { display: flex; align-items: center; gap: 16px; padding: 16px 24px; color: var(--text-sub); font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
+        .menu-item:hover { background: #f9fafb; color: var(--primary); }
+        .menu-item.active { color: var(--primary); background: rgba(55, 0, 60, 0.04); border-left-color: var(--primary); }
+        
+        .menu-footer { padding: 20px; border-top: 1px solid var(--border); margin-top: auto; }
+        .logout-btn { 
+            width: 100%; padding: 12px; border: 1px solid #fee2e2; background: #fef2f2; 
+            color: #ef4444; border-radius: 12px; font-size: 0.9rem; font-weight: 700; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.2s; 
+        }
+        .logout-btn:active { background: #fee2e2; transform: scale(0.98); }
 
-    /* Countdown & Chips */
-    .countdown-container { display: flex; justify-content: center; margin-bottom: 20px; }
-    .countdown-pill { background: white; border: 1px solid #e5e7eb; border-radius: 100px; padding: 8px 20px; display: inline-flex; align-items: center; gap: 15px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
-    .cd-label { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid #e5e7eb; padding-right: 15px; }
-    .cd-time { font-family: 'Courier New', monospace; font-weight: 800; color: var(--primary); font-size: 1rem; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
-    .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
-    .status-dot.urgent { background: #e90052; box-shadow: 0 0 0 3px rgba(233, 0, 82, 0.15); }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
+        .menu-overlay.open { opacity: 1; visibility: visible; }
 
-    .chip-bar { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-    .chip-pill { background: #e5e7eb; color: #9ca3af; padding: 6px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #d1d5db; letter-spacing: 0.5px; }
-    .chip-pill.active { background: #fff; color: var(--primary); border-color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .chip-pill.used { text-decoration: line-through; opacity: 0.6; }
+        /* =========================================
+           4. SCOREBOARD & DASHBOARD UI
+           ========================================= */
+        .scoreboard { background: var(--primary); color: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2); }
+        .manager-name { font-size: 1.1rem; font-weight: 800; text-align: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; }
+        .stat-box { display: flex; flex-direction: column; }
+        .stat-label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; font-weight: 600; letter-spacing: 0.5px; }
+        .stat-val { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
+        .stat-val-small { font-size: 0.9rem; font-weight: 700; color: white; }
 
-    /* VIEW TOGGLE SWITCH */
-    .view-toggle { display: flex; background: #f3f4f6; border-radius: 12px; padding: 4px; margin-bottom: 20px; border: 1px solid var(--border); }
-    .vt-btn { flex: 1; padding: 8px; text-align: center; font-size: 0.8rem; font-weight: 700; color: var(--text-sub); border-radius: 8px; cursor: pointer; transition: 0.2s; }
-    .vt-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    
-    /* NEXT FIXTURE PILL STYLE */
-    .next-fix-pill { font-size: 0.7rem; font-weight: 800; width: 100%; text-align: center; padding: 2px 0; border-radius: 0 0 4px 4px; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
+        /* Countdown & Chips */
+        .countdown-container { display: flex; justify-content: center; margin-bottom: 20px; }
+        .countdown-pill { 
+            background: white; border: 1px solid #e5e7eb; border-radius: 100px;
+            padding: 8px 20px; display: inline-flex; align-items: center; gap: 15px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
+        }
+        .cd-label { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid #e5e7eb; padding-right: 15px; }
+        .cd-time { font-family: 'Courier New', monospace; font-weight: 800; color: var(--primary); font-size: 1rem; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+        .status-dot.urgent { background: #e90052; box-shadow: 0 0 0 3px rgba(233, 0, 82, 0.15); }
 
-    /* Rank Arrows */
-    .rank-wrap { display: flex; align-items: center; justify-content: center; gap: 6px; }
-    .r-arrow { font-size: 0.8rem; }
-    .r-green { color: #00ff85; } .r-red { color: #ef4444; } .r-grey { color: #9ca3af; }
+        .chip-bar { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .chip-pill { background: #e5e7eb; color: #9ca3af; padding: 6px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #d1d5db; letter-spacing: 0.5px; }
+        .chip-pill.active { background: #fff; color: var(--primary); border-color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .chip-pill.used { text-decoration: line-through; opacity: 0.6; }
 
-    /* =========================================
-       5. PITCH & PLAYERS
-       ========================================= */
-    .pitch-wrapper { background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 20px; }
-    .budget-bar { background: white; padding: 8px 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 0.75rem; font-weight: 600; color: var(--text-sub); }
-    .budget-val { color: var(--primary); font-weight: 800; }
-    
-    .pitch-container { background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 20px, var(--grass-2) 20px, var(--grass-2) 40px); padding: 25px 5px; position: relative; min-height: 480px; }
-    .pitch-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.6; }
-    .pitch-circle { width: 80px; height: 80px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-    .line-mid { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.4); }
-    .box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-top: none; }
-    .box-bot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-bottom: none; }
-    .field-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 20px; position: relative; z-index: 10; }
+        /* VIEW TOGGLE SWITCH */
+        .view-toggle { display: flex; background: #f3f4f6; border-radius: 12px; padding: 4px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .vt-btn { flex: 1; padding: 8px; text-align: center; font-size: 0.8rem; font-weight: 700; color: var(--text-sub); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .vt-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        /* NEXT FIXTURE PILL STYLE */
+        .next-fix-pill { font-size: 0.7rem; font-weight: 800; width: 100%; text-align: center; padding: 2px 0; border-radius: 0 0 4px 4px; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
 
-    .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
-    .bench-header { background: #f8f9fa; padding: 8px 15px; font-size: 0.7rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
-    .bench-row { display: flex; justify-content: space-around; padding: 15px; background: #fdfdfd; }
-    .bench-pill { opacity: 0.85; }
-    .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
+        /* Rank Arrows */
+        .rank-wrap { display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .r-arrow { font-size: 0.8rem; }
+        .r-green { color: #00ff85; } .r-red { color: #ef4444; } .r-grey { color: #9ca3af; }
 
-    /* Player Pill Components */
-    .player-pill {
-        background: rgba(255,255,255,0.95); width: 68px; padding: 6px 2px; border-radius: 6px; text-align: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s; margin-top: 10px;
-    }
-    .player-pill:active { transform: scale(0.95); }
-    .kit-img { width: 36px; height: 46px; object-fit: contain; margin-bottom: -2px; margin-top: 2px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
-    .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; background: white; margin-top: 2px; padding: 1px 0; }
-    .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding-bottom: 2px; }
-    .points-badge { background: var(--primary); color: white; padding: 0 4px; border-radius: 3px; font-weight: 700; }
-    .fix-badge { font-size: 0.5rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; }
-    
-    /* Badges & Status */
-    .captain-badge { position: absolute; bottom: 30px; right: -4px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
-    .vice-badge { background: #666; }
-    .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
-    .status-warn { background: var(--status-warn); color: #78350f; }
-    .status-bad { background: var(--status-bad); color: white; }
+        /* =========================================
+           5. PITCH & PLAYERS
+           ========================================= */
+        .pitch-wrapper { background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 20px; }
+        .budget-bar { background: white; padding: 8px 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 0.75rem; font-weight: 600; color: var(--text-sub); }
+        .budget-val { color: var(--primary); font-weight: 800; }
+        
+        .pitch-container { background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 20px, var(--grass-2) 20px, var(--grass-2) 40px); padding: 25px 5px; position: relative; min-height: 480px; }
+        .pitch-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.6; }
+        .pitch-circle { width: 80px; height: 80px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .line-mid { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.4); }
+        .box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-top: none; }
+        .box-bot { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 15%; border: 2px solid rgba(255,255,255,0.4); border-bottom: none; }
+        .field-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 20px; position: relative; z-index: 10; }
 
-    /* LIVE MATCH STATUS BADGES */
-    .match-status { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; white-space: nowrap; z-index: 18; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-    .ms-fix { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; } 
-    .ms-live { background: #00ff85; color: #00381b; border: 1px solid #00e676; animation: pulseLive 2s infinite; } 
-    .ms-ft { background: #111827; color: #9ca3af; border: 1px solid #374151; } 
-    @keyframes pulseLive { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        .bench-wrapper { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        .bench-header { background: #f8f9fa; padding: 8px 15px; font-size: 0.7rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+        .bench-row { display: flex; justify-content: space-around; padding: 15px; background: #fdfdfd; }
+        .bench-pill { opacity: 0.85; }
+        .bench-num { position: absolute; top: 0; left: 0; background: #eee; color: #555; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px 0 4px 0; }
 
-    /* Subs & Live Events */
-    .did-not-play { opacity: 0.5; filter: grayscale(1); }
-    .coming-on { border: 2px solid #00ff85; box-shadow: 0 0 10px rgba(0, 255, 133, 0.4); transform: translateY(-4px); }
-    .sub-icon { position: absolute; top: -5px; left: -5px; background: #00ff85; color: #00381b; width: 18px; height: 18px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; z-index: 30; font-weight: 800; border: 1px solid white; }
-    
-    .event-row { position: absolute; bottom: 38px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 25; }
-    .evt-icon { width: 16px; height: 16px; border-radius: 50%; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 1px solid white; }
-    .evt-goal { background: #fff; color: #111; }
-    .evt-assist { background: #3b82f6; color: white; }
-    .evt-red { background: #ef4444; color: white; }
-    .evt-own { background: #111; color: #ef4444; }
+        /* Player Pill Components */
+        .player-pill {
+            background: rgba(255,255,255,0.95); width: 68px; padding: 6px 2px; border-radius: 6px; text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s; margin-top: 10px;
+        }
+        .player-pill:active { transform: scale(0.95); }
+        .kit-img { width: 36px; height: 46px; object-fit: contain; margin-bottom: -2px; margin-top: 2px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+        .pill-name { font-size: 0.65rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; background: white; margin-top: 2px; padding: 1px 0; }
+        .pill-data { font-size: 0.6rem; color: #555; font-weight: 500; display: flex; gap: 4px; justify-content: center; width: 100%; background: #f3f4f6; border-radius: 0 0 4px 4px; padding-bottom: 2px; }
+        .points-badge { background: var(--primary); color: white; padding: 0 4px; border-radius: 3px; font-weight: 700; }
+        .fix-badge { font-size: 0.5rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; }
+        
+        /* Badges & Status */
+        .captain-badge { position: absolute; bottom: 30px; right: -4px; background: #111; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1px solid white; z-index: 15; }
+        .vice-badge { background: #666; }
+        .status-flag { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 25; }
+        .status-warn { background: var(--status-warn); color: #78350f; }
+        .status-bad { background: var(--status-bad); color: white; }
 
-    /* FDR Ticker */
-    .fdr-row { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); display: flex; gap: 1px; z-index: 20; box-shadow: 0 1px 2px rgba(0,0,0,0.2); border-radius: 4px; overflow: hidden; }
-    .fdr-dot { width: 22px; height: 12px; font-size: 0.5rem; font-weight: 800; color: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; line-height: 1; }
-    .bg-1 { background: #375523; color: white; }
-    .bg-2 { background: #01fc7a; color: #00381b; }
-    .bg-3 { background: #e5e7eb; color: #374151; }
-    .bg-4 { background: #ff1751; color: white; }
-    .bg-5 { background: #80072d; color: white; }
+        /* LIVE MATCH STATUS BADGES */
+        .match-status { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; white-space: nowrap; z-index: 18; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .ms-fix { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; } 
+        .ms-live { background: #00ff85; color: #00381b; border: 1px solid #00e676; animation: pulseLive 2s infinite; } 
+        .ms-ft { background: #111827; color: #9ca3af; border: 1px solid #374151; } 
+        @keyframes pulseLive { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-    /* =========================================
-       6. TRANSFERS & CARDS (IMPROVED UI)
-       ========================================= */
-    .t-card { background: white; border-radius: 16px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; flex-direction: column; }
-    
-    /* Improved Header */
-    .t-header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid var(--border); }
-    .t-type { font-size: 0.75rem; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
-    .t-gain { background: var(--accent); color: #00381b; font-weight: 800; font-size: 0.85rem; padding: 4px 10px; border-radius: 20px; }
+        /* Subs & Live Events */
+        .did-not-play { opacity: 0.5; filter: grayscale(1); }
+        .coming-on { border: 2px solid #00ff85; box-shadow: 0 0 10px rgba(0, 255, 133, 0.4); transform: translateY(-4px); }
+        .sub-icon { position: absolute; top: -5px; left: -5px; background: #00ff85; color: #00381b; width: 18px; height: 18px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; z-index: 30; font-weight: 800; border: 1px solid white; }
+        
+        .event-row { position: absolute; bottom: 38px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 25; }
+        .evt-icon { width: 16px; height: 16px; border-radius: 50%; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 1px solid white; }
+        .evt-goal { background: #fff; color: #111; }
+        .evt-assist { background: #3b82f6; color: white; }
+        .evt-red { background: #ef4444; color: white; }
+        .evt-own { background: #111; color: #ef4444; }
 
-    /* New Info Bar */
-    .t-info-bar { display: flex; justify-content: space-between; padding: 8px 15px; background: #f9fafb; border-bottom: 1px solid var(--border); font-size: 0.7rem; font-weight: 600; color: var(--text-sub); }
-    .bank-ok { color: #059669; }
-    .bank-low { color: #ef4444; }
+        /* FDR Ticker */
+        .fdr-row { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); display: flex; gap: 1px; z-index: 20; box-shadow: 0 1px 2px rgba(0,0,0,0.2); border-radius: 4px; overflow: hidden; }
+        .fdr-dot { width: 22px; height: 12px; font-size: 0.5rem; font-weight: 800; color: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .bg-1 { background: #375523; color: white; }
+        .bg-2 { background: #01fc7a; color: #00381b; }
+        .bg-3 { background: #e5e7eb; color: #374151; }
+        .bg-4 { background: #ff1751; color: white; }
+        .bg-5 { background: #80072d; color: white; }
 
-    /* Body Layout */
-    .t-body { display: flex; position: relative; padding: 10px 0; }
-    .t-mid-arrow { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid var(--border); color: var(--text-sub); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
-    .t-half { flex: 1; padding: 5px 10px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-    .t-out { background: rgba(255, 245, 245, 0.5); }
-    .t-in { background: rgba(240, 253, 244, 0.5); }
-    
-    .lbl-out { color: #ef4444; font-size: 0.6rem; font-weight: 800; margin-bottom: 8px; opacity: 0.8; }
-    .lbl-in { color: #16a34a; font-size: 0.6rem; font-weight: 800; margin-bottom: 8px; opacity: 0.8; }
+        /* =========================================
+           6. TRANSFERS & CARDS
+           ========================================= */
+        .t-card { background: white; border-radius: 16px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .t-header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: #f9fafb; }
+        .t-type { font-size: 0.75rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; }
+        .t-gain { background: var(--primary); color: var(--accent); font-weight: 800; font-size: 0.9rem; padding: 4px 10px; border-radius: 8px; }
+        
+        .t-body { display: flex; position: relative; }
+        .t-mid-arrow { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid var(--border); color: var(--text-sub); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .t-half { flex: 1; padding: 15px 10px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .t-out { background: #fff5f5; border-right: 1px solid #fee2e2; }
+        .t-in { background: #f0fdf4; }
+        
+        .t-label { font-size: 0.6rem; font-weight: 800; margin-bottom: 8px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+        .lbl-out { background: #fee2e2; color: #ef4444; }
+        .lbl-in { background: #dcfce7; color: #16a34a; }
 
-    /* Player in Card */
-    .t-player { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
-    .t-kit { width: 40px; height: 50px; object-fit: contain; margin: 5px 0; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2)); }
-    .t-name { font-weight: 700; font-size: 0.85rem; margin-top: 4px; line-height: 1.2; }
-    .t-meta { font-size: 0.65rem; color: var(--text-sub); font-weight: 500; }
-    .t-fdr { display: flex; gap: 2px; margin-top: 4px; }
-    .t-dot { width: 14px; height: 4px; border-radius: 2px; }
-    
-    /* Highlight */
-    .t-card.best-pick { border: 2px solid #fbbf24; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.15); }
-    .rec-badge { background: #fbbf24; color: #78350f; font-size: 0.65rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
+        /* Transfer Styles specific */
+        .t-kit { width: 40px; height: 50px; object-fit: contain; margin: 5px 0; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2)); }
+        .t-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 2px; line-height: 1.2; }
+        .t-meta { font-size: 0.7rem; color: var(--text-sub); font-weight: 500; }
+        .t-fdr { display: flex; gap: 2px; margin-top: 8px; }
+        .t-dot { width: 18px; height: 6px; border-radius: 2px; }
+        
+        .t-card.best-pick { border: 2px solid #fbbf24; box-shadow: 0 10px 30px rgba(251, 191, 36, 0.15); transform: scale(1.02); margin-bottom: 30px; }
+        .t-card.best-pick .t-header { background: #fffbeb; }
+        .rec-badge { background: #fbbf24; color: #78350f; font-size: 0.7rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; }
 
-    /* Preview Button */
-    .preview-btn { width: calc(100% - 30px); margin: 0 15px 15px 15px; padding: 12px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-    .preview-btn:active { transform: scale(0.98); opacity: 0.9; }
+        /* Simulation Banner */
+        .sim-banner { background: #e90052; color: white; padding: 10px 20px; text-align: center; font-weight: 700; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(233, 0, 82, 0.3); animation: slideDown 0.3s ease; }
+        .sim-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 800; }
+        .preview-btn { width: 100%; margin-top: 15px; padding: 10px; border-radius: 8px; border: none; background: #f3f4f6; color: #111; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .preview-btn:hover { background: #e5e7eb; }
+        .best-pick .preview-btn { background: #fef3c7; color: #78350f; }
+        
+        .sim-new { border: 2px solid #fbbf24 !important; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); animation: pulseGlow 2s infinite; z-index: 30; }
+        .new-badge { position: absolute; top: -8px; right: -8px; background: #fbbf24; color: #78350f; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-    /* Simulation Banner */
-    .sim-banner { background: #e90052; color: white; padding: 10px 20px; text-align: center; font-weight: 700; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(233, 0, 82, 0.3); animation: slideDown 0.3s ease; }
-    .sim-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 800; }
-    
-    .sim-new { border: 2px solid #fbbf24 !important; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); animation: pulseGlow 2s infinite; z-index: 30; }
-    .new-badge { position: absolute; top: -8px; right: -8px; background: #fbbf24; color: #78350f; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        /* --- TRANSFER SCOUT SEARCH (FIXED UI) --- */
+        .search-container { position: sticky; top: 0; background: var(--bg-app); padding: 15px 0; z-index: 40; border-bottom: 1px solid transparent; }
+        .search-box {
+            display: flex; align-items: center; background: white; 
+            border: 1px solid var(--border); border-radius: 12px; 
+            padding: 8px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .search-box i { color: var(--text-sub); margin-right: 10px; }
+        .search-input { 
+            border: none !important; 
+            outline: none !important; 
+            background: transparent !important; 
+            width: 100%; 
+            font-size: 0.95rem; 
+            font-weight: 500; 
+            padding: 0 !important; 
+            margin: 0 !important; 
+            text-align: left !important;
+            color: var(--text-main);
+        }
+        .search-input:focus { box-shadow: none; }
+        
+        /* SEARCH RESULTS */
+        .scout-list { display: none; margin-bottom: 20px; }
+        .scout-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: white; padding: 12px; border-radius: 12px; 
+            margin-bottom: 8px; border: 1px solid var(--border); cursor: pointer;
+        }
+        .scout-left { display: flex; align-items: center; gap: 12px; }
+        .scout-info div:first-child { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+        .scout-info div:last-child { font-size: 0.75rem; color: var(--text-sub); }
+        .scout-right { text-align: right; }
+        .scout-price { font-weight: 800; color: var(--primary); font-size: 0.9rem; }
 
-    /* --- TRANSFER SCOUT SEARCH (FIXED UI) --- */
-    .search-container { position: sticky; top: 0; background: var(--bg-app); padding: 15px 0; z-index: 40; border-bottom: 1px solid transparent; }
-    .search-box {
-        display: flex; align-items: center; background: white; 
-        border: 1px solid var(--border); border-radius: 12px; 
-        padding: 8px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .search-box i { color: var(--text-sub); margin-right: 10px; }
-    .search-input { 
-        border: none !important; 
-        outline: none !important; 
-        background: transparent !important; 
-        width: 100%; 
-        font-size: 0.95rem; 
-        font-weight: 500; 
-        padding: 0 !important; 
-        margin: 0 !important; 
-        text-align: left !important;
-        color: var(--text-main);
-    }
-    .search-input:focus { box-shadow: none; }
-    
-    /* SEARCH RESULTS */
-    .scout-list { display: none; margin-bottom: 20px; }
-    .scout-item { 
-        display: flex; justify-content: space-between; align-items: center; 
-        background: white; padding: 12px; border-radius: 12px; 
-        margin-bottom: 8px; border: 1px solid var(--border); cursor: pointer;
-    }
-    .scout-left { display: flex; align-items: center; gap: 12px; }
-    .scout-info div:first-child { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
-    .scout-info div:last-child { font-size: 0.75rem; color: var(--text-sub); }
-    .scout-right { text-align: right; }
-    .scout-price { font-weight: 800; color: var(--primary); font-size: 0.9rem; }
+        /* MARKET TRENDS UI (NEW) */
+        .trend-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 5px 5px 15px 5px; scrollbar-width: none; }
+        .trend-card { 
+            min-width: 130px; background: white; border: 1px solid var(--border); 
+            border-radius: 12px; padding: 12px; text-align: center; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.2s;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .trend-card:active { transform: scale(0.98); }
+        .trend-img { width: 45px; height: 58px; object-fit: contain; margin-bottom: 5px; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2)); }
+        .trend-name { font-size: 0.8rem; font-weight: 800; color: var(--text-main); margin-bottom: 2px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .trend-team { font-size: 0.7rem; color: var(--text-sub); margin-bottom: 6px; }
+        .trend-stat { font-size: 0.7rem; font-weight: 700; color: var(--accent); background: #ecfdf5; padding: 2px 8px; border-radius: 10px; }
 
-    /* MARKET TRENDS UI (NEW) */
-    .trend-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 5px 5px 15px 5px; scrollbar-width: none; }
-    .trend-card { 
-        min-width: 130px; background: white; border: 1px solid var(--border); 
-        border-radius: 12px; padding: 12px; text-align: center; 
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.2s;
-        display: flex; flex-direction: column; align-items: center;
-    }
-    .trend-card:active { transform: scale(0.98); }
-    .trend-img { width: 45px; height: 58px; object-fit: contain; margin-bottom: 5px; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2)); }
-    .trend-name { font-size: 0.8rem; font-weight: 800; color: var(--text-main); margin-bottom: 2px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .trend-team { font-size: 0.7rem; color: var(--text-sub); margin-bottom: 6px; }
-    .trend-stat { font-size: 0.7rem; font-weight: 700; color: var(--accent); background: #ecfdf5; padding: 2px 8px; border-radius: 10px; }
+        /* --- FIXTURE TICKER (NEW) --- */
+        .ticker-section { margin-top: 10px; padding-bottom: 30px; }
+        .ticker-row { 
+            display: flex; align-items: center; justify-content: space-between; 
+            background: white; padding: 12px; border-bottom: 1px solid var(--border); 
+            cursor: pointer; transition: 0.2s;
+        }
+        .ticker-row:first-child { border-top: 1px solid var(--border); border-radius: 12px 12px 0 0; }
+        .ticker-row:last-child { border-bottom: 1px solid var(--border); border-radius: 0 0 12px 12px; }
+        .ticker-row:hover { background: #f9fafb; }
+        
+        .t-team { display: flex; align-items: center; gap: 10px; width: 30%; font-weight: 700; font-size: 0.9rem; }
+        .t-team img { width: 24px; }
+        
+        .t-run { display: flex; gap: 4px; flex: 1; justify-content: flex-end; }
+        .run-box { 
+            width: 45px; padding: 4px 0; text-align: center; border-radius: 4px; 
+            font-size: 0.65rem; font-weight: 800; color: #111; 
+            display: flex; flex-direction: column; 
+        }
+        .run-opp { text-transform: uppercase; }
+        .run-loc { font-weight: 400; font-size: 0.6rem; opacity: 0.8; }
 
-    /* --- FIXTURE TICKER (NEW) --- */
-    .ticker-section { margin-top: 10px; padding-bottom: 30px; }
-    .ticker-row { 
-        display: flex; align-items: center; justify-content: space-between; 
-        background: white; padding: 12px; border-bottom: 1px solid var(--border); 
-        cursor: pointer; transition: 0.2s;
-    }
-    .ticker-row:first-child { border-top: 1px solid var(--border); border-radius: 12px 12px 0 0; }
-    .ticker-row:last-child { border-bottom: 1px solid var(--border); border-radius: 0 0 12px 12px; }
-    .ticker-row:hover { background: #f9fafb; }
-    
-    .t-team { display: flex; align-items: center; gap: 10px; width: 30%; font-weight: 700; font-size: 0.9rem; }
-    .t-team img { width: 24px; }
-    
-    .t-run { display: flex; gap: 4px; flex: 1; justify-content: flex-end; }
-    .run-box { 
-        width: 45px; padding: 4px 0; text-align: center; border-radius: 4px; 
-        font-size: 0.65rem; font-weight: 800; color: #111; 
-        display: flex; flex-direction: column; 
-    }
-    .run-opp { text-transform: uppercase; }
-    .run-loc { font-weight: 400; font-size: 0.6rem; opacity: 0.8; }
+        /* =========================================
+           7. MODALS & UTILITIES
+           ========================================= */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: flex-end; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+        .modal-card { background: white; width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 25px; box-shadow: 0 -10px 40px rgba(0,0,0,0.3); margin: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-overlay.open .modal-card { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        
+        .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
+        .m-player-team { font-size: 0.9rem; color: var(--text-sub); }
+        .close-modal { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; color: #666; }
+        
+        .m-stats-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .m-stat-box { background: #f9fafb; padding: 10px; border-radius: 10px; flex: 1; text-align: center; border: 1px solid var(--border); }
+        .m-stat-label { font-size: 0.65rem; text-transform: uppercase; color: #888; font-weight: 700; }
+        .m-stat-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .m-news { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #ffeeba; display: none; }
+        
+        /* Fixture Tracker in Modal (Visual Boxes) */
+        .fix-list { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
+        .fix-box { min-width: 70px; flex: 1; display: flex; flex-direction: column; align-items: center; background: #f9fafb; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .fix-gw-label { font-size: 0.6rem; color: #888; font-weight: 700; padding: 4px 0; width: 100%; text-align: center; background: #fff; border-bottom: 1px solid #eee; }
+        .fix-opp-pill { width: 100%; text-align: center; padding: 8px 0; font-weight: 800; font-size: 0.85rem; color: #111; display: flex; flex-direction: column; justify-content: center; flex: 1; }
+        .fix-loc { font-size: 0.65rem; font-weight: 500; opacity: 0.8; margin-top: 2px; }
+        
+        /* Modal Difficulty Colors */
+        .d-1 { background: #375523; color: white; }
+        .d-2 { background: #00ff85; color: #00381b; }
+        .d-3 { background: #e5e7eb; color: #1f2937; }
+        .d-4 { background: #ff1751; color: white; }
+        .d-5 { background: #80072d; color: white; }
+        
+        /* Modal Action Buttons */
+        .modal-actions { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
+        .action-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
+        .btn-buy { background: #00ff85; color: #00381b; box-shadow: 0 4px 15px rgba(0, 255, 133, 0.3); }
+        .btn-buy:active { transform: scale(0.98); }
+        
+        /* Replacement List */
+        .rep-list { display: none; margin-top: 15px; animation: slideUp 0.3s ease; }
+        .rep-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f9fafb; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+        .rep-item:hover { background: #fee2e2; border-color: #fca5a5; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* =========================================
-       7. MODALS & UTILITIES
-       ========================================= */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: flex-end; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
-    .modal-overlay.open { opacity: 1; visibility: visible; }
-    .modal-card { background: white; width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 25px; box-shadow: 0 -10px 40px rgba(0,0,0,0.3); margin: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-    .modal-overlay.open .modal-card { transform: translateY(0); }
-    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-    
-    .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
-    .m-player-team { font-size: 0.9rem; color: var(--text-sub); }
-    .close-modal { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; color: #666; }
-    
-    .m-stats-row { display: flex; gap: 15px; margin-bottom: 20px; }
-    .m-stat-box { background: #f9fafb; padding: 10px; border-radius: 10px; flex: 1; text-align: center; border: 1px solid var(--border); }
-    .m-stat-label { font-size: 0.65rem; text-transform: uppercase; color: #888; font-weight: 700; }
-    .m-stat-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
-    .m-news { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid #ffeeba; display: none; }
-    
-    /* Fixture Tracker in Modal (Visual Boxes) */
-    .fix-list { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
-    .fix-box { min-width: 70px; flex: 1; display: flex; flex-direction: column; align-items: center; background: #f9fafb; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .fix-gw-label { font-size: 0.6rem; color: #888; font-weight: 700; padding: 4px 0; width: 100%; text-align: center; background: #fff; border-bottom: 1px solid #eee; }
-    .fix-opp-pill { width: 100%; text-align: center; padding: 8px 0; font-weight: 800; font-size: 0.85rem; color: #111; display: flex; flex-direction: column; justify-content: center; flex: 1; }
-    .fix-loc { font-size: 0.65rem; font-weight: 500; opacity: 0.8; margin-top: 2px; }
-    
-    /* Modal Difficulty Colors */
-    .d-1 { background: #375523; color: white; }
-    .d-2 { background: #00ff85; color: #00381b; }
-    .d-3 { background: #e5e7eb; color: #1f2937; }
-    .d-4 { background: #ff1751; color: white; }
-    .d-5 { background: #80072d; color: white; }
-    
-    /* Modal Action Buttons */
-    .modal-actions { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
-    .action-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
-    .btn-buy { background: #00ff85; color: #00381b; box-shadow: 0 4px 15px rgba(0, 255, 133, 0.3); }
-    .btn-buy:active { transform: scale(0.98); }
-    
-    /* Replacement List */
-    .rep-list { display: none; margin-top: 15px; animation: slideUp 0.3s ease; }
-    .rep-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f9fafb; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
-    .rep-item:hover { background: #fee2e2; border-color: #fca5a5; }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Leagues Modal - SCROLLABLE */
+        #leaguesList { max-height: 50vh; overflow-y: auto; scrollbar-width: none; }
+        #leaguesList::-webkit-scrollbar { display: none; }
 
-    /* Leagues Modal - SCROLLABLE */
-    #leaguesList { max-height: 50vh; overflow-y: auto; scrollbar-width: none; }
-    #leaguesList::-webkit-scrollbar { display: none; }
+        .league-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
+        .league-item:last-child { border-bottom: none; }
+        .lg-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
+        .lg-rank-box { text-align: right; }
+        .lg-rank { font-weight: 800; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+        .arrow-up { color: #16a34a; } .arrow-down { color: #ef4444; } .arrow-same { color: #d1d5db; }
+        
+        /* Utilities */
+        .welcome-card { text-align: center; padding: 40px 20px; background: #fafafa; border-radius: 20px; border: 1px solid var(--border); margin-top: 20px; }
+        input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: white; font-size: 1rem; }
+        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
+        .demo-alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 15px; border: 1px solid #ffeeba; }
+        .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-    .league-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
-    .league-item:last-child { border-bottom: none; }
-    .lg-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
-    .lg-rank-box { text-align: right; }
-    .lg-rank { font-weight: 800; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
-    .arrow-up { color: #16a34a; } .arrow-down { color: #ef4444; } .arrow-same { color: #d1d5db; }
-    
-    /* Utilities */
-    .welcome-card { text-align: center; padding: 40px 20px; background: #fafafa; border-radius: 20px; border: 1px solid var(--border); margin-top: 20px; }
-    input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; text-align: center; margin: 20px 0; outline: none; background: white; font-size: 1rem; }
-    .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
-    .demo-alert { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 15px; border: 1px solid #ffeeba; }
-    .spinner { width: 30px; height: 30px; border: 3px solid rgba(55,0,60,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px auto; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Logout Overlay Specific */
-    .logout-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px); }
-    .logout-overlay.open { opacity: 1; visibility: visible; }
-    .logout-card { background: white; width: 90%; max-width: 320px; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform: scale(0.95); transition: 0.2s; }
-    .logout-overlay.open .logout-card { transform: scale(1); }
-    .logout-actions { display: flex; gap: 10px; margin-top: 24px; }
-    .l-btn { flex: 1; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; border: none; }
-    .l-btn-cancel { background: #f3f4f6; color: #374151; }
-    .l-btn-confirm { background: #ef4444; color: white; }
-    
-    /* NEW: Market Explorer Pills */
-    .filter-bar { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding: 5px 0; scrollbar-width: none; }
-    .filter-pill { flex: 1; min-width: 70px; padding: 10px 0; background: white; border: 1px solid var(--border); border-radius: 12px; text-align: center; font-weight: 800; font-size: 0.75rem; color: var(--text-sub); cursor: pointer; transition: 0.2s; }
-    .filter-pill.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(55,0,60,0.2); }
-
-</style>
+        /* Logout Overlay Specific */
+        .logout-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px); }
+        .logout-overlay.open { opacity: 1; visibility: visible; }
+        .logout-card { background: white; width: 90%; max-width: 320px; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform: scale(0.95); transition: 0.2s; }
+        .logout-overlay.open .logout-card { transform: scale(1); }
+        .logout-actions { display: flex; gap: 10px; margin-top: 24px; }
+        .l-btn { flex: 1; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; border: none; }
+        .l-btn-cancel { background: #f3f4f6; color: #374151; }
+        .l-btn-confirm { background: #ef4444; color: white; }
+    </style>
 </head>
 
 <body>
@@ -543,13 +575,6 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" class="search-input" placeholder="Scout players (e.g. Palmer)..." onkeyup="app.searchScout(this.value)">
                     </div>
-                </div>
-                
-                <div class="filter-bar" style="margin-top:10px;">
-                    <div class="filter-pill" onclick="app.filterPos(1, this)">GK</div>
-                    <div class="filter-pill" onclick="app.filterPos(2, this)">DEF</div>
-                    <div class="filter-pill" onclick="app.filterPos(3, this)">MID</div>
-                    <div class="filter-pill" onclick="app.filterPos(4, this)">FWD</div>
                 </div>
 
                 <div id="scoutResults" class="scout-list"></div>
@@ -824,6 +849,7 @@
                     app.load(localStorage.getItem('fpl_id_final'));
                 }
             } else {
+                // --- FIXED AUTO-RELOAD LOGIC ---
                 app.show('transfersView');
                 
                 // Clear UI to force a visual "Reload" effect
@@ -834,18 +860,25 @@
                 app.ftCount = app.calcFreeTransfers();
                 const bankTxt = app.currentStats ? (app.currentStats.bank/10).toFixed(1) : '0.0';
                 
+                // Show Spinner immediately
                 const headerHtml = `
                     <div style="display:flex; justify-content:space-between; padding:15px; background:white; border-bottom:1px solid var(--border); margin:-15px -15px 15px -15px;">
                         <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
                         <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Free Transfers: <span style="color:${app.ftCount === 5 ? 'var(--primary)' : '#00ff85'}; font-weight:800;">${app.ftCount}</span></div>
                     </div>
-                    <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analyzing Market...</p></div>
+                    <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Finding Best Move...</p></div>
                 `;
-                document.getElementById('transferContent').innerHTML = headerHtml;
+                
+                const container = document.getElementById('transferContent');
+                container.innerHTML = headerHtml;
 
+                // WRAPPED IN TRY/CATCH TO PREVENT INFINITE SPINNER
                 setTimeout(() => {
                     try {
-                        if (!app.currentPicks || app.currentPicks.length === 0 || Object.keys(app.playersCache).length === 0) throw new Error("No data loaded");
+                        // Safety Check: Do we have data?
+                        if (!app.currentPicks || app.currentPicks.length === 0 || Object.keys(app.playersCache).length === 0) {
+                             throw new Error("No data loaded");
+                        }
 
                         const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap, app.ftCount);
                         const market = MarketBot.getTrends(app.playersCache);
@@ -869,64 +902,28 @@
                                     return;
                                 }
 
-                                const sellSum = s.out.reduce((sum, p) => sum + p.price, 0);
-                                const buySum = s.in.reduce((sum, p) => sum + p.price, 0);
-                                const remBank = (app.currentBank + sellSum - buySum).toFixed(1);
-                                const bankColor = remBank >= 0 ? 'bank-ok' : 'bank-low';
-                                const hitTxt = s.hit > 0 ? `<span style="color:var(--red); font-size:0.7em;">(-${s.hit} pts)</span>` : '';
-
                                 const outIds = JSON.stringify(s.out.map(p => p.id));
                                 const inIds = JSON.stringify(s.in.map(p => p.id));
-                                
-                                html += `<div class="${cardClass}">
-                                    <div class="t-header">
-                                        ${badge}
-                                        <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-                                            <div>
-                                                <div class="t-type">${s.type} ${hitTxt}</div>
-                                            </div>
-                                            <div class="t-gain">+${s.diff} pts</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="t-info-bar">
-                                        <span>Transfers: ${s.out.length}</span>
-                                        <span class="${bankColor}">Bank: £${remBank}m</span>
-                                    </div>
-
-                                    <div class="t-body">
-                                        <div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                                        
-                                        <div class="t-half t-out">
-                                            <span class="lbl-out">SELL</span>
-                                            ${s.out.map(p => {
-                                                const fixtures = app.fixMap[p.team_id] || [];
-                                                let dots = '<div class="t-fdr">';
-                                                fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
-                                                dots += '</div>';
-                                                return `<div class="t-player"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.web_name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
-                                            }).join('')}
-                                        </div>
-
-                                        <div class="t-half t-in">
-                                            <span class="lbl-in">BUY</span>
-                                            ${s.in.map(p => {
-                                                const fixtures = app.fixMap[p.team_id] || [];
-                                                let dots = '<div class="t-fdr">';
-                                                fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
-                                                dots += '</div>';
-                                                return `<div class="t-player"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.web_name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
-                                            }).join('')}
-                                        </div>
-                                    </div>
-                                    
-                                    <button class="preview-btn" onclick='app.simulate(${outIds}, ${inIds})'>
-                                        <i class="fa-solid fa-eye"></i> PREVIEW TEAM
-                                    </button>
-                                </div>`;
+                                html += `<div class="${cardClass}"><div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">${badge}<div style="width:100%; display:flex; justify-content:space-between; align-items:center;"><div class="t-type">${s.type}</div><div class="t-gain">+${s.diff} pts</div></div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                                s.out.forEach(p => {
+                                    const fixtures = app.fixMap[p.team_id] || [];
+                                    let dots = '<div class="t-fdr">';
+                                    fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
+                                    dots += '</div>';
+                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
+                                });
+                                html += `</div><div class="t-half t-in"><span class="t-label lbl-in">BUY</span>`;
+                                s.in.forEach(p => {
+                                    const fixtures = app.fixMap[p.team_id] || [];
+                                    let dots = '<div class="t-fdr">';
+                                    fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
+                                    dots += '</div>';
+                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
+                                });
+                                html += `</div></div><div style="padding:0 15px 15px 15px;"><button class="preview-btn" onclick='app.simulate(${outIds}, ${inIds})'><i class="fa-solid fa-eye"></i> Preview Team</button></div></div>`;
                             });
                         } else {
-                            html += `<div class="welcome-card"><p>Team is optimal. Consider rolling your transfer.</p></div>`;
+                            html += `<div class="welcome-card"><p>Team is optimal. Save your transfer.</p></div>`;
                         }
 
                         html += `<div style="font-size:1.1rem; font-weight:800; margin:30px 0 15px 0; padding-left:5px;">Market Trends</div><div class="trend-scroll">`;
@@ -944,50 +941,6 @@
             }
         },
 
-        filterPos: (posId, btnElement) => {
-            document.querySelectorAll('.filter-pill').forEach(el => el.classList.remove('active'));
-            btnElement.classList.add('active');
-
-            const resultsContainer = document.getElementById('scoutResults');
-            const mainContent = document.getElementById('transferContent');
-            mainContent.style.display = 'none';
-            resultsContainer.style.display = 'block';
-
-            const players = Object.values(app.playersCache);
-            const matches = players.filter(p => p.pos == posId && p.status === 'a');
-            matches.sort((a,b) => parseFloat(b.form) - parseFloat(a.form));
-            const top20 = matches.slice(0, 20);
-
-            let html = '';
-            if(top20.length === 0) {
-                html = '<div style="text-align:center; padding:20px; color:#888">No players found.</div>';
-            } else {
-                top20.forEach(p => {
-                    const fixtures = app.fixMap[p.team_id] || [];
-                    let dots = '<div class="t-fdr" style="margin-top:4px;">';
-                    fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
-                    dots += '</div>';
-
-                    html += `
-                        <div class="scout-item" onclick="app.openModal(${p.id})">
-                            <div class="scout-left">
-                                <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;">
-                                <div class="scout-info">
-                                    <div>${p.name}</div>
-                                    <div>${p.team} • ${p.form} Form</div>
-                                </div>
-                            </div>
-                            <div class="scout-right">
-                                <div class="scout-price">£${p.price}m</div>
-                                ${dots}
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            resultsContainer.innerHTML = html;
-        },
-
         filterByTeam: (teamName) => {
             document.querySelector('.search-input').value = teamName;
             app.searchScout(teamName);
@@ -995,7 +948,6 @@
         },
 
         searchScout: (query) => {
-            document.querySelectorAll('.filter-pill').forEach(el => el.classList.remove('active'));
             const resultsContainer = document.getElementById('scoutResults');
             const mainContent = document.getElementById('transferContent');
             if (!query || query.length < 2) {
