@@ -2067,11 +2067,19 @@
             app.currentTool = 'squad';
             app.isSimulating = true;
             app.simNewIds = inIds;
+            
+            // Force Next GW View
+            app.viewMode = 'next';
+            document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-next').classList.add('active');
+
             document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-squad').classList.add('active');
             const simStats = { ...app.currentStats, bank: simBank * 10, value: app.currentStats.value };
             app.render(app.userData, finalPicks, app.playersCache, app.fixMap, app.statusMap || {}, simStats, app.historyData, app.deadline, app.gwName);
-            const bannerHtml = `<div class="sim-banner"><div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div><div class="sim-btn" onclick="app.switchTool('squad')">Reset</div></div>`;
+            
+            // Redirect Reset to Transfers
+            const bannerHtml = `<div class="sim-banner"><div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div><div class="sim-btn" onclick="app.switchTool('transfers')">Reset</div></div>`;
             const dash = document.getElementById('dashboardView');
             const existingBanner = dash.querySelector('.sim-banner');
             if (existingBanner) existingBanner.remove();
