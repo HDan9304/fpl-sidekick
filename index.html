@@ -409,6 +409,10 @@
         .r-green { color: #00ff85; }
         .r-red { color: #ef4444; }
         .r-grey { color: #9ca3af; }
+        
+        .pc-arrow { font-size: 0.6rem; margin-left: 2px; font-weight: 800; }
+        .pc-up { color: #16a34a; }
+        .pc-down { color: #ef4444; }
 
         /* =========================================
            5. PITCH & PLAYERS
@@ -1834,7 +1838,8 @@
                                     let dots = '<div class="t-fdr">';
                                     fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
                                     dots += '</div>';
-                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
+                                    const pc = p.cost_change > 0 ? '<span class="pc-arrow pc-up">▲</span>' : (p.cost_change < 0 ? '<span class="pc-arrow pc-down">▼</span>' : '');
+                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m${pc}</div>${dots}</div>`;
                                 });
                                 html += `</div><div class="t-half t-in"><span class="t-label lbl-in">BUY</span>`;
                                 s.in.forEach(p => {
@@ -1842,7 +1847,8 @@
                                     let dots = '<div class="t-fdr">';
                                     fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
                                     dots += '</div>';
-                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
+                                    const pc = p.cost_change > 0 ? '<span class="pc-arrow pc-up">▲</span>' : (p.cost_change < 0 ? '<span class="pc-arrow pc-down">▼</span>' : '');
+                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m${pc}</div>${dots}</div>`;
                                 });
                                 html += `</div></div><div style="padding:0 15px 15px 15px;"><button class="preview-btn" onclick='app.simulate(${outIds}, ${inIds})'><i class="fa-solid fa-eye"></i> Preview Team</button></div></div>`;
                             });
@@ -2087,7 +2093,7 @@
                         event_points: live ? live.points : p.event_points,
                         minutes: live ? live.mins : 0,
                         stats: live || { goals: 0, assists: 0, red_cards: 0 },
-                        team_code: p.team_code, status: p.status, chance: p.chance_of_playing_next_round, news: p.news,
+                        team_code: p.team_code, status: p.status, chance: p.chance_of_playing_next_round, news: p.news, cost_change: p.cost_change_event,
                         sel: parseFloat(p.selected_by_percent), form: p.form, transfers_in: p.transfers_in_event, total_points: p.total_points, ict_index: p.ict_index
                     };
                 });
@@ -2261,7 +2267,8 @@
             const displayPoints = p.event_points * (p.multiplier || 1);
 
             // --- NEXT GW MODE ---
-            let bottomBar = `<div class="pill-data"><span>£${p.price}</span><span class="points-badge">${displayPoints}</span></div>`;
+            let pcArrow = p.cost_change > 0 ? `<span class="pc-arrow pc-up">▲</span>` : (p.cost_change < 0 ? `<span class="pc-arrow pc-down">▼</span>` : '');
+            let bottomBar = `<div class="pill-data"><span>£${p.price}${pcArrow}</span><span class="points-badge">${displayPoints}</span></div>`;
             
             if (app.viewMode === 'next') {
                 dotsHtml = '';
