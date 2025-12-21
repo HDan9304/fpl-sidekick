@@ -1739,29 +1739,51 @@
             const next5 = [1,2,3,4,5].map(i => currentGW + i);
             let rec = null;
 
-            // 1. Triple Captain (Haaland/Salah vs Easy Team)
-            if (!used.includes('3xc')) {
+            // 1. Wildcard (Long-term Crisis Check)
+            if (!used.includes('wildcard')) {
+                let badCount = 0;
+                picks.forEach(p => {
+                    const f = fixMap[p.element] || [];
+                    // Avg diff of next 3 games > 3.5 implies tough run
+                    const avg = (f.slice(0,3).reduce((a,b)=>a+(b.diff||3),0))/3;
+                    if (avg > 3.5) badCount++;
+                });
+                if (badCount >= 5) rec = { chip: 'Wildcard', gw: next5[0], reason: "Detected severe fixture turn for 5+ players." };
+            }
+
+            // 2. Free Hit (Short-term Crisis Check)
+            if (!used.includes('freehit') && !rec) {
+                const starters = picks.filter(p => p.position <= 11);
+                const totalDiff = starters.reduce((acc, p) => acc + ((fixMap[p.element]||[])[0]?.diff || 3), 0);
+                // Avg difficulty > 4.0 implies crisis week
+                if ((totalDiff / 11) > 4.0) rec = { chip: 'Free Hit', gw: next5[0], reason: "Extreme fixture difficulty detected for this week only." };
+            }
+
+            // 3. Triple Captain
+            if (!used.includes('3xc') && !rec) {
                 next5.forEach(gw => {
                     picks.forEach(p => {
-                        if ((p.element === 9 || p.element === 5) && p.multiplier > 0) { // Hardcoded Haaland/Salah IDs for demo
-                            const f = (fixMap[p.element] || [])[gw - currentGW]; // rough approximation
+                        if ((p.element === 9 || p.element === 5) && p.multiplier > 0) {
+                            const f = (fixMap[p.element] || [])[gw - currentGW];
                             if (f && f.diff < 2) rec = { chip: 'Triple Captain', gw: gw, reason: `${p.element === 9 ? 'Haaland' : 'Salah'} has an easy fixture (Diff 1).` };
                         }
                     });
                 });
             }
             
-            // 2. Bench Boost (Bench has easy games)
+            // 4. Bench Boost
             if (!used.includes('bboost') && !rec) {
-                // Check GW+1 (next5[0]) for strong bench fixtures
-                const targetGW = next5[0]; 
                 const bench = picks.filter(p => p.position > 11);
                 const isEasy = bench.every(p => {
-                    const f = (fixMap[p.element] || [])[0]; // Next fixture
+                    const f = (fixMap[p.element] || [])[0];
                     return f && f.diff <= 3;
                 });
-                
-                if (isEasy) rec = { chip: 'Bench Boost', gw: targetGW, reason: "All 4 bench players have favorable fixtures (Diff <= 3)." };
+                if (isEasy) rec = { chip: 'Bench Boost', gw: next5[0], reason: "All 4 bench players have favorable fixtures." };
+            }
+
+            // 5. Default (Save)
+            if (!rec) {
+                rec = { chip: 'Save Chips', gw: next5[0], reason: "Team looks solid. Hold chips for Double Gameweeks." };
             }
 
             return rec;
