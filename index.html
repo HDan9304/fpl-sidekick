@@ -2272,9 +2272,9 @@
                     app.lastEvents[el.id] = { goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, yellow_cards: el.stats.yellow_cards };
                 });
 
-                // Fetch 3 fixtures in parallel because it's safe
-                const fixReqs = [gw, gw + 1, gw + 2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
-                const [fix1, fix2, fix3] = await Promise.all(fixReqs);
+                // Fetch 4 fixtures to ensure we have enough future data for Transfer view
+                const fixReqs = [gw, gw + 1, gw + 2, gw + 3].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
+                const [fix1, fix2, fix3, fix4] = await Promise.all(fixReqs);
                 
                 const teamShort = {};
                 staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
@@ -2310,13 +2310,14 @@
                     });
                     return map;
                 };
-                const map1 = processFix(fix1); const map2 = processFix(fix2); const map3 = processFix(fix3);
+                const map1 = processFix(fix1); const map2 = processFix(fix2); const map3 = processFix(fix3); const map4 = processFix(fix4);
                 const masterFixMap = {};
                 staticData.teams.forEach(t => {
                     const f1 = (map1[t.id] || [])[0] || { opp: '-', diff: 3 };
                     const f2 = (map2[t.id] || [])[0] || { opp: '-', diff: 3 };
                     const f3 = (map3[t.id] || [])[0] || { opp: '-', diff: 3 };
-                    masterFixMap[t.id] = [f1, f2, f3];
+                    const f4 = (map4[t.id] || [])[0] || { opp: '-', diff: 3 };
+                    masterFixMap[t.id] = [f1, f2, f3, f4];
                 });
                 app.fixMap = masterFixMap;
 
@@ -2358,7 +2359,7 @@
         
         checkLiveEvents: async (gw) => {
             try {
-                const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
+                const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/?t=${Date.now()}`);
                 liveData.elements.forEach(el => {
                     const pid = el.id;
                     const p = app.playersCache[pid];
