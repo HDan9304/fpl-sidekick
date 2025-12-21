@@ -608,77 +608,40 @@
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
-        // --- GOD MODE TRANSFER BOT ---
         const TransferBot = {
-            // 1. Pre-calculate team difficulty (Runs once, super fast)
-            preCalcTeamData: (fixMap) => {
-                const data = {};
-                for (const [tid, fixList] of Object.entries(fixMap)) {
-                    let sum = 0;
-                    const limit = Math.min(fixList.length, 3);
-                    for(let i=0; i<limit; i++) sum += fixList[i].diff;
-                    data[tid] = {
-                        avg: limit > 0 ? sum/limit : 3,
-                        nextHome: fixList[0] ? fixList[0].is_home : false
-                    };
-                }
-                return data;
-            },
-
-            // 2. The "Overpowered" Scoring Formula
-            getScore: (p, teamData) => {
-                const t = teamData[p.team_id] || { avg: 3, nextHome: false };
-                
-                const form = parseFloat(p.form) || 0;
-                const ict = parseFloat(p.ict_index) || 0; // Underlying stats
-                
-                // FORMULA: (Form x 5) + (ICT x 0.16) + (Fixture Bonus)
-                let score = (form * 5) + (ict * 0.16) + (20 - (t.avg * 4));
-
-                // Penalties & Boosts
-                if (p.status !== 'a' && p.chance < 75) score -= 200; // Ignore injured players
-                if (p.pos === 1) score *= 0.85; // Lower ceiling for GKs
-                if (t.nextHome) score += 2; // Home advantage
-
+            getScore: (p, fixtures) => {
+                const teamFix = fixtures[p.team_id];
+                const nextFix = Array.isArray(teamFix) ? teamFix[0] : (teamFix || { diff: 3 });
+                let score = parseFloat(p.form) - (nextFix.diff * 2);
+                if (p.status !== 'a' && p.chance < 75) score -= 50;
                 return score;
             },
-
-            // 3. Analysis Logic
             analyze: (myPicks, allPlayers, bank, fixtures, ftCount) => {
                 let singleMoves = [];
                 let finalSuggestions = [];
 
-                // A. Pre-calculate environment
-                const teamStats = TransferBot.preCalcTeamData(fixtures);
-
-                // B. Score Squad (Find Weakest Links)
                 const squadScores = myPicks.map(pick => {
                     const p = allPlayers[pick.element];
-                    if(!p || p.pos === 1) return null; // Skip GK trades for speed
-                    return { p: p, score: TransferBot.getScore(p, teamStats) };
+                    if(!p || p.pos === 1) return null;
+                    return { p: p, score: TransferBot.getScore(p, fixtures) };
                 }).filter(x => x).sort((a,b) => a.score - b.score);
 
-                // C. Score Market (Find Best Targets)
                 const marketScores = Object.values(allPlayers)
                     .filter(p => p.status === 'a' && p.pos > 1)
-                    .map(p => ({ p: p, score: TransferBot.getScore(p, teamStats) }))
-                    .sort((a,b) => b.score - a.score).slice(0, 50); // Top 50 only
+                    .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
+                    .sort((a,b) => b.score - a.score).slice(0, 50);
 
-                // D. Find Single Moves
                 for(let i=0; i<Math.min(5, squadScores.length); i++) {
                     const sell = squadScores[i];
                     const maxBudget = bank + sell.p.price;
                     for(let j=0; j<marketScores.length; j++) {
                         const buy = marketScores[j];
-                        
                         if(buy.p.pos !== sell.p.pos) continue; 
                         if(buy.p.price > maxBudget) continue; 
                         if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
 
                         const diff = (buy.score - sell.score).toFixed(1);
-                        
-                        // God Mode Threshold: Only show moves with significant gain (>5.0)
-                        if(parseFloat(diff) > 5.0) { 
+                        if(parseFloat(diff) > -2) { 
                             singleMoves.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff) });
                             break; 
                         }
@@ -687,7 +650,6 @@
                 singleMoves.sort((a,b) => b.diff - a.diff);
                 finalSuggestions.push(...singleMoves.slice(0, 3));
 
-                // E. Double Moves
                 if(singleMoves.length > 0) {
                     const bestMove = singleMoves[0];
                     const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
@@ -699,21 +661,16 @@
                             const diff2 = secondBuy.score - secondSell.score;
                             const hitCost = ftCount >= 2 ? 0 : 4;
                             const totalDiff = (bestMove.diff + diff2 - hitCost).toFixed(1);
-                            
                             if (parseFloat(totalDiff) > 1.0) {
                                 finalSuggestions.push({ type: `Double Move (-${hitCost})`, out: [bestMove.out[0], secondSell.p], in: [bestMove.in[0], secondBuy.p], diff: parseFloat(totalDiff) });
                             }
                         }
                     }
                 }
-
-                // F. Smart Roll Logic
                 const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
-                // If FT < 5 and best move isn't huge (< 10pts gain), suggest rolling
-                if (ftCount < 5 && bestDiff < 10.0) {
+                if (ftCount < 5 && bestDiff < 4.0) {
                     finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
                 }
-
                 return finalSuggestions;
             }
         };
@@ -721,8 +678,9 @@
         const MarketBot = {
             getTrends: (allPlayers) => {
                 const players = Object.values(allPlayers);
-                const movers = [...players].sort((a, b) => b.transfers_in - a.transfers_in).slice(0, 5);
-                return { movers };
+                const movers = [...players].sort((a, b) => b.transfers_in - a.transfers_in).slice(0, 3);
+                const differentials = [...players].filter(p => p.sel < 5 && p.status === 'a').sort((a, b) => parseFloat(b.form) - parseFloat(a.form)).slice(0, 3);
+                return { movers, differentials };
             }
         };
 
@@ -738,8 +696,10 @@
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
+                // RECOVER LAST TAB
                 const lastTool = localStorage.getItem('fpl_last_tool');
                 if (lastTool) app.currentTool = lastTool;
+
                 if (savedId) {
                     document.getElementById('teamID').value = savedId;
                     app.load(savedId);
@@ -789,12 +749,15 @@
                 document.getElementById('menuOverlay').classList.toggle('open');
             },
 
+            // --- UPDATED SWITCH TOOL (With Persistence) ---
             switchTool: (t, suppressMenu = false) => {
                 if (!suppressMenu) app.toggleMenu();
                 
+                // Save state
                 app.currentTool = t;
                 localStorage.setItem('fpl_last_tool', t);
                 
+                // Update Nav UI
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-' + t).classList.add('active');
 
@@ -826,7 +789,9 @@
                         </div>
                         <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Finding Best Move...</p></div>
                     `;
-                    document.getElementById('transferContent').innerHTML = headerHtml;
+                    
+                    const container = document.getElementById('transferContent');
+                    container.innerHTML = headerHtml;
 
                     setTimeout(() => {
                         const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap, app.ftCount);
@@ -913,14 +878,8 @@
                         });
                         html += `</div><div style="height:40px;"></div>`;
                         container.innerHTML = html;
-                    }, 50); // Fast load, no heavy Ticker
+                    }, 100);
                 }
-            },
-
-            filterByTeam: (teamName) => {
-                document.querySelector('.search-input').value = teamName;
-                app.searchScout(teamName);
-                document.querySelector('.search-container').scrollIntoView({ behavior: 'smooth' });
             },
 
             searchScout: (query) => {
@@ -938,7 +897,11 @@
                 
                 const q = query.toLowerCase();
                 const players = Object.values(app.playersCache);
-                const matches = players.filter(p => p.name.toLowerCase().includes(q) || (p.team && p.team.toLowerCase().includes(q)));
+                
+                const matches = players.filter(p => 
+                    p.name.toLowerCase().includes(q) || 
+                    (p.team && p.team.toLowerCase().includes(q))
+                );
 
                 matches.sort((a,b) => parseFloat(b.form) - parseFloat(a.form));
                 const top20 = matches.slice(0, 20);
@@ -952,7 +915,22 @@
                         let dots = '<div class="t-fdr" style="margin-top:4px;">';
                         fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
                         dots += '</div>';
-                        html += `<div class="scout-item" onclick="app.openModal(${p.id})"><div class="scout-left"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;"><div class="scout-info"><div>${p.name}</div><div>${p.team} • ${p.form} Form</div></div></div><div class="scout-right"><div class="scout-price">£${p.price}m</div>${dots}</div></div>`;
+
+                        html += `
+                            <div class="scout-item" onclick="app.openModal(${p.id})">
+                                <div class="scout-left">
+                                    <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;">
+                                    <div class="scout-info">
+                                        <div>${p.name}</div>
+                                        <div>${p.team} • ${p.form} Form</div>
+                                    </div>
+                                </div>
+                                <div class="scout-right">
+                                    <div class="scout-price">£${p.price}m</div>
+                                    ${dots}
+                                </div>
+                            </div>
+                        `;
                     });
                 }
                 resultsContainer.innerHTML = html;
@@ -1210,7 +1188,8 @@
                         benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false, multiplier: pick.multiplier }, fixMap, statusMap, true, i - 10, status);
                     }
                 }
-                
+
+                // --- NEW: AUTO SWITCH TO SAVED TAB ON LOAD ---
                 if (app.currentTool === 'transfers' && !app.isSimulating) {
                     app.switchTool('transfers', true); // True = Suppress menu toggle
                 } else {
