@@ -1634,7 +1634,11 @@
                     if (total > maxScore) { maxScore = total; bestForm = f.join('-'); bestLineup = [gk.p.id, ...defs.map(x=>x.p.id), ...mids.map(x=>x.p.id), ...fwds.map(x=>x.p.id)]; }
                 }
             });
-            const bench = rated.filter(x => !bestLineup.includes(x.p.id)).sort((a,b) => a.p.pos === 1 ? -1 : b.score - a.score); 
+            const bench = rated.filter(x => !bestLineup.includes(x.p.id)).sort((a,b) => {
+                if (a.p.pos === 1) return -1;
+                if (b.p.pos === 1) return 1;
+                return b.score - a.score;
+            });
             return { formation: bestForm, bench: bench.map(x => x.p), bestLineup };
         },
 
