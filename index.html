@@ -2369,7 +2369,8 @@
                 dotsHtml = '';
                 evtHtml = '';
                 const nextF = fixtures[1] || { opp: '-', diff: 3 }; 
-                bottomBar = `<div class="next-fix-pill bg-${nextF.diff}">${nextF.opp}</div>`;
+                // Use standard "pill-data" style for consistency, but with fixture content
+                bottomBar = `<div class="pill-data"><span>£${p.price}</span><span class="points-badge" style="background:var(--fdr-${nextF.diff}); color:var(--fdr-text-${nextF.diff > 2 ? 'dark' : 'light'})">${nextF.opp}</span></div>`;
             }
 
             return `<div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
