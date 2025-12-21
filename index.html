@@ -847,6 +847,9 @@
             margin-bottom: 10px;
         }
 
+        .opt-bench { background: #f3f4f6; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; color: #555; }
+        .opt-bench span { color: #111; font-weight: 700; }
+
         /* --- Simulation & Scout --- */
         .sim-banner {
             background: #e90052;
@@ -1569,6 +1572,31 @@
             return score;
         },
 
+        recommendFormation: (myPicks, allPlayers, fixtures) => {
+            const teamStats = TransferBot.preCalcTeamData(fixtures);
+            const rated = myPicks.map(pick => {
+                const p = allPlayers[pick.element];
+                return { p, score: TransferBot.getScore(p, teamStats) };
+            });
+            const gk = rated.filter(x => x.p.pos === 1).sort((a,b) => b.score - a.score)[0];
+            const outfield = rated.filter(x => x.p.pos !== 1);
+            
+            const formations = [[3,4,3], [3,5,2], [4,3,3], [4,4,2], [4,5,1], [5,3,2], [5,4,1], [5,2,3]];
+            let bestForm = null, maxScore = -9999, bestLineup = [];
+
+            formations.forEach(f => {
+                const defs = outfield.filter(x => x.p.pos === 2).sort((a,b) => b.score - a.score).slice(0, f[0]);
+                const mids = outfield.filter(x => x.p.pos === 3).sort((a,b) => b.score - a.score).slice(0, f[1]);
+                const fwds = outfield.filter(x => x.p.pos === 4).sort((a,b) => b.score - a.score).slice(0, f[2]);
+                if (defs.length === f[0] && mids.length === f[1] && fwds.length === f[2]) {
+                    const total = gk.score + [...defs, ...mids, ...fwds].reduce((a,b) => a + b.score, 0);
+                    if (total > maxScore) { maxScore = total; bestForm = f.join('-'); bestLineup = [gk.p.id, ...defs.map(x=>x.p.id), ...mids.map(x=>x.p.id), ...fwds.map(x=>x.p.id)]; }
+                }
+            });
+            const bench = rated.filter(x => !bestLineup.includes(x.p.id)).sort((a,b) => a.p.pos === 1 ? -1 : b.score - a.score); 
+            return { formation: bestForm, bench: bench.map(x => x.p) };
+        },
+
         analyze: (myPicks, allPlayers, bank, fixtures, ftCount) => {
             let singleMoves = [];
             let finalSuggestions = [];
@@ -1810,8 +1838,18 @@
                         }
 
                         const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap, app.ftCount);
+                        const bestForm = TransferBot.recommendFormation(app.currentPicks, app.playersCache, app.fixMap);
                         const market = MarketBot.getTrends(app.playersCache);
+                        
                         let html = `
+                        <div class="t-card" style="padding:15px; border-left:4px solid #8b5cf6; background:#f5f3ff; border-radius:12px; margin-bottom:15px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                <div style="font-weight:800; color:#5b21b6; font-size:0.9rem;"><i class="fa-solid fa-chess-board"></i> Optimal Lineup</div>
+                                <div style="background:#8b5cf6; color:white; font-weight:800; padding:2px 8px; border-radius:6px; font-size:0.8rem;">${bestForm.formation}</div>
+                            </div>
+                            <div class="opt-bench">Bench: <span>${bestForm.bench.map(p => p.name).join(', ')}</span></div>
+                        </div>
+
                         <div style="display:flex; justify-content:space-between; padding:10px 15px; background:white; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
                             <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
                             <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Free Transfers: <span style="color:${app.ftCount === 5 ? '#e90052' : '#00ff85'}; font-weight:800;">${app.ftCount}</span></div>
