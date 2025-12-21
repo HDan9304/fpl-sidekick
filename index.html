@@ -274,6 +274,24 @@
         }
         .search-input:focus { box-shadow: none; }
         
+        /* MARKET EXPLORER PILLS (New Feature) */
+        .filter-bar { 
+            display: flex; gap: 8px; margin-bottom: 15px; 
+            overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; 
+        }
+        .filter-pill { 
+            flex: 1; padding: 10px 0; background: white; 
+            border: 1px solid var(--border); border-radius: 12px; 
+            text-align: center; font-weight: 800; font-size: 0.75rem; 
+            color: var(--text-sub); cursor: pointer; transition: 0.2s; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        .filter-pill:active { transform: scale(0.96); }
+        .filter-pill.active { 
+            background: var(--primary); color: white; 
+            border-color: var(--primary); box-shadow: 0 4px 10px rgba(55,0,60,0.2); 
+        }
+        
         /* SEARCH RESULTS */
         .scout-list { display: none; margin-bottom: 20px; }
         .scout-item { 
@@ -576,7 +594,14 @@
                         <input type="text" class="search-input" placeholder="Scout players (e.g. Palmer)..." onkeyup="app.searchScout(this.value)">
                     </div>
                 </div>
-
+                
+                <div class="filter-bar">
+                    <div class="filter-pill" onclick="app.filterPos(1, this)">GK</div>
+                    <div class="filter-pill" onclick="app.filterPos(2, this)">DEF</div>
+                    <div class="filter-pill" onclick="app.filterPos(3, this)">MID</div>
+                    <div class="filter-pill" onclick="app.filterPos(4, this)">FWD</div>
+                </div>
+                
                 <div id="scoutResults" class="scout-list"></div>
 
                 <div id="transferContent">
@@ -947,6 +972,54 @@
             document.querySelector('.search-container').scrollIntoView({ behavior: 'smooth' });
         },
 
+        // --- NEW: Filter Players by Position ---
+        filterPos: (posId, btnElement) => {
+            // 1. Visual Toggle
+            document.querySelectorAll('.filter-pill').forEach(el => el.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            // 2. Hide Suggestions, Show Results
+            document.getElementById('transferContent').style.display = 'none';
+            const res = document.getElementById('scoutResults');
+            res.style.display = 'block';
+
+            // 3. Filter & Sort Data (By Form)
+            const players = Object.values(app.playersCache);
+            const matches = players.filter(p => p.pos == posId && p.status === 'a');
+            matches.sort((a,b) => parseFloat(b.form) - parseFloat(a.form)); 
+            const top20 = matches.slice(0, 20);
+
+            // 4. Render List
+            let html = '';
+            if(top20.length === 0) {
+                html = '<div style="text-align:center; padding:20px; color:#888">No players found.</div>';
+            } else {
+                top20.forEach(p => {
+                    const fixtures = app.fixMap[p.team_id] || [];
+                    let dots = '<div class="t-fdr" style="margin-top:4px;">';
+                    fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
+                    dots += '</div>';
+
+                    html += `
+                        <div class="scout-item" onclick="app.openModal(${p.id})">
+                            <div class="scout-left">
+                                <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;">
+                                <div class="scout-info">
+                                    <div>${p.name}</div>
+                                    <div>${p.team} • ${p.form} Form</div>
+                                </div>
+                            </div>
+                            <div class="scout-right">
+                                <div class="scout-price">£${p.price}m</div>
+                                ${dots}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            res.innerHTML = html;
+        },
+        
         searchScout: (query) => {
             const resultsContainer = document.getElementById('scoutResults');
             const mainContent = document.getElementById('transferContent');
