@@ -2303,7 +2303,14 @@
             if (!p) return;
             const overlay = document.getElementById('playerModalOverlay');
             document.getElementById('modalName').innerText = p.name;
-            document.getElementById('modalTeam').innerText = `${p.team} • £${p.price}m`;
+
+            const net = (p.transfers_in || 0) - (p.transfers_out || 0);
+            const netClass = net >= 0 ? 't-net-pos' : 't-net-neg';
+            const netStr = (Math.abs(net) > 999) ? (net/1000).toFixed(1) + 'k' : net;
+            const pc = p.cost_change > 0 ? '<span class="pc-arrow pc-up">▲</span>' : (p.cost_change < 0 ? '<span class="pc-arrow pc-down">▼</span>' : '');
+
+            document.getElementById('modalTeam').innerHTML = `${p.team} • <span style="font-weight:700">£${p.price}m</span>${pc} <span class="t-net ${netClass}" style="margin-left:8px; font-size:0.8rem;">${net >= 0 ? '+' : ''}${netStr}</span>`;
+            
             document.getElementById('modalForm').innerText = p.form;
             document.getElementById('modalSel').innerText = `${p.sel}%`;
             document.getElementById('modalPts').innerText = p.event_points;
