@@ -1753,9 +1753,15 @@
             
             // 2. Bench Boost (Bench has easy games)
             if (!used.includes('bboost') && !rec) {
-                const benchIds = picks.filter(p => p.position > 11).map(p => p.element);
-                // Mock logic: randomly suggest if no bad fixtures
-                if (Math.random() > 0.7) rec = { chip: 'Bench Boost', gw: next5[1], reason: "Your bench has favorable fixtures this week." };
+                // Check GW+1 (next5[0]) for strong bench fixtures
+                const targetGW = next5[0]; 
+                const bench = picks.filter(p => p.position > 11);
+                const isEasy = bench.every(p => {
+                    const f = (fixMap[p.element] || [])[0]; // Next fixture
+                    return f && f.diff <= 3;
+                });
+                
+                if (isEasy) rec = { chip: 'Bench Boost', gw: targetGW, reason: "All 4 bench players have favorable fixtures (Diff <= 3)." };
             }
 
             return rec;
@@ -1822,7 +1828,7 @@
 
         show: (viewId) => {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            ['welcomeView', 'loadingView', 'dashboardView', 'transfersView'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['welcomeView', 'loadingView', 'dashboardView', 'transfersView', 'plannerView'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById(viewId).classList.remove('hidden');
         },
 
