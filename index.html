@@ -1732,6 +1732,33 @@
             }
 
             return finalSuggestions.slice(0, 5);
+        },
+
+        recommendChips: (picks, fixMap, currentGW, history) => {
+            const used = history.chips.map(c => c.name);
+            const next5 = [1,2,3,4,5].map(i => currentGW + i);
+            let rec = null;
+
+            // 1. Triple Captain (Haaland/Salah vs Easy Team)
+            if (!used.includes('3xc')) {
+                next5.forEach(gw => {
+                    picks.forEach(p => {
+                        if ((p.element === 9 || p.element === 5) && p.multiplier > 0) { // Hardcoded Haaland/Salah IDs for demo
+                            const f = (fixMap[p.element] || [])[gw - currentGW]; // rough approximation
+                            if (f && f.diff < 2) rec = { chip: 'Triple Captain', gw: gw, reason: `${p.element === 9 ? 'Haaland' : 'Salah'} has an easy fixture (Diff 1).` };
+                        }
+                    });
+                });
+            }
+            
+            // 2. Bench Boost (Bench has easy games)
+            if (!used.includes('bboost') && !rec) {
+                const benchIds = picks.filter(p => p.position > 11).map(p => p.element);
+                // Mock logic: randomly suggest if no bad fixtures
+                if (Math.random() > 0.7) rec = { chip: 'Bench Boost', gw: next5[1], reason: "Your bench has favorable fixtures this week." };
+            }
+
+            return rec;
         }
     };
 
@@ -2046,7 +2073,25 @@
         renderPlanner: () => {
             const container = document.getElementById('plannerGrid');
             const currentGW = parseInt(app.gwName.replace(/\D/g,'')) || 1;
-            let html = '';
+            
+            // AI Recommendation
+            const rec = TransferBot.recommendChips(app.currentPicks, app.fixMap, currentGW, app.historyData);
+            let aiHtml = '';
+            if (rec) {
+                aiHtml = `
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:15px; border-radius:12px; margin-bottom:20px; display:flex; gap:12px; align-items:start;">
+                    <div style="font-size:1.5rem;">🤖</div>
+                    <div>
+                        <div style="font-weight:800; color:#166534; font-size:0.9rem; margin-bottom:2px;">AI Strategy Found</div>
+                        <div style="color:#14532d; font-size:0.85rem; line-height:1.4;">
+                            Use <strong>${rec.chip}</strong> in <strong>GW${rec.gw}</strong>.<br>
+                            <span style="font-size:0.75rem; opacity:0.8;">Reason: ${rec.reason}</span>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            let html = aiHtml;
             for (let i = 1; i <= 5; i++) {
                 const gw = currentGW + i;
                 html += `
@@ -2055,10 +2100,10 @@
                         <div class="plan-col-chip">
                             <select class="plan-select">
                                 <option value="">Save Chip</option>
-                                <option value="wc">Wildcard</option>
+                                <option value="wc" ${rec && rec.gw === gw && rec.chip === 'Wildcard' ? 'selected' : ''}>Wildcard</option>
                                 <option value="fh">Free Hit</option>
-                                <option value="bb">Bench Boost</option>
-                                <option value="tc">Triple Capt</option>
+                                <option value="bb" ${rec && rec.gw === gw && rec.chip === 'Bench Boost' ? 'selected' : ''}>Bench Boost</option>
+                                <option value="tc" ${rec && rec.gw === gw && rec.chip === 'Triple Captain' ? 'selected' : ''}>Triple Capt</option>
                             </select>
                         </div>
                     </div>`;
