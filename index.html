@@ -1343,6 +1343,12 @@
         }
         .l-btn-cancel { background: #f3f4f6; color: #374151; }
         .l-btn-confirm { background: #ef4444; color: white; }
+
+        /* Chip Planner */
+        .plan-row { display: flex; align-items: center; padding: 15px; background: white; border-bottom: 1px solid var(--border); }
+        .plan-col-gw { font-weight: 800; width: 60px; color: var(--primary); font-size: 0.9rem; }
+        .plan-col-chip { margin-left: auto; }
+        .plan-select { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-weight: 700; color: #4b5563; background: #fff; }
     </style>
 </head>
 
@@ -1417,6 +1423,9 @@
             </div>
             <div id="nav-transfers" class="menu-item" onclick="switchTool('transfers')">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i> Suggestions
+            </div>
+            <div id="nav-planner" class="menu-item" onclick="switchTool('planner')">
+                <i class="fa-regular fa-calendar-check"></i> Chip Planner
             </div>
         </div>
         <div class="menu-footer">
@@ -1540,6 +1549,15 @@
                         <h2>Transfer Hub</h2>
                         <p>Loading market data...</p>
                     </div>
+                </div>
+            </div>
+
+            <div id="plannerView" class="hidden">
+                <div class="welcome-card" style="padding:20px;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🗓️</div>
+                    <h2 style="margin-bottom:5px;">Chip Strategy</h2>
+                    <p style="color:var(--text-sub); margin-bottom:20px; font-size:0.9rem;">Plan your chips for the next 5 weeks.</p>
+                    <div id="plannerGrid" style="border:1px solid var(--border); border-radius:12px; overflow:hidden; text-align:left;"></div>
                 </div>
             </div>
         </div>
@@ -1800,12 +1818,13 @@
                 app.simNewIds = [];
                 const banner = document.querySelector('.sim-banner');
                 if (banner) banner.remove();
+                if (Object.keys(app.playersCache).length > 0) app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
+                else app.load(localStorage.getItem('fpl_id_final'));
 
-                if (Object.keys(app.playersCache).length > 0) {
-                    app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
-                } else {
-                    app.load(localStorage.getItem('fpl_id_final'));
-                }
+            } else if (t === 'planner') {
+                app.show('plannerView');
+                app.renderPlanner();
+
             } else {
                 // --- FIXED AUTO-RELOAD LOGIC ---
                 app.show('transfersView');
@@ -1813,6 +1832,7 @@
                 // Clear UI to force a visual "Reload" effect
                 document.querySelector('.search-input').value = '';
                 document.getElementById('scoutResults').style.display = 'none';
+                // ... (rest of transfer logic remains below) ...
                 document.getElementById('transferContent').style.display = 'block';
 
                 app.ftCount = app.calcFreeTransfers();
@@ -2021,6 +2041,29 @@
                 });
             }
             resultsContainer.innerHTML = html;
+        },
+        
+        renderPlanner: () => {
+            const container = document.getElementById('plannerGrid');
+            const currentGW = parseInt(app.gwName.replace(/\D/g,'')) || 1;
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                const gw = currentGW + i;
+                html += `
+                    <div class="plan-row">
+                        <div class="plan-col-gw">GW${gw}</div>
+                        <div class="plan-col-chip">
+                            <select class="plan-select">
+                                <option value="">Save Chip</option>
+                                <option value="wc">Wildcard</option>
+                                <option value="fh">Free Hit</option>
+                                <option value="bb">Bench Boost</option>
+                                <option value="tc">Triple Capt</option>
+                            </select>
+                        </div>
+                    </div>`;
+            }
+            container.innerHTML = html;
         },
 
         toggleView: (mode) => {
