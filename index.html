@@ -680,7 +680,7 @@
 
                         if(parseFloat(totalDiff) > move1.diff + 1.0) { 
                             bestDouble = { 
-                                type: `Double Move`, hit: hitCost, 
+                                type: `Double Move (-${hitCost})`, 
                                 out: [sell1, sell2], in: [buy1, buy2], 
                                 diff: parseFloat(totalDiff),
                                 bankAfter: (budget2 - buy2.price)
@@ -708,12 +708,12 @@
                     if(buy3Obj) {
                         const buy3 = buy3Obj.p;
                         const diff3 = buy3Obj.score - sell3Obj.score;
-                        const extraHit = ftCount >= 3 ? 0 : (ftCount === 2 ? 4 : 8); 
-                        const totalDiff3 = (move2.diff + diff3 - (extraHit - move2.hit)).toFixed(1);
+                        const extraHit = ftCount >= 3 ? 0 : 4; 
+                        const totalDiff3 = (move2.diff + diff3 - extraHit).toFixed(1);
 
                         if(parseFloat(totalDiff3) > move2.diff + 2.0) {
                             finalSuggestions.push({
-                                type: `Triple Move`, hit: extraHit, 
+                                type: `Triple Move (-${(ftCount>=3?0:4) + (ftCount>=2?0:4)})`, 
                                 out: [move2.out[0], move2.out[1], sell3],
                                 in: [move2.in[0], move2.in[1], buy3],
                                 diff: parseFloat(totalDiff3)
