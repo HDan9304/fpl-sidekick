@@ -1806,7 +1806,7 @@
                 if (p.is_captain) cur = { name: pl.name, score };
                 if (score > max) { max = score; best = { name: pl.name, score }; }
             });
-            return (cur && best && best.name !== cur.name && (best.score - cur.score) > 2.0) ? { best, cur } : null;
+            return (cur && best) ? { best, cur } : null;
         }
     };
 
@@ -2448,11 +2448,21 @@
             const capRec = TransferBot.analyzeCaptaincy(picks, players, fixMap);
             const capDiv = document.getElementById('capRecommendation');
             if (capRec) {
-                capDiv.innerHTML = `<div style="background:#fffbeb; border:1px solid #fcd34d; padding:12px; border-radius:12px; margin-bottom:20px; display:flex; align-items:center; gap:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
-                    <div style="font-size:1.8rem; color:#d97706;"><i class="fa-solid fa-copyright"></i></div>
+                const isSwitch = capRec.best.name !== capRec.cur.name && (capRec.best.score - capRec.cur.score) > 0.5;
+                const bg = isSwitch ? '#fffbeb' : '#f0fdf4';
+                const border = isSwitch ? '#fcd34d' : '#bbf7d0';
+                const iconColor = isSwitch ? '#d97706' : '#16a34a';
+                const titleColor = isSwitch ? '#b45309' : '#166534';
+                const title = isSwitch ? 'Captaincy Alert' : 'Captain Active';
+                const msg = isSwitch 
+                    ? `Switch <strong>${capRec.cur.name}</strong> <i class="fa-solid fa-arrow-right" style="font-size:0.7rem; margin:0 4px; opacity:0.6;"></i> <strong>${capRec.best.name}</strong>`
+                    : `Great choice! <strong>${capRec.cur.name}</strong> is the best option this week.`;
+
+                capDiv.innerHTML = `<div style="background:${bg}; border:1px solid ${border}; padding:12px; border-radius:12px; margin-bottom:20px; display:flex; align-items:center; gap:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="font-size:1.8rem; color:${iconColor};"><i class="fa-solid fa-copyright"></i></div>
                     <div>
-                        <div style="font-size:0.75rem; font-weight:700; color:#b45309; text-transform:uppercase; letter-spacing:0.5px;">Captaincy Alert</div>
-                        <div style="font-size:0.9rem; font-weight:600; color:#78350f;">Switch <strong>${capRec.cur.name}</strong> <i class="fa-solid fa-arrow-right" style="font-size:0.7rem; margin:0 4px; opacity:0.6;"></i> <strong>${capRec.best.name}</strong></div>
+                        <div style="font-size:0.75rem; font-weight:700; color:${titleColor}; text-transform:uppercase; letter-spacing:0.5px;">${title}</div>
+                        <div style="font-size:0.9rem; font-weight:600; color:${isSwitch ? '#78350f' : '#14532d'};">${msg}</div>
                     </div>
                 </div>`;
             } else {
