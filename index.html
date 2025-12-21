@@ -803,8 +803,6 @@
                 }
             } else {
                 app.show('transfersView');
-                
-                // Clear UI to force a visual "Reload" effect
                 document.querySelector('.search-input').value = '';
                 document.getElementById('scoutResults').style.display = 'none';
                 document.getElementById('transferContent').style.display = 'block';
@@ -817,13 +815,12 @@
                         <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
                         <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Free Transfers: <span style="color:${app.ftCount === 5 ? 'var(--primary)' : '#00ff85'}; font-weight:800;">${app.ftCount}</span></div>
                     </div>
-                    <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Finding Best Move...</p></div>
+                    <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Analysing Market...</p></div>
                 `;
                 
                 const container = document.getElementById('transferContent');
                 container.innerHTML = headerHtml;
 
-                // WRAPPED IN TRY/CATCH TO PREVENT INFINITE SPINNER
                 setTimeout(() => {
                     try {
                         if (!app.currentPicks || app.currentPicks.length === 0 || Object.keys(app.playersCache).length === 0) {
@@ -852,9 +849,27 @@
                                     return;
                                 }
 
+                                // --- BUDGET CALCULATION (Added Feature) ---
+                                const sellSum = s.out.reduce((sum, p) => sum + p.price, 0);
+                                const buySum = s.in.reduce((sum, p) => sum + p.price, 0);
+                                const remBank = (app.currentBank + sellSum - buySum).toFixed(1);
+                                const bankColor = remBank >= 0 ? 'var(--text-sub)' : '#ef4444';
+
                                 const outIds = JSON.stringify(s.out.map(p => p.id));
                                 const inIds = JSON.stringify(s.in.map(p => p.id));
-                                html += `<div class="${cardClass}"><div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">${badge}<div style="width:100%; display:flex; justify-content:space-between; align-items:center;"><div class="t-type">${s.type}</div><div class="t-gain">+${s.diff} pts</div></div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                                
+                                html += `<div class="${cardClass}">
+                                    <div class="t-header">
+                                        ${badge}
+                                        <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                                            <div style="display:flex; flex-direction:column;">
+                                                <div class="t-type">${s.type}</div>
+                                                <div style="font-size:0.65rem; color:${bankColor}; font-weight:600;">Bank: £${remBank}m</div>
+                                            </div>
+                                            <div class="t-gain">+${s.diff} pts</div>
+                                        </div>
+                                    </div>
+                                    <div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
                                 s.out.forEach(p => {
                                     const fixtures = app.fixMap[p.team_id] || [];
                                     let dots = '<div class="t-fdr">';
@@ -884,11 +899,55 @@
                         
                         container.innerHTML = html;
                     } catch (err) {
-                        console.error("Transfer Error", err);
+                        console.error(err);
                         container.innerHTML = `<div class="welcome-card" style="color:#ef4444;"><p>Analysis unavailable. Check connection.</p><button class="btn" style="margin-top:10px" onclick="app.load()">Reload Data</button></div>`;
                     }
                 }, 100); 
             }
+        },
+
+        filterPos: (posId, btnElement) => {
+            document.querySelectorAll('.filter-pill').forEach(el => el.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            const resultsContainer = document.getElementById('scoutResults');
+            const mainContent = document.getElementById('transferContent');
+            mainContent.style.display = 'none';
+            resultsContainer.style.display = 'block';
+
+            const players = Object.values(app.playersCache);
+            const matches = players.filter(p => p.pos == posId && p.status === 'a');
+            matches.sort((a,b) => parseFloat(b.form) - parseFloat(a.form));
+            const top20 = matches.slice(0, 20);
+
+            let html = '';
+            if(top20.length === 0) {
+                html = '<div style="text-align:center; padding:20px; color:#888">No players found.</div>';
+            } else {
+                top20.forEach(p => {
+                    const fixtures = app.fixMap[p.team_id] || [];
+                    let dots = '<div class="t-fdr" style="margin-top:4px;">';
+                    fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
+                    dots += '</div>';
+
+                    html += `
+                        <div class="scout-item" onclick="app.openModal(${p.id})">
+                            <div class="scout-left">
+                                <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;">
+                                <div class="scout-info">
+                                    <div>${p.name}</div>
+                                    <div>${p.team} • ${p.form} Form</div>
+                                </div>
+                            </div>
+                            <div class="scout-right">
+                                <div class="scout-price">£${p.price}m</div>
+                                ${dots}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            resultsContainer.innerHTML = html;
         },
 
         filterByTeam: (teamName) => {
@@ -898,6 +957,7 @@
         },
 
         searchScout: (query) => {
+            document.querySelectorAll('.filter-pill').forEach(el => el.classList.remove('active'));
             const resultsContainer = document.getElementById('scoutResults');
             const mainContent = document.getElementById('transferContent');
             if (!query || query.length < 2) {
@@ -976,7 +1036,6 @@
 
             try {
                 document.getElementById('loadingMsg').innerText = "Connecting...";
-                
                 const staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
                 const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
                 app.userData = user;
@@ -1000,7 +1059,7 @@
                     liveMap[el.id] = { points: el.stats.total_points, mins: el.stats.minutes, goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, own_goals: el.stats.own_goals };
                 });
 
-                // Fetch 3 fixtures in parallel because it's safe
+                // Fetch 3 fixtures
                 const fixReqs = [gw, gw + 1, gw + 2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
                 const [fix1, fix2, fix3] = await Promise.all(fixReqs);
                 
@@ -1008,19 +1067,14 @@
                 staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
                 app.teams = teamShort;
 
-                // --- MATCH STATUS MAP ---
+                // Status Map
                 const statusMap = {};
                 if(fix1) {
                     fix1.forEach(f => {
                         let status = 'FIX';
                         let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        if (f.finished || f.finished_provisional) { 
-                            status = 'FT'; 
-                            label = 'FT'; 
-                        } else if (f.started) { 
-                            status = 'LIVE'; 
-                            label = 'LIVE'; 
-                        }
+                        if (f.finished || f.finished_provisional) { status = 'FT'; label = 'FT'; } 
+                        else if (f.started) { status = 'LIVE'; label = 'LIVE'; }
                         statusMap[f.team_h] = { status, label, id: f.id };
                         statusMap[f.team_a] = { status, label, id: f.id };
                     });
