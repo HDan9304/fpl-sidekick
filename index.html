@@ -1732,7 +1732,7 @@
                 finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
             }
 
-            return finalSuggestions.slice(0, 3);
+            return finalSuggestions.slice(0, 5);
         }
     };
 
@@ -1893,7 +1893,12 @@
                                 const inIds = JSON.stringify(s.in.map(p => p.id));
                                 const bankRem = (app.currentBank + s.out.reduce((a,b)=>a+b.price,0) - s.in.reduce((a,b)=>a+b.price,0)).toFixed(1);
                                 
-                                html += `<div class="${cardClass}"><div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">${badge}<div style="width:100%; display:flex; justify-content:space-between; align-items:center;"><div style="display:flex; align-items:center; gap:8px;"><div class="t-type">${s.type}</div><div class="t-bank-tag">£${bankRem}m</div></div><div class="t-gain">+${s.diff} pts</div></div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                                let verdict = '';
+                                if (s.type.includes('(-') && s.diff > 6) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#16a34a; background:#dcfce7; padding:2px 6px; border-radius:4px; margin-left:4px;">💎 Worth Hit</span>';
+                                else if (!s.type.includes('(-') && app.ftCount > 1) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#2563eb; background:#dbeafe; padding:2px 6px; border-radius:4px; margin-left:4px;">✨ Use FT</span>';
+                                else if (s.diff > 8) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#d97706; background:#fef3c7; padding:2px 6px; border-radius:4px; margin-left:4px;">🔥 Hot</span>';
+
+                                html += `<div class="${cardClass}"><div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">${badge}<div style="width:100%; display:flex; justify-content:space-between; align-items:center;"><div style="display:flex; align-items:center; gap:8px;"><div class="t-type">${s.type}${verdict}</div><div class="t-bank-tag">£${bankRem}m</div></div><div class="t-gain">+${s.diff} pts</div></div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
                                 s.out.forEach(p => {
                                     const fixtures = app.fixMap[p.team_id] || [];
                                     let dots = '<div class="t-fdr">';
