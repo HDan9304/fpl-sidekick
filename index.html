@@ -605,14 +605,14 @@
                 { element: 13, position: 13, multiplier: 1 }, { element: 14, position: 14, multiplier: 1 }, { element: 15, position: 15, multiplier: 1 }
             ],
             players: {
-                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock - 75% chance of playing", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 },
+                9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 },
                 5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40, form: 7.0, transfers_in: 30000, total_points: 140, ict_index: 280 },
                 1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', form: 3.5, transfers_in: 1000, total_points: 50, ict_index: 20 }
             },
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
-        // --- GOD MODE TRANSFER BOT ---
+        // --- OPTIMIZED GOD MODE BOT ---
         const TransferBot = {
             preCalcTeamData: (fixMap) => {
                 const data = {};
@@ -620,25 +620,23 @@
                     let sum = 0;
                     const limit = Math.min(fixList.length, 3);
                     for(let i=0; i<limit; i++) sum += fixList[i].diff;
-                    data[tid] = {
-                        avg: limit > 0 ? sum/limit : 3,
-                        nextHome: fixList[0] ? fixList[0].is_home : false
-                    };
+                    data[tid] = { avg: limit > 0 ? sum/limit : 3, nextHome: fixList[0] ? fixList[0].is_home : false };
                 }
                 return data;
             },
 
             getScore: (p, teamData) => {
                 const t = teamData[p.team_id] || { avg: 3, nextHome: false };
+                // Parsing floats is fast, but let's be safe
                 const form = parseFloat(p.form) || 0;
-                const ict = parseFloat(p.ict_index) || 0;
                 
-                // GOD MODE FORMULA
-                let score = (form * 5) + (ict * 0.16) + (20 - (t.avg * 4));
+                // GOD MODE FORMULA (Simplified for speed)
+                // (Form * 5) + (Fixture Bonus)
+                let score = (form * 5) + (20 - (t.avg * 4));
 
-                if (p.status !== 'a' && p.chance < 75) score -= 200;
-                if (p.pos === 1) score *= 0.85;
-                if (t.nextHome) score += 2;
+                if (p.status !== 'a' && p.chance < 75) score -= 200; 
+                if (p.pos === 1) score *= 0.85; 
+                if (t.nextHome) score += 2; 
 
                 return score;
             },
@@ -647,25 +645,37 @@
                 let singleMoves = [];
                 let finalSuggestions = [];
 
+                // 1. Pre-calc
                 const teamStats = TransferBot.preCalcTeamData(fixtures);
 
+                // 2. Score Squad
                 const squadScores = myPicks.map(pick => {
                     const p = allPlayers[pick.element];
                     if(!p || p.pos === 1) return null;
                     return { p: p, score: TransferBot.getScore(p, teamStats) };
                 }).filter(x => x).sort((a,b) => a.score - b.score);
 
-                const marketScores = Object.values(allPlayers)
-                    .filter(p => p.status === 'a' && p.pos > 1)
-                    .map(p => ({ p: p, score: TransferBot.getScore(p, teamStats) }))
-                    .sort((a,b) => b.score - a.score).slice(0, 60);
+                // 3. Score Market (HEAVY OPTIMIZATION HERE)
+                // Only consider players who are active, outfield, AND have some form
+                const players = Object.values(allPlayers);
+                const marketScores = [];
+                for(let i=0; i<players.length; i++) {
+                    const p = players[i];
+                    // Skip players with low form to reduce sorting load
+                    if(p.status === 'a' && p.pos > 1 && parseFloat(p.form) > 0.5) {
+                        marketScores.push({ p: p, score: TransferBot.getScore(p, teamStats) });
+                    }
+                }
+                // Sort best first, take top 40 only
+                marketScores.sort((a,b) => b.score - a.score);
+                const topMarket = marketScores.slice(0, 40); 
 
-                // 1. Find Single Moves
+                // 4. Find Single Moves
                 for(let i=0; i<Math.min(5, squadScores.length); i++) {
                     const sell = squadScores[i];
                     const maxBudget = bank + sell.p.price;
-                    for(let j=0; j<marketScores.length; j++) {
-                        const buy = marketScores[j];
+                    for(let j=0; j<topMarket.length; j++) {
+                        const buy = topMarket[j];
                         if(buy.p.pos !== sell.p.pos) continue; 
                         if(buy.p.price > maxBudget) continue; 
                         if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
@@ -673,15 +683,14 @@
                         const diff = (buy.score - sell.score).toFixed(1);
                         if(parseFloat(diff) > 5.0) { 
                             singleMoves.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff) });
-                            break; 
+                            break; // Stop looking for this player once we found a good swap
                         }
                     }
                 }
                 
                 finalSuggestions.push(...singleMoves);
 
-                // 2. Find Double Moves
-                let doubleMove = null;
+                // 5. Find Double Moves (Simple Check)
                 if(singleMoves.length > 0) {
                     const bestMove = singleMoves.sort((a,b) => b.diff - a.diff)[0];
                     const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
@@ -689,74 +698,29 @@
                     
                     if(secondSell) {
                         const budget2 = newBank + secondSell.p.price;
-                        const secondBuy = marketScores.find(m => m.p.id !== bestMove.in[0].id && !myPicks.some(pick => pick.element === m.p.id) && m.p.pos === secondSell.p.pos && m.p.price <= budget2);
-                        
+                        const secondBuy = topMarket.find(m => m.p.id !== bestMove.in[0].id && !myPicks.some(pick => pick.element === m.p.id) && m.p.pos === secondSell.p.pos && m.p.price <= budget2);
                         if(secondBuy) {
                             const diff2 = secondBuy.score - secondSell.score;
-                            // Hit Logic: If FT >= 2, Double is free. Else -4.
                             const hitCost = ftCount >= 2 ? 0 : 4;
                             const totalDiff = (bestMove.diff + diff2 - hitCost).toFixed(1);
                             
                             if (parseFloat(totalDiff) > 1.0) {
-                                doubleMove = { 
+                                finalSuggestions.push({ 
                                     type: `Double Move (-${hitCost})`, 
                                     out: [bestMove.out[0], secondSell.p], 
                                     in: [bestMove.in[0], secondBuy.p], 
-                                    diff: parseFloat(totalDiff),
-                                    bankAfter: (budget2 - secondBuy.p.price)
-                                };
-                                finalSuggestions.push(doubleMove);
-                            }
-                        }
-                    }
-                }
-
-                // 3. Find Triple Moves (NEW - Only if user has 3+ FTs or is daring)
-                // We assume user wants a triple move if they have 3 FTs, or 2 FTs (taking a -4 hit for a huge gain)
-                if (doubleMove && ftCount >= 2) {
-                    const move2 = doubleMove;
-                    const currentBank = move2.bankAfter;
-                    
-                    // Find 3rd worst player (who isn't in the first 2 sales)
-                    const thirdSell = squadScores.find(s => s.p.id !== move2.out[0].id && s.p.id !== move2.out[1].id);
-                    
-                    if (thirdSell) {
-                        const budget3 = currentBank + thirdSell.p.price;
-                        const thirdBuy = marketScores.find(m => 
-                            m.p.id !== move2.in[0].id && 
-                            m.p.id !== move2.in[1].id &&
-                            !myPicks.some(pick => pick.element === m.p.id) && 
-                            m.p.pos === thirdSell.p.pos && 
-                            m.p.price <= budget3
-                        );
-
-                        if (thirdBuy) {
-                            const diff3 = thirdBuy.score - thirdSell.score;
-                            // Logic: If FT=3, cost 0. If FT=2, cost -4.
-                            const hitCost3 = ftCount >= 3 ? 0 : 4;
-                            
-                            // Note: doubleMove.diff already accounts for the first hit cost. 
-                            // We just add the marginal diff of the 3rd player and subtract marginal hit cost.
-                            const totalDiff3 = (move2.diff + diff3 - hitCost3).toFixed(1);
-
-                            if (parseFloat(totalDiff3) > move2.diff + 2.0) { // Only suggest if better than double
-                                finalSuggestions.push({
-                                    type: `Triple Move (-${(ftCount >= 3 ? 0 : 4) + (ftCount >= 2 ? 0 : 4)})`, // Approximate label
-                                    out: [move2.out[0], move2.out[1], thirdSell.p],
-                                    in: [move2.in[0], move2.in[1], thirdBuy.p],
-                                    diff: parseFloat(totalDiff3)
+                                    diff: parseFloat(totalDiff) 
                                 });
                             }
                         }
                     }
                 }
 
-                // 4. SORT & ROLL LOGIC
+                // 6. Sort & Roll Logic
                 finalSuggestions.sort((a, b) => b.diff - a.diff);
 
                 const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
-                // If FT < 5, and best move is weak, suggest rolling.
-                if (ftCount < 5 && bestDiff < 8.0) {
+                if (ftCount < 5 && bestDiff < 10.0) {
                     finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
                 }
 
@@ -767,6 +731,7 @@
         const MarketBot = {
             getTrends: (allPlayers) => {
                 const players = Object.values(allPlayers);
+                // Optimized sort: Only grabbing top 5
                 const movers = [...players].sort((a, b) => b.transfers_in - a.transfers_in).slice(0, 5);
                 return { movers };
             }
@@ -855,6 +820,7 @@
                     }
                 } else {
                     app.show('transfersView');
+                    
                     document.querySelector('.search-input').value = '';
                     document.getElementById('scoutResults').style.display = 'none';
                     document.getElementById('transferContent').style.display = 'block';
@@ -956,7 +922,7 @@
                         });
                         html += `</div><div style="height:40px;"></div>`;
                         container.innerHTML = html;
-                    }, 100);
+                    }, 50); // Fast Timeout
                 }
             },
 
@@ -1274,7 +1240,7 @@
                 }
                 
                 if (app.currentTool === 'transfers' && !app.isSimulating) {
-                    app.switchTool('transfers', true); // True = Suppress menu toggle
+                    app.switchTool('transfers', true);
                 } else {
                     app.show('dashboardView');
                 }
