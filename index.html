@@ -2079,7 +2079,7 @@
             app.render(app.userData, finalPicks, app.playersCache, app.fixMap, app.statusMap || {}, simStats, app.historyData, app.deadline, app.gwName);
             
             // Redirect Reset to Transfers
-            const bannerHtml = `<div class="sim-banner"><div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div><div class="sim-btn" onclick="app.switchTool('transfers')">Reset</div></div>`;
+            const bannerHtml = `<div class="sim-banner"><div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div><div class="sim-btn" onclick="app.switchTool('transfers', true)">Reset</div></div>`;
             const dash = document.getElementById('dashboardView');
             const existingBanner = dash.querySelector('.sim-banner');
             if (existingBanner) existingBanner.remove();
