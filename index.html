@@ -595,10 +595,26 @@
     // 1. DATA & HELPERS
     // =========================================
     
-    const MOCK_DATA = { /* ... (Keep existing mock data) ... */ };
+    const MOCK_DATA = {
+        user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
+        bank: 5, value: 1024,
+        picks: [
+            { element: 1, position: 1, multiplier: 1 }, { element: 2, position: 2, multiplier: 1 }, { element: 3, position: 3, multiplier: 1 }, { element: 4, position: 4, multiplier: 1 }, 
+            { element: 5, position: 5, is_vice_captain: true, multiplier: 1 }, { element: 6, position: 6, multiplier: 1 }, { element: 7, position: 7, multiplier: 1 }, { element: 8, position: 8, multiplier: 1 }, 
+            { element: 9, position: 9, is_captain: true, multiplier: 2 }, { element: 10, position: 10, multiplier: 1 }, { element: 11, position: 11, multiplier: 1 }, { element: 12, position: 12, multiplier: 1 }, 
+            { element: 13, position: 13, multiplier: 1 }, { element: 14, position: 14, multiplier: 1 }, { element: 15, position: 15, multiplier: 1 }
+        ],
+        players: {
+            9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 },
+            5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40, form: 7.0, transfers_in: 30000, total_points: 140, ict_index: 280 },
+            1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', form: 3.5, transfers_in: 1000, total_points: 50, ict_index: 20 }
+        },
+        fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
+    };
 
-    // --- GOD MODE TRANSFER BOT (Dynamic Chain) ---
+    // --- GOD MODE TRANSFER BOT (HARD CODED & FAST) ---
     const TransferBot = {
+        // 1. Pre-calculate team data (Runs once)
         preCalcTeamData: (fixMap) => {
             const data = {};
             for (const [tid, fixList] of Object.entries(fixMap)) {
@@ -610,6 +626,7 @@
             return data;
         },
 
+        // 2. God Mode Scoring
         getScore: (p, teamData) => {
             const t = teamData[p.team_id] || { avg: 3, nextHome: false };
             const form = parseFloat(p.form) || 0;
@@ -626,114 +643,146 @@
         },
 
         analyze: (myPicks, allPlayers, bank, fixtures, ftCount) => {
-            const finalSuggestions = [];
+            let singleMoves = [];
+            let finalSuggestions = [];
+
+            // A. Prepare Data
             const teamStats = TransferBot.preCalcTeamData(fixtures);
 
-            // 1. Prepare Market (Top 40 active players)
+            // B. Score Squad
+            const squadScores = myPicks.map(pick => {
+                const p = allPlayers[pick.element];
+                if(!p || p.pos === 1) return null; // Skip GK
+                return { p: p, score: TransferBot.getScore(p, teamStats) };
+            }).filter(x => x).sort((a,b) => a.score - b.score); // Worst first
+
+            // C. Score Market (LIMIT TO TOP 40 FOR SPEED)
             const marketScores = Object.values(allPlayers)
                 .filter(p => p.status === 'a' && p.pos > 1 && parseFloat(p.form) > 0.5)
                 .map(p => ({ p: p, score: TransferBot.getScore(p, teamStats) }))
                 .sort((a,b) => b.score - a.score)
-                .slice(0, 40);
+                .slice(0, 40); // Hard limit to ensure instant load
 
-            // 2. Prepare Simulation Variables
-            // We clone the picks so we can simulate swaps sequentially
-            let currentSquad = myPicks.map(pick => {
-                const p = allPlayers[pick.element];
-                return p ? { ...p, score: TransferBot.getScore(p, teamStats) } : null;
-            }).filter(x => x && x.pos !== 1); // Exclude GKs from analysis
-            
-            let currentBank = bank;
-            let currentOut = [];
-            let currentIn = [];
-            let accumulatedDiff = 0;
+            // ------------------------------------------
+            // 1. HARD CODED: SINGLE MOVES
+            // ------------------------------------------
+            for(let i=0; i<Math.min(5, squadScores.length); i++) {
+                const sell = squadScores[i];
+                const maxBudget = bank + sell.p.price;
+                for(let j=0; j<marketScores.length; j++) {
+                    const buy = marketScores[j];
+                    if(buy.p.pos !== sell.p.pos) continue; 
+                    if(buy.p.price > maxBudget) continue; 
+                    if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
 
-            // 3. DYNAMIC LOOP (Up to 5 moves)
-            // We loop up to 5 times. Each time we find the BEST single swap for the CURRENT squad state.
-            const maxMoves = 5; 
+                    const diff = (buy.score - sell.score).toFixed(1);
+                    if(parseFloat(diff) > 5.0) { 
+                        singleMoves.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff) });
+                        break; 
+                    }
+                }
+            }
+            finalSuggestions.push(...singleMoves);
 
-            for(let i = 1; i <= maxMoves; i++) {
+            // ------------------------------------------
+            // 2. HARD CODED: DOUBLE MOVES
+            // ------------------------------------------
+            let bestDouble = null;
+            if(singleMoves.length > 0) {
+                // Take best single move
+                const move1 = singleMoves.sort((a,b) => b.diff - a.diff)[0]; 
+                const sell1 = move1.out[0];
+                const buy1 = move1.in[0];
+                const bankAfter1 = bank + sell1.price - buy1.price;
                 
-                // Sort squad to find current weakest link
-                currentSquad.sort((a,b) => a.score - b.score);
+                // Find next worst player
+                const sell2Obj = squadScores.find(s => s.p.id !== sell1.id);
                 
-                let bestSwap = null;
-                let bestDiff = -999;
+                if(sell2Obj) {
+                    const sell2 = sell2Obj.p;
+                    const budget2 = bankAfter1 + sell2.price;
+                    
+                    const buy2Obj = marketScores.find(m => 
+                        m.p.id !== buy1.id && 
+                        !myPicks.some(pick => pick.element === m.p.id) && 
+                        m.p.pos === sell2.pos && 
+                        m.p.price <= budget2
+                    );
 
-                // Find best swap for the worst 5 players in current squad
-                for(let k=0; k<Math.min(5, currentSquad.length); k++) {
-                    const sell = currentSquad[k];
-                    const maxBudget = currentBank + sell.price;
+                    if(buy2Obj) {
+                        const buy2 = buy2Obj.p;
+                        const diff2 = buy2Obj.score - sell2Obj.score;
+                        const hitCost = ftCount >= 2 ? 0 : 4;
+                        const totalDiff = (move1.diff + diff2 - hitCost).toFixed(1);
 
-                    for(let m=0; m<marketScores.length; m++) {
-                        const buy = marketScores[m].p;
-                        const buyScore = marketScores[m].score;
-                        
-                        // Validations
-                        if(buy.pos !== sell.pos) continue;
-                        if(buy.price > maxBudget) continue;
-                        // Don't buy someone we already own or just bought
-                        if(currentSquad.some(p => p.id === buy.id)) continue; 
-                        if(currentIn.some(p => p.id === buy.id)) continue;
-
-                        const diff = buyScore - sell.score;
-                        if(diff > bestDiff) {
-                            bestDiff = diff;
-                            bestSwap = { sell, buy, diff };
+                        if(parseFloat(totalDiff) > move1.diff + 1.0) { 
+                            bestDouble = { 
+                                type: `Double Move (-${hitCost})`, 
+                                out: [sell1, sell2], 
+                                in: [buy1, buy2], 
+                                diff: parseFloat(totalDiff),
+                                bankAfter: (budget2 - buy2.price) // Pass to step 3
+                            };
+                            finalSuggestions.push(bestDouble);
                         }
                     }
                 }
+            }
 
-                // If we found a beneficial move
-                if(bestSwap && bestSwap.diff > 1.0) {
-                    // Update Simulation State
-                    currentOut.push(bestSwap.sell);
-                    currentIn.push(bestSwap.buy);
-                    currentBank = currentBank + bestSwap.sell.price - bestSwap.buy.price;
-                    accumulatedDiff += bestSwap.diff;
+            // ------------------------------------------
+            // 3. HARD CODED: TRIPLE MOVES (Explicit)
+            // ------------------------------------------
+            if(bestDouble && ftCount >= 2) { 
+                const move2 = bestDouble;
+                const bankAfter2 = move2.bankAfter;
 
-                    // Remove Sold player from Current Squad, Add Bought player
-                    currentSquad = currentSquad.filter(p => p.id !== bestSwap.sell.id);
-                    currentSquad.push({ ...bestSwap.buy, score: TransferBot.getScore(bestSwap.buy, teamStats) });
+                // Find 3rd worst player
+                const sell3Obj = squadScores.find(s => 
+                    s.p.id !== move2.out[0].id && 
+                    s.p.id !== move2.out[1].id
+                );
 
-                    // Calculate Hit Cost
-                    // Logic: You have 'ftCount' free. Any move beyond that costs 4.
-                    // i is current move number.
-                    const hitCost = i > ftCount ? (i - ftCount) * 4 : 0;
-                    const netScore = accumulatedDiff - hitCost;
+                if(sell3Obj) {
+                    const sell3 = sell3Obj.p;
+                    const budget3 = bankAfter2 + sell3.price;
 
-                    // VALIDATION: Is this specific combo worth showing?
-                    // We show it if:
-                    // 1. It uses available FTs (i <= ftCount)
-                    // 2. OR the point gain is massive (netScore > 8)
-                    if (i <= ftCount || netScore > 8) {
+                    const buy3Obj = marketScores.find(m => 
+                        m.p.id !== move2.in[0].id && 
+                        m.p.id !== move2.in[1].id &&
+                        !myPicks.some(pick => pick.element === m.p.id) && 
+                        m.p.pos === sell3.pos && 
+                        m.p.price <= budget3
+                    );
+
+                    if(buy3Obj) {
+                        const buy3 = buy3Obj.p;
+                        const diff3 = buy3Obj.score - sell3Obj.score;
+                        // Cost: If FT=3, extra cost=0. If FT=2, extra cost=4.
+                        const extraHit = ftCount >= 3 ? 0 : 4; 
                         
-                        // Label logic
-                        let label = i === 1 ? "Single Move" : (i === 2 ? "Double Move" : (i === 3 ? "Triple Move" : (i===4 ? "Quad Move" : "Mini Wildcard")));
-                        if(hitCost > 0) label += ` (-${hitCost})`;
+                        const totalDiff3 = (move2.diff + diff3 - extraHit).toFixed(1);
 
-                        finalSuggestions.push({
-                            type: label,
-                            out: [...currentOut], // Snapshot of array
-                            in: [...currentIn],   // Snapshot of array
-                            diff: parseFloat(netScore.toFixed(1))
-                        });
+                        if(parseFloat(totalDiff3) > move2.diff + 2.0) {
+                            finalSuggestions.push({
+                                type: `Triple Move (-${(ftCount>=3?0:4) + (ftCount>=2?0:4)})`, 
+                                out: [move2.out[0], move2.out[1], sell3],
+                                in: [move2.in[0], move2.in[1], buy3],
+                                diff: parseFloat(totalDiff3)
+                            });
+                        }
                     }
-                } else {
-                    break; // No more beneficial moves found
                 }
             }
 
-            // 4. Sort results by highest Net Score
+            // 4. Final Sort
             finalSuggestions.sort((a, b) => b.diff - a.diff);
 
-            // 5. Smart Roll Logic (Only if top move is weak)
-            const topMoveScore = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
-            if (ftCount < 5 && topMoveScore < 6.0) {
+            // 5. Smart Roll
+            const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
+            if (ftCount < 5 && bestDiff < 8.0) {
                 finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
             }
 
-            // Return top 3 suggestions (e.g., Best Single, Best Triple, Best 5-way)
             return finalSuggestions.slice(0, 3);
         }
     };
@@ -1248,7 +1297,7 @@
             }
             
             if (app.currentTool === 'transfers' && !app.isSimulating) {
-                app.switchTool('transfers', true); // True = Suppress menu toggle
+                app.switchTool('transfers', true);
             } else {
                 app.show('dashboardView');
             }
