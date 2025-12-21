@@ -1843,6 +1843,7 @@
                                     dots += '</div>';
                                     const pc = p.cost_change > 0 ? '<span class="pc-arrow pc-up">▲</span>' : (p.cost_change < 0 ? '<span class="pc-arrow pc-down">▼</span>' : '');
                                     
+                                    const net = (p.transfers_in || 0) - (p.transfers_out || 0);
                                     const netClass = net >= 0 ? 't-net-pos' : 't-net-neg';
                                     const netStr = (Math.abs(net) > 999) ? (net/1000).toFixed(1) + 'k' : net;
 
