@@ -658,7 +658,7 @@
                 const marketScores = Object.values(allPlayers)
                     .filter(p => p.status === 'a' && p.pos > 1)
                     .map(p => ({ p: p, score: TransferBot.getScore(p, teamStats) }))
-                    .sort((a,b) => b.score - a.score).slice(0, 50);
+                    .sort((a,b) => b.score - a.score).slice(0, 60);
 
                 // 1. Find Single Moves
                 for(let i=0; i<Math.min(5, squadScores.length); i++) {
@@ -678,12 +678,11 @@
                     }
                 }
                 
-                // Add singles to final list
                 finalSuggestions.push(...singleMoves);
 
                 // 2. Find Double Moves
+                let doubleMove = null;
                 if(singleMoves.length > 0) {
-                    // Try to pair the best single move with another move
                     const bestMove = singleMoves.sort((a,b) => b.diff - a.diff)[0];
                     const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
                     const secondSell = squadScores.find(s => s.p.id !== bestMove.out[0].id);
@@ -694,34 +693,73 @@
                         
                         if(secondBuy) {
                             const diff2 = secondBuy.score - secondSell.score;
+                            // Hit Logic: If FT >= 2, Double is free. Else -4.
                             const hitCost = ftCount >= 2 ? 0 : 4;
                             const totalDiff = (bestMove.diff + diff2 - hitCost).toFixed(1);
                             
-                            // Only suggest Double if gain is positive
                             if (parseFloat(totalDiff) > 1.0) {
-                                finalSuggestions.push({ 
+                                doubleMove = { 
                                     type: `Double Move (-${hitCost})`, 
                                     out: [bestMove.out[0], secondSell.p], 
                                     in: [bestMove.in[0], secondBuy.p], 
-                                    diff: parseFloat(totalDiff) 
+                                    diff: parseFloat(totalDiff),
+                                    bankAfter: (budget2 - secondBuy.p.price)
+                                };
+                                finalSuggestions.push(doubleMove);
+                            }
+                        }
+                    }
+                }
+
+                // 3. Find Triple Moves (NEW - Only if user has 3+ FTs or is daring)
+                // We assume user wants a triple move if they have 3 FTs, or 2 FTs (taking a -4 hit for a huge gain)
+                if (doubleMove && ftCount >= 2) {
+                    const move2 = doubleMove;
+                    const currentBank = move2.bankAfter;
+                    
+                    // Find 3rd worst player (who isn't in the first 2 sales)
+                    const thirdSell = squadScores.find(s => s.p.id !== move2.out[0].id && s.p.id !== move2.out[1].id);
+                    
+                    if (thirdSell) {
+                        const budget3 = currentBank + thirdSell.p.price;
+                        const thirdBuy = marketScores.find(m => 
+                            m.p.id !== move2.in[0].id && 
+                            m.p.id !== move2.in[1].id &&
+                            !myPicks.some(pick => pick.element === m.p.id) && 
+                            m.p.pos === thirdSell.p.pos && 
+                            m.p.price <= budget3
+                        );
+
+                        if (thirdBuy) {
+                            const diff3 = thirdBuy.score - thirdSell.score;
+                            // Logic: If FT=3, cost 0. If FT=2, cost -4.
+                            const hitCost3 = ftCount >= 3 ? 0 : 4;
+                            
+                            // Note: doubleMove.diff already accounts for the first hit cost. 
+                            // We just add the marginal diff of the 3rd player and subtract marginal hit cost.
+                            const totalDiff3 = (move2.diff + diff3 - hitCost3).toFixed(1);
+
+                            if (parseFloat(totalDiff3) > move2.diff + 2.0) { // Only suggest if better than double
+                                finalSuggestions.push({
+                                    type: `Triple Move (-${(ftCount >= 3 ? 0 : 4) + (ftCount >= 2 ? 0 : 4)})`, // Approximate label
+                                    out: [move2.out[0], move2.out[1], thirdSell.p],
+                                    in: [move2.in[0], move2.in[1], thirdBuy.p],
+                                    diff: parseFloat(totalDiff3)
                                 });
                             }
                         }
                     }
                 }
 
-                // 3. FIX: SORT EVERYTHING BY POINTS (DESCENDING)
-                // This ensures the Double Move appears first if it has more points
+                // 4. SORT & ROLL LOGIC
                 finalSuggestions.sort((a, b) => b.diff - a.diff);
 
-                // 4. Smart Roll Logic
-                // We check the BEST move (now at index 0). If it's weak, suggest rolling.
                 const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
-                if (ftCount < 5 && bestDiff < 10.0) {
+                // If FT < 5, and best move is weak, suggest rolling.
+                if (ftCount < 5 && bestDiff < 8.0) {
                     finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
                 }
 
-                // Return top 3 only
                 return finalSuggestions.slice(0, 3);
             }
         };
@@ -761,10 +799,8 @@
                 ];
                 for (let i = 0; i < proxies.length; i++) {
                     try {
-                        const c = new AbortController(); 
-                        const id = setTimeout(() => c.abort(), 8000); 
-                        const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); 
-                        clearTimeout(id);
+                        const c = new AbortController(); const id = setTimeout(() => c.abort(), 8000); 
+                        const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); clearTimeout(id);
                         if(r.ok) return await r.json();
                     } catch (e) {}
                 }
@@ -819,7 +855,6 @@
                     }
                 } else {
                     app.show('transfersView');
-                    
                     document.querySelector('.search-input').value = '';
                     document.getElementById('scoutResults').style.display = 'none';
                     document.getElementById('transferContent').style.display = 'block';
@@ -834,9 +869,7 @@
                         </div>
                         <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Finding Best Move...</p></div>
                     `;
-                    
-                    const container = document.getElementById('transferContent');
-                    container.innerHTML = headerHtml;
+                    document.getElementById('transferContent').innerHTML = headerHtml;
 
                     setTimeout(() => {
                         const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap, app.ftCount);
@@ -923,7 +956,7 @@
                         });
                         html += `</div><div style="height:40px;"></div>`;
                         container.innerHTML = html;
-                    }, 50); // Fast Timeout
+                    }, 100);
                 }
             },
 
