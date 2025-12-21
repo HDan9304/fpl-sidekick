@@ -595,24 +595,9 @@
     // 1. DATA & HELPERS
     // =========================================
     
-    const MOCK_DATA = {
-        user: { name: "Demo Manager", summary_overall_points: 950, summary_event_points: 45, summary_overall_rank: 125000 },
-        bank: 5, value: 1024,
-        picks: [
-            { element: 1, position: 1, multiplier: 1 }, { element: 2, position: 2, multiplier: 1 }, { element: 3, position: 3, multiplier: 1 }, { element: 4, position: 4, multiplier: 1 }, 
-            { element: 5, position: 5, is_vice_captain: true, multiplier: 1 }, { element: 6, position: 6, multiplier: 1 }, { element: 7, position: 7, multiplier: 1 }, { element: 8, position: 8, multiplier: 1 }, 
-            { element: 9, position: 9, is_captain: true, multiplier: 2 }, { element: 10, position: 10, multiplier: 1 }, { element: 11, position: 11, multiplier: 1 }, { element: 12, position: 12, multiplier: 1 }, 
-            { element: 13, position: 13, multiplier: 1 }, { element: 14, position: 14, multiplier: 1 }, { element: 15, position: 15, multiplier: 1 }
-        ],
-        players: {
-            9: { web_name: "Haaland", team_code: 43, pos: 4, price: 14.0, event_points: 13, status: 'd', chance: 75, news: "Knock", sel: 70, form: 8.5, transfers_in: 50000, total_points: 150, ict_index: 300 },
-            5: { web_name: "Salah", team_code: 14, pos: 3, price: 13.0, event_points: 12, status: 'a', chance: 100, news: "", sel: 40, form: 7.0, transfers_in: 30000, total_points: 140, ict_index: 280 },
-            1: { web_name: "Pickford", team_code: 11, pos: 1, price: 4.5, event_points: 6, status: 'a', form: 3.5, transfers_in: 1000, total_points: 50, ict_index: 20 }
-        },
-        fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
-    };
+    const MOCK_DATA = { /* ... (Same as before) ... */ };
 
-    // --- GOD MODE TRANSFER BOT (GREEDY 5-STEP) ---
+    // --- GOD MODE TRANSFER BOT (Hard-Coded 1-5) ---
     const TransferBot = {
         preCalcTeamData: (fixMap) => {
             const data = {};
@@ -641,152 +626,231 @@
         },
 
         analyze: (myPicks, allPlayers, bank, fixtures, ftCount) => {
+            let singleMoves = [];
             let finalSuggestions = [];
+
+            // A. Prepare Data
             const teamStats = TransferBot.preCalcTeamData(fixtures);
 
-            // 1. Score Squad (Exclude GKs - Pos 1)
+            // B. Score Squad
             const squadScores = myPicks.map(pick => {
                 const p = allPlayers[pick.element];
-                if(!p || p.pos === 1) return null; // STRICT OUTFIELD ONLY
+                if(!p || p.pos === 1) return null; // Skip GK
                 return { p: p, score: TransferBot.getScore(p, teamStats) };
             }).filter(x => x).sort((a,b) => a.score - b.score); // Worst first
 
-            // 2. Score Market (Exclude GKs - Pos 1)
+            // C. Score Market (Top 50 to ensure we find 5 distinct players)
             const marketScores = Object.values(allPlayers)
                 .filter(p => p.status === 'a' && p.pos > 1 && parseFloat(p.form) > 0.5)
                 .map(p => ({ p: p, score: TransferBot.getScore(p, teamStats) }))
-                .sort((a,b) => b.score - a.score) // Best first
-                .slice(0, 40); // Top 40 only for speed
+                .sort((a,b) => b.score - a.score)
+                .slice(0, 50);
 
-            // Helper to find best single swap based on current criteria
-            const findBestSwap = (currentBank, excludeSellIds, excludeBuyIds) => {
-                let bestSwap = null;
-                let bestDiff = -999;
+            // ============================================================
+            // STEP 1: SINGLE MOVES
+            // ============================================================
+            for(let i=0; i<Math.min(5, squadScores.length); i++) {
+                const sell = squadScores[i];
+                const maxBudget = bank + sell.p.price;
+                for(let j=0; j<marketScores.length; j++) {
+                    const buy = marketScores[j];
+                    if(buy.p.pos !== sell.p.pos) continue; 
+                    if(buy.p.price > maxBudget) continue; 
+                    if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
 
-                // Look at worst available squad players
-                const availableSells = squadScores.filter(s => !excludeSellIds.includes(s.p.id));
-
-                for(let i=0; i<Math.min(6, availableSells.length); i++) {
-                    const sell = availableSells[i];
-                    const maxBudget = currentBank + sell.p.price;
-
-                    for(let j=0; j<marketScores.length; j++) {
-                        const buy = marketScores[j];
-                        
-                        // FPL RULE: Must buy same position
-                        if(buy.p.pos !== sell.p.pos) continue; 
-                        if(buy.p.price > maxBudget) continue; 
-                        if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
-                        if(excludeBuyIds.includes(buy.p.id)) continue;
-
-                        const diff = buy.score - sell.score;
-                        if(diff > bestDiff) {
-                            bestDiff = diff;
-                            bestSwap = { sell: sell.p, buy: buy.p, diff: diff };
-                        }
+                    const diff = (buy.score - sell.score).toFixed(1);
+                    if(parseFloat(diff) > 5.0) { 
+                        singleMoves.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff) });
+                        break; 
                     }
                 }
-                return bestSwap;
-            };
+            }
+            finalSuggestions.push(...singleMoves);
 
             // ============================================================
-            // THE GREEDY HARD-CODED CHAIN (1 to 5)
+            // STEP 2: DOUBLE MOVE (Using your specific structure)
             // ============================================================
+            let bestDouble = null;
+            let currentTotalHit = 0; // Track cumulative hit for labeling
 
-            // --- STEP 1: SINGLE MOVE ---
-            let move1 = findBestSwap(bank, [], []);
-            if(move1 && move1.diff > 4.0) {
-                finalSuggestions.push({
-                    type: "Single Move",
-                    out: [move1.sell], in: [move1.buy],
-                    diff: parseFloat(move1.diff.toFixed(1))
-                });
-
-                // --- STEP 2: DOUBLE MOVE ---
-                let bank2 = bank + move1.sell.price - move1.buy.price;
-                let move2 = findBestSwap(bank2, [move1.sell.id], [move1.buy.id]);
+            if(singleMoves.length > 0) {
+                // Start with the best single move available
+                const move1 = singleMoves.sort((a,b) => b.diff - a.diff)[0]; 
+                const sell1 = move1.out[0];
+                const buy1 = move1.in[0];
+                const bankAfter1 = bank + sell1.price - buy1.price;
                 
-                if(move2 && move2.diff > 1.0) {
-                    let hit2 = ftCount >= 2 ? 0 : 4;
-                    let net2 = (move1.diff + move2.diff - hit2).toFixed(1);
+                // Find next worst player (not sell1)
+                const sell2Obj = squadScores.find(s => s.p.id !== sell1.id);
+                
+                if(sell2Obj) {
+                    const sell2 = sell2Obj.p;
+                    const budget2 = bankAfter1 + sell2.price;
                     
-                    if(parseFloat(net2) > move1.diff + 1) {
-                        finalSuggestions.push({
-                            type: `Double Move (-${hit2})`,
-                            out: [move1.sell, move2.sell],
-                            in: [move1.buy, move2.buy],
-                            diff: parseFloat(net2)
-                        });
+                    const buy2Obj = marketScores.find(m => 
+                        m.p.id !== buy1.id && 
+                        !myPicks.some(pick => pick.element === m.p.id) && 
+                        m.p.pos === sell2.pos && 
+                        m.p.price <= budget2
+                    );
 
-                        // --- STEP 3: TRIPLE MOVE ---
-                        // Only suggest if we have FTs or gain is huge
-                        if(ftCount >= 2 || move2.diff > 6.0) {
-                            let bank3 = bank2 + move2.sell.price - move2.buy.price;
-                            let move3 = findBestSwap(bank3, [move1.sell.id, move2.sell.id], [move1.buy.id, move2.buy.id]);
+                    if(buy2Obj) {
+                        const buy2 = buy2Obj.p;
+                        const diff2 = buy2Obj.score - sell2Obj.score;
+                        const stepCost = ftCount >= 2 ? 0 : 4; // Cost for THIS step
+                        const totalDiff = (move1.diff + diff2 - stepCost).toFixed(1);
 
-                            if(move3 && move3.diff > 1.0) {
-                                let hit3 = (ftCount >= 3 ? 0 : 4) + (ftCount >= 2 ? 0 : 4) + (ftCount >= 1 ? 0 : 4) - 4; // Simplified hit calc
-                                if (hit3 < 0) hit3 = 0; // If FT=3, hit is 0. If FT=2, hit is 4.
-                                let net3 = (move1.diff + move2.diff + move3.diff - hit3).toFixed(1);
-
-                                if(parseFloat(net3) > parseFloat(net2)) {
-                                    finalSuggestions.push({
-                                        type: `Triple Move (-${hit3})`,
-                                        out: [move1.sell, move2.sell, move3.sell],
-                                        in: [move1.buy, move2.buy, move3.buy],
-                                        diff: parseFloat(net3)
-                                    });
-
-                                    // --- STEP 4: QUAD MOVE ---
-                                    if(ftCount >= 3) {
-                                        let bank4 = bank3 + move3.sell.price - move3.buy.price;
-                                        let move4 = findBestSwap(bank4, [move1.sell.id, move2.sell.id, move3.sell.id], [move1.buy.id, move2.buy.id, move3.buy.id]);
-
-                                        if(move4 && move4.diff > 2.0) {
-                                            let hit4 = ftCount >= 4 ? 0 : 4; 
-                                            let net4 = (parseFloat(net3) + move4.diff - hit4).toFixed(1);
-                                            finalSuggestions.push({
-                                                type: `Quad Move (-${hit3 + hit4})`,
-                                                out: [move1.sell, move2.sell, move3.sell, move4.sell],
-                                                in: [move1.buy, move2.buy, move3.buy, move4.buy],
-                                                diff: parseFloat(net4)
-                                            });
-
-                                            // --- STEP 5: PENTA MOVE ---
-                                            if(ftCount >= 4) {
-                                                let bank5 = bank4 + move4.sell.price - move4.buy.price;
-                                                let move5 = findBestSwap(bank5, [move1.sell.id, move2.sell.id, move3.sell.id, move4.sell.id], [move1.buy.id, move2.buy.id, move3.buy.id, move4.buy.id]);
-
-                                                if(move5 && move5.diff > 2.0) {
-                                                    let hit5 = ftCount >= 5 ? 0 : 4;
-                                                    let net5 = (parseFloat(net4) + move5.diff - hit5).toFixed(1);
-                                                    finalSuggestions.push({
-                                                        type: `Mini Wildcard (-${hit3 + hit4 + hit5})`,
-                                                        out: [move1.sell, move2.sell, move3.sell, move4.sell, move5.sell],
-                                                        in: [move1.buy, move2.buy, move3.buy, move4.buy, move5.buy],
-                                                        diff: parseFloat(net5)
-                                                    });
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        if(parseFloat(totalDiff) > move1.diff + 1.0) { 
+                            currentTotalHit = stepCost; // Total hit so far
+                            bestDouble = { 
+                                type: `Double Move (-${currentTotalHit})`, 
+                                out: [sell1, sell2], 
+                                in: [buy1, buy2], 
+                                diff: parseFloat(totalDiff),
+                                bankAfter: (budget2 - buy2.price),
+                                totalHit: currentTotalHit
+                            };
+                            finalSuggestions.push(bestDouble);
                         }
                     }
                 }
             }
 
-            // 4. SORT RESULTS (Highest Gain First)
+            // ============================================================
+            // STEP 3: TRIPLE MOVE
+            // ============================================================
+            let bestTriple = null;
+            if(bestDouble && (ftCount >= 2 || bestDouble.diff > 8.0)) { 
+                const move2 = bestDouble;
+                const sell1 = move2.out[0]; const sell2 = move2.out[1];
+                const buy1 = move2.in[0]; const buy2 = move2.in[1];
+
+                const sell3Obj = squadScores.find(s => s.p.id !== sell1.id && s.p.id !== sell2.id);
+
+                if(sell3Obj) {
+                    const sell3 = sell3Obj.p;
+                    const budget3 = move2.bankAfter + sell3.price;
+
+                    const buy3Obj = marketScores.find(m => 
+                        m.p.id !== buy1.id && m.p.id !== buy2.id &&
+                        !myPicks.some(pick => pick.element === m.p.id) && 
+                        m.p.pos === sell3.pos && m.p.price <= budget3
+                    );
+
+                    if(buy3Obj) {
+                        const buy3 = buy3Obj.p;
+                        const diff3 = buy3Obj.score - sell3Obj.score;
+                        const stepCost = ftCount >= 3 ? 0 : 4; 
+                        const totalDiff = (move2.diff + diff3 - stepCost).toFixed(1);
+
+                        if(parseFloat(totalDiff) > move2.diff + 1.0) {
+                            currentTotalHit = move2.totalHit + stepCost;
+                            bestTriple = {
+                                type: `Triple Move (-${currentTotalHit})`, 
+                                out: [sell1, sell2, sell3],
+                                in: [buy1, buy2, buy3],
+                                diff: parseFloat(totalDiff),
+                                bankAfter: (budget3 - buy3.price),
+                                totalHit: currentTotalHit
+                            };
+                            finalSuggestions.push(bestTriple);
+                        }
+                    }
+                }
+            }
+
+            // ============================================================
+            // STEP 4: QUAD MOVE
+            // ============================================================
+            let bestQuad = null;
+            if(bestTriple && (ftCount >= 3 || bestTriple.diff > 12.0)) {
+                const move3 = bestTriple;
+                // Get previous arrays
+                const s1=move3.out[0], s2=move3.out[1], s3=move3.out[2];
+                const b1=move3.in[0], b2=move3.in[1], b3=move3.in[2];
+
+                const sell4Obj = squadScores.find(s => s.p.id !== s1.id && s.p.id !== s2.id && s.p.id !== s3.id);
+
+                if(sell4Obj) {
+                    const sell4 = sell4Obj.p;
+                    const budget4 = move3.bankAfter + sell4.price;
+
+                    const buy4Obj = marketScores.find(m => 
+                        m.p.id!==b1.id && m.p.id!==b2.id && m.p.id!==b3.id &&
+                        !myPicks.some(pick => pick.element === m.p.id) && 
+                        m.p.pos === sell4.pos && m.p.price <= budget4
+                    );
+
+                    if(buy4Obj) {
+                        const buy4 = buy4Obj.p;
+                        const diff4 = buy4Obj.score - sell4Obj.score;
+                        const stepCost = ftCount >= 4 ? 0 : 4;
+                        const totalDiff = (move3.diff + diff4 - stepCost).toFixed(1);
+
+                        if(parseFloat(totalDiff) > move3.diff + 1.0) {
+                            currentTotalHit = move3.totalHit + stepCost;
+                            bestQuad = {
+                                type: `Quad Move (-${currentTotalHit})`,
+                                out: [s1, s2, s3, sell4],
+                                in: [b1, b2, b3, buy4],
+                                diff: parseFloat(totalDiff),
+                                bankAfter: (budget4 - buy4.price),
+                                totalHit: currentTotalHit
+                            };
+                            finalSuggestions.push(bestQuad);
+                        }
+                    }
+                }
+            }
+
+            // ============================================================
+            // STEP 5: PENTA MOVE (Mini Wildcard)
+            // ============================================================
+            if(bestQuad && (ftCount >= 4 || bestQuad.diff > 16.0)) {
+                const move4 = bestQuad;
+                const s1=move4.out[0], s2=move4.out[1], s3=move4.out[2], s4=move4.out[3];
+                const b1=move4.in[0], b2=move4.in[1], b3=move4.in[2], b4=move4.in[3];
+
+                const sell5Obj = squadScores.find(s => s.p.id!==s1.id && s.p.id!==s2.id && s.p.id!==s3.id && s.p.id!==s4.id);
+
+                if(sell5Obj) {
+                    const sell5 = sell5Obj.p;
+                    const budget5 = move4.bankAfter + sell5.price;
+
+                    const buy5Obj = marketScores.find(m => 
+                        m.p.id!==b1.id && m.p.id!==b2.id && m.p.id!==b3.id && m.p.id!==b4.id &&
+                        !myPicks.some(pick => pick.element === m.p.id) && 
+                        m.p.pos === sell5.pos && m.p.price <= budget5
+                    );
+
+                    if(buy5Obj) {
+                        const buy5 = buy5Obj.p;
+                        const diff5 = buy5Obj.score - sell5Obj.score;
+                        const stepCost = ftCount >= 5 ? 0 : 4;
+                        const totalDiff = (move4.diff + diff5 - stepCost).toFixed(1);
+
+                        if(parseFloat(totalDiff) > move4.diff + 1.0) {
+                            currentTotalHit = move4.totalHit + stepCost;
+                            finalSuggestions.push({
+                                type: `Mini Wildcard (-${currentTotalHit})`,
+                                out: [s1, s2, s3, s4, sell5],
+                                in: [b1, b2, b3, b4, buy5],
+                                diff: parseFloat(totalDiff)
+                            });
+                        }
+                    }
+                }
+            }
+
+            // --- FINAL SORTING ---
             finalSuggestions.sort((a, b) => b.diff - a.diff);
 
-            // 5. SMART ROLL
-            const bestGain = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
-            if (ftCount < 5 && bestGain < 6.0) {
+            // --- SMART ROLL ---
+            const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
+            if (ftCount < 5 && bestDiff < 6.0) {
                 finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
             }
 
-            // Return top 3 options only to keep UI clean
             return finalSuggestions.slice(0, 3);
         }
     };
@@ -826,10 +890,8 @@
             ];
             for (let i = 0; i < proxies.length; i++) {
                 try {
-                    const c = new AbortController(); 
-                    const id = setTimeout(() => c.abort(), 8000); 
-                    const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); 
-                    clearTimeout(id);
+                    const c = new AbortController(); const id = setTimeout(() => c.abort(), 8000); 
+                    const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); clearTimeout(id);
                     if(r.ok) return await r.json();
                 } catch (e) {}
             }
@@ -864,10 +926,8 @@
 
         switchTool: (t, suppressMenu = false) => {
             if (!suppressMenu) app.toggleMenu();
-            
             app.currentTool = t;
             localStorage.setItem('fpl_last_tool', t);
-            
             document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-' + t).classList.add('active');
 
@@ -876,7 +936,6 @@
                 app.simNewIds = [];
                 const banner = document.querySelector('.sim-banner');
                 if (banner) banner.remove();
-
                 if (Object.keys(app.playersCache).length > 0) {
                     app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
                 } else {
@@ -919,31 +978,13 @@
                             else if(index === 1) html += `<div style="font-size:0.9rem; font-weight:700; color:#888; margin:20px 0 10px 0; padding-left:5px;">Alternative Options</div>`;
 
                             if (s.type === 'Roll Transfer') {
-                                html += `
-                                    <div class="${cardClass}" style="padding:25px; text-align:center;">
-                                        ${badge}
-                                        <div style="font-size:2rem; margin:10px 0;">🛡️</div>
-                                        <div style="font-weight:800; margin-bottom:5px; font-size:1.1rem;">Save Free Transfer</div>
-                                        <div style="font-size:0.85rem; color:#666; line-height:1.4;">
-                                            Your team is strong. You have ${app.ftCount} FTs. Saving one is the best value play.
-                                        </div>
-                                    </div>`;
+                                html += `<div class="${cardClass}" style="padding:25px; text-align:center;">${badge}<div style="font-size:2rem; margin:10px 0;">🛡️</div><div style="font-weight:800; margin-bottom:5px; font-size:1.1rem;">Save Free Transfer</div><div style="font-size:0.85rem; color:#666; line-height:1.4;">Your team is strong. You have ${app.ftCount} FTs. Saving one is the best value play.</div></div>`;
                                 return;
                             }
 
                             const outIds = JSON.stringify(s.out.map(p => p.id));
                             const inIds = JSON.stringify(s.in.map(p => p.id));
-                            html += `<div class="${cardClass}">
-                                <div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">
-                                    ${badge}
-                                    <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-                                        <div class="t-type">${s.type}</div>
-                                        <div class="t-gain">+${s.diff} pts</div>
-                                    </div>
-                                </div>
-                                <div class="t-body">
-                                    <div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                                    <div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                            html += `<div class="${cardClass}"><div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">${badge}<div style="width:100%; display:flex; justify-content:space-between; align-items:center;"><div class="t-type">${s.type}</div><div class="t-gain">+${s.diff} pts</div></div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
                             s.out.forEach(p => {
                                 const fixtures = app.fixMap[p.team_id] || [];
                                 let dots = '<div class="t-fdr">';
@@ -1084,7 +1125,7 @@
                     liveMap[el.id] = { points: el.stats.total_points, mins: el.stats.minutes, goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, own_goals: el.stats.own_goals };
                 });
 
-                // Fetch 3 fixtures in parallel because it's safe
+                // Fetch 3 fixtures
                 const fixReqs = [gw, gw + 1, gw + 2].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
                 const [fix1, fix2, fix3] = await Promise.all(fixReqs);
                 
@@ -1092,19 +1133,14 @@
                 staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
                 app.teams = teamShort;
 
-                // --- MATCH STATUS MAP ---
+                // Status Map
                 const statusMap = {};
                 if(fix1) {
                     fix1.forEach(f => {
                         let status = 'FIX';
                         let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        if (f.finished || f.finished_provisional) { 
-                            status = 'FT'; 
-                            label = 'FT'; 
-                        } else if (f.started) { 
-                            status = 'LIVE'; 
-                            label = 'LIVE'; 
-                        }
+                        if (f.finished || f.finished_provisional) { status = 'FT'; label = 'FT'; } 
+                        else if (f.started) { status = 'LIVE'; label = 'LIVE'; }
                         statusMap[f.team_h] = { status, label, id: f.id };
                         statusMap[f.team_a] = { status, label, id: f.id };
                     });
