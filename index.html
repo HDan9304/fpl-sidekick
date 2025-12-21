@@ -608,40 +608,80 @@
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
+        // --- GOD MODE TRANSFER BOT ---
         const TransferBot = {
-            getScore: (p, fixtures) => {
-                const teamFix = fixtures[p.team_id];
-                const nextFix = Array.isArray(teamFix) ? teamFix[0] : (teamFix || { diff: 3 });
-                let score = parseFloat(p.form) - (nextFix.diff * 2);
-                if (p.status !== 'a' && p.chance < 75) score -= 50;
+            // 1. OPTIMIZATION: Pre-calculate team difficulty maps (Runs 20 times instead of 700)
+            preCalcTeamData: (fixMap) => {
+                const data = {};
+                for (const [tid, fixList] of Object.entries(fixMap)) {
+                    let sum = 0;
+                    // Analyze next 3 games for a "Run", not just 1 game
+                    const limit = Math.min(fixList.length, 3);
+                    for(let i=0; i<limit; i++) sum += fixList[i].diff;
+                    
+                    data[tid] = {
+                        avg: limit > 0 ? sum/limit : 3,
+                        nextHome: fixList[0] ? fixList[0].is_home : false
+                    };
+                }
+                return data;
+            },
+
+            // 2. SCORING ALGORITHM
+            getScore: (p, teamData) => {
+                const t = teamData[p.team_id] || { avg: 3, nextHome: false };
+                
+                const form = parseFloat(p.form) || 0;
+                const ict = parseFloat(p.ict_index) || 0;
+                
+                // GOD MODE FORMULA:
+                // (Form * 5) + (ICT * 0.16) + (Fixture Bonus)
+                let score = (form * 5) + (ict * 0.16) + (20 - (t.avg * 4));
+
+                // Penalties & Boosts
+                if (p.status !== 'a' && p.chance < 75) score -= 200; // Nuclear penalty for injury
+                if (p.pos === 1) score *= 0.85; // GKs score less
+                if (t.nextHome) score += 2; // Home advantage bonus
+
                 return score;
             },
+
+            // 3. ANALYSIS LOOP
             analyze: (myPicks, allPlayers, bank, fixtures, ftCount) => {
                 let singleMoves = [];
                 let finalSuggestions = [];
 
+                // A. Pre-calculate Environment (Speed Boost)
+                const teamStats = TransferBot.preCalcTeamData(fixtures);
+
+                // B. Score Squad (Find Weakest)
                 const squadScores = myPicks.map(pick => {
                     const p = allPlayers[pick.element];
                     if(!p || p.pos === 1) return null;
-                    return { p: p, score: TransferBot.getScore(p, fixtures) };
+                    return { p: p, score: TransferBot.getScore(p, teamStats) };
                 }).filter(x => x).sort((a,b) => a.score - b.score);
 
+                // C. Score Market (Find Strongest)
                 const marketScores = Object.values(allPlayers)
                     .filter(p => p.status === 'a' && p.pos > 1)
-                    .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
+                    .map(p => ({ p: p, score: TransferBot.getScore(p, teamStats) }))
                     .sort((a,b) => b.score - a.score).slice(0, 50);
 
+                // D. Find Moves
                 for(let i=0; i<Math.min(5, squadScores.length); i++) {
                     const sell = squadScores[i];
                     const maxBudget = bank + sell.p.price;
                     for(let j=0; j<marketScores.length; j++) {
                         const buy = marketScores[j];
+                        
                         if(buy.p.pos !== sell.p.pos) continue; 
                         if(buy.p.price > maxBudget) continue; 
                         if(myPicks.some(pick => pick.element === buy.p.id)) continue; 
 
                         const diff = (buy.score - sell.score).toFixed(1);
-                        if(parseFloat(diff) > -2) { 
+                        
+                        // God Mode Threshold: Only suggest move if gain is > 5 points
+                        if(parseFloat(diff) > 5.0) { 
                             singleMoves.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff) });
                             break; 
                         }
@@ -650,6 +690,7 @@
                 singleMoves.sort((a,b) => b.diff - a.diff);
                 finalSuggestions.push(...singleMoves.slice(0, 3));
 
+                // E. Double Moves
                 if(singleMoves.length > 0) {
                     const bestMove = singleMoves[0];
                     const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
@@ -667,10 +708,13 @@
                         }
                     }
                 }
+
+                // F. Smart Roll Logic
                 const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
-                if (ftCount < 5 && bestDiff < 4.0) {
+                if (ftCount < 5 && bestDiff < 10.0) {
                     finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
                 }
+
                 return finalSuggestions;
             }
         };
@@ -696,10 +740,8 @@
 
             init: () => {
                 const savedId = localStorage.getItem('fpl_id_final');
-                // RECOVER LAST TAB
                 const lastTool = localStorage.getItem('fpl_last_tool');
                 if (lastTool) app.currentTool = lastTool;
-
                 if (savedId) {
                     document.getElementById('teamID').value = savedId;
                     app.load(savedId);
@@ -749,15 +791,12 @@
                 document.getElementById('menuOverlay').classList.toggle('open');
             },
 
-            // --- UPDATED SWITCH TOOL (With Persistence) ---
             switchTool: (t, suppressMenu = false) => {
                 if (!suppressMenu) app.toggleMenu();
                 
-                // Save state
                 app.currentTool = t;
                 localStorage.setItem('fpl_last_tool', t);
                 
-                // Update Nav UI
                 document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                 document.getElementById('nav-' + t).classList.add('active');
 
@@ -1188,8 +1227,7 @@
                         benchDiv.innerHTML += app.createPill({ ...p, is_captain: false, is_vice: false, multiplier: pick.multiplier }, fixMap, statusMap, true, i - 10, status);
                     }
                 }
-
-                // --- NEW: AUTO SWITCH TO SAVED TAB ON LOAD ---
+                
                 if (app.currentTool === 'transfers' && !app.isSimulating) {
                     app.switchTool('transfers', true); // True = Suppress menu toggle
                 } else {
