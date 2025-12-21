@@ -1491,6 +1491,7 @@
                 </div>
 
                 <div id="chipBar" class="chip-bar"></div>
+                <div id="capRecommendation"></div>
 
                 <div class="view-toggle">
                     <div id="btn-live" class="vt-btn active" onclick="app.toggleView('live')">
@@ -1791,6 +1792,21 @@
             }
 
             return rec;
+        },
+
+        analyzeCaptaincy: (picks, players, fixMap) => {
+            let cur = null, best = null, max = -99;
+            picks.forEach(p => {
+                if (p.position > 11) return;
+                const pl = players[p.element];
+                if (!pl) return;
+                // Score: Form + (5 - FixtureDiff)*2 + HomeAdvantage
+                const f = (fixMap[pl.team_id]||[])[0] || {diff:3, is_home:false};
+                let score = parseFloat(pl.form) + ((5 - f.diff) * 2.5) + (f.is_home ? 1 : 0);
+                if (p.is_captain) cur = { name: pl.name, score };
+                if (score > max) { max = score; best = { name: pl.name, score }; }
+            });
+            return (cur && best && best.name !== cur.name && (best.score - cur.score) > 2.0) ? { best, cur } : null;
         }
     };
 
@@ -2427,6 +2443,21 @@
                 return `<div class="${isUsed ? 'chip-pill used' : 'chip-pill active'}">${chipMap[c]}</div>`;
             }).join('');
             document.getElementById('chipBar').innerHTML = chipHtml;
+
+            // CAPTAINCY INTEL
+            const capRec = TransferBot.analyzeCaptaincy(picks, players, fixMap);
+            const capDiv = document.getElementById('capRecommendation');
+            if (capRec) {
+                capDiv.innerHTML = `<div style="background:#fffbeb; border:1px solid #fcd34d; padding:12px; border-radius:12px; margin-bottom:20px; display:flex; align-items:center; gap:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="font-size:1.8rem; color:#d97706;"><i class="fa-solid fa-copyright"></i></div>
+                    <div>
+                        <div style="font-size:0.75rem; font-weight:700; color:#b45309; text-transform:uppercase; letter-spacing:0.5px;">Captaincy Alert</div>
+                        <div style="font-size:0.9rem; font-weight:600; color:#78350f;">Switch <strong>${capRec.cur.name}</strong> <i class="fa-solid fa-arrow-right" style="font-size:0.7rem; margin:0 4px; opacity:0.6;"></i> <strong>${capRec.best.name}</strong></div>
+                    </div>
+                </div>`;
+            } else {
+                capDiv.innerHTML = '';
+            }
 
             const subOutIds = [];
             const subInIds = [];
