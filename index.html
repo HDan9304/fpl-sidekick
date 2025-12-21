@@ -875,20 +875,24 @@
             document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-' + t).classList.add('active');
 
+            // --- REFRESH LOGIC (Added) ---
             if (t === 'squad') {
                 app.isSimulating = false;
                 app.simNewIds = [];
                 const banner = document.querySelector('.sim-banner');
                 if (banner) banner.remove();
 
+                // Force Re-render to refresh squad view
                 if (Object.keys(app.playersCache).length > 0) {
                     app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
                 } else {
                     app.load(localStorage.getItem('fpl_id_final'));
                 }
             } else {
+                // Switch to Transfer View & TRIGGER RELOAD
                 app.show('transfersView');
                 
+                // Reset UI for "reloading" effect
                 document.querySelector('.search-input').value = '';
                 document.getElementById('scoutResults').style.display = 'none';
                 document.getElementById('transferContent').style.display = 'block';
@@ -896,6 +900,7 @@
                 app.ftCount = app.calcFreeTransfers();
                 const bankTxt = app.currentStats ? (app.currentStats.bank/10).toFixed(1) : '0.0';
                 
+                // Show Spinner immediately to indicate reload
                 const headerHtml = `
                     <div style="display:flex; justify-content:space-between; padding:15px; background:white; border-bottom:1px solid var(--border); margin:-15px -15px 15px -15px;">
                         <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
@@ -903,16 +908,13 @@
                     </div>
                     <div style="text-align:center; padding:30px;"><div class="spinner"></div><p style="color:#888; margin-top:15px">Finding Best Move...</p></div>
                 `;
-                
-                const container = document.getElementById('transferContent');
-                container.innerHTML = headerHtml;
+                document.getElementById('transferContent').innerHTML = headerHtml;
 
+                // Re-run Analysis (Simulated Reload)
                 setTimeout(() => {
                     const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap, app.ftCount);
                     const market = MarketBot.getTrends(app.playersCache);
-                    let html = '';
-
-                    html += `
+                    let html = `
                     <div style="display:flex; justify-content:space-between; padding:10px 15px; background:white; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
                         <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
                         <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Free Transfers: <span style="color:${app.ftCount === 5 ? '#e90052' : '#00ff85'}; font-weight:800;">${app.ftCount}</span></div>
@@ -928,31 +930,13 @@
                             else if(index === 1) html += `<div style="font-size:0.9rem; font-weight:700; color:#888; margin:20px 0 10px 0; padding-left:5px;">Alternative Options</div>`;
 
                             if (s.type === 'Roll Transfer') {
-                                html += `
-                                    <div class="${cardClass}" style="padding:25px; text-align:center;">
-                                        ${badge}
-                                        <div style="font-size:2rem; margin:10px 0;">🛡️</div>
-                                        <div style="font-weight:800; margin-bottom:5px; font-size:1.1rem;">Save Free Transfer</div>
-                                        <div style="font-size:0.85rem; color:#666; line-height:1.4;">
-                                            Your team is strong. You have ${app.ftCount} FTs. Saving one is the best value play.
-                                        </div>
-                                    </div>`;
+                                html += `<div class="${cardClass}" style="padding:25px; text-align:center;">${badge}<div style="font-size:2rem; margin:10px 0;">🛡️</div><div style="font-weight:800; margin-bottom:5px; font-size:1.1rem;">Save Free Transfer</div><div style="font-size:0.85rem; color:#666; line-height:1.4;">Your team is strong. You have ${app.ftCount} FTs. Saving one is the best value play.</div></div>`;
                                 return;
                             }
 
                             const outIds = JSON.stringify(s.out.map(p => p.id));
                             const inIds = JSON.stringify(s.in.map(p => p.id));
-                            html += `<div class="${cardClass}">
-                                <div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">
-                                    ${badge}
-                                    <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-                                        <div class="t-type">${s.type}</div>
-                                        <div class="t-gain">+${s.diff} pts</div>
-                                    </div>
-                                </div>
-                                <div class="t-body">
-                                    <div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-                                    <div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                            html += `<div class="${cardClass}"><div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">${badge}<div style="width:100%; display:flex; justify-content:space-between; align-items:center;"><div class="t-type">${s.type}</div><div class="t-gain">+${s.diff} pts</div></div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
                             s.out.forEach(p => {
                                 const fixtures = app.fixMap[p.team_id] || [];
                                 let dots = '<div class="t-fdr">';
@@ -968,13 +952,7 @@
                                 dots += '</div>';
                                 html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
                             });
-                            html += `</div></div>
-                                <div style="padding:0 15px 15px 15px;">
-                                    <button class="preview-btn" onclick='app.simulate(${outIds}, ${inIds})'>
-                                        <i class="fa-solid fa-eye"></i> Preview Team
-                                    </button>
-                                </div>
-                            </div>`;
+                            html += `</div></div><div style="padding:0 15px 15px 15px;"><button class="preview-btn" onclick='app.simulate(${outIds}, ${inIds})'><i class="fa-solid fa-eye"></i> Preview Team</button></div></div>`;
                         });
                     } else {
                         html += `<div class="welcome-card"><p>Team is optimal. Save your transfer.</p></div>`;
@@ -982,17 +960,11 @@
 
                     html += `<div style="font-size:1.1rem; font-weight:800; margin:30px 0 15px 0; padding-left:5px;">Market Trends</div><div class="trend-scroll">`;
                     market.movers.forEach(p => {
-                        html += `
-                            <div class="trend-card" onclick="app.openModal(${p.id})">
-                                <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="trend-img">
-                                <div class="trend-name">${p.name}</div>
-                                <div class="trend-team">${p.team}</div>
-                                <div class="trend-stat"><i class="fa-solid fa-arrow-trend-up"></i> Hot</div>
-                            </div>`;
+                        html += `<div class="trend-card" onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="trend-img"><div class="trend-name">${p.name}</div><div class="trend-team">${p.team}</div><div class="trend-stat"><i class="fa-solid fa-arrow-trend-up"></i> Hot</div></div>`;
                     });
                     html += `</div><div style="height:40px;"></div>`;
                     container.innerHTML = html;
-                }, 100);
+                }, 50); // Small delay to allow UI to show spinner
             }
         },
 
@@ -1017,11 +989,7 @@
             
             const q = query.toLowerCase();
             const players = Object.values(app.playersCache);
-            
-            const matches = players.filter(p => 
-                p.name.toLowerCase().includes(q) || 
-                (p.team && p.team.toLowerCase().includes(q))
-            );
+            const matches = players.filter(p => p.name.toLowerCase().includes(q) || (p.team && p.team.toLowerCase().includes(q)));
 
             matches.sort((a,b) => parseFloat(b.form) - parseFloat(a.form));
             const top20 = matches.slice(0, 20);
@@ -1035,22 +1003,7 @@
                     let dots = '<div class="t-fdr" style="margin-top:4px;">';
                     fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
                     dots += '</div>';
-
-                    html += `
-                        <div class="scout-item" onclick="app.openModal(${p.id})">
-                            <div class="scout-left">
-                                <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;">
-                                <div class="scout-info">
-                                    <div>${p.name}</div>
-                                    <div>${p.team} • ${p.form} Form</div>
-                                </div>
-                            </div>
-                            <div class="scout-right">
-                                <div class="scout-price">£${p.price}m</div>
-                                ${dots}
-                            </div>
-                        </div>
-                    `;
+                    html += `<div class="scout-item" onclick="app.openModal(${p.id})"><div class="scout-left"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;"><div class="scout-info"><div>${p.name}</div><div>${p.team} • ${p.form} Form</div></div></div><div class="scout-right"><div class="scout-price">£${p.price}m</div>${dots}</div></div>`;
                 });
             }
             resultsContainer.innerHTML = html;
@@ -1310,7 +1263,7 @@
             }
             
             if (app.currentTool === 'transfers' && !app.isSimulating) {
-                app.switchTool('transfers', true); // True = Suppress menu toggle
+                app.switchTool('transfers', true);
             } else {
                 app.show('dashboardView');
             }
