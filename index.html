@@ -2343,8 +2343,18 @@
 
             let rankArrow = '<i class="fa-solid fa-minus r-grey"></i>';
             const currentRank = user.summary_overall_rank || 0;
-            const lastGwData = history.current && history.current.length > 0 ? history.current[history.current.length - 1] : null;
-            const lastRank = lastGwData ? lastGwData.overall_rank : 0;
+            
+            // Logic: If last history entry has same rank as current, fallback to previous entry to show movement
+            let lastRank = 0;
+            if (history.current && history.current.length > 0) {
+                const last = history.current[history.current.length - 1];
+                if (last.overall_rank === currentRank && history.current.length > 1) {
+                    lastRank = history.current[history.current.length - 2].overall_rank;
+                } else {
+                    lastRank = last.overall_rank;
+                }
+            }
+
             if (currentRank < lastRank) rankArrow = '<i class="fa-solid fa-arrow-up r-green"></i>';
             else if (currentRank > lastRank) rankArrow = '<i class="fa-solid fa-arrow-down r-red"></i>';
             document.getElementById('dispRank').innerHTML = `<div class="rank-wrap">${rankArrow} <span>${currentRank.toLocaleString()}</span></div>`;
