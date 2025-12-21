@@ -1649,7 +1649,10 @@
                 let rawDiff = 0;
                 const labels = ["Single", "Double", "Triple", "Quad", "Quint"];
 
-                for (let step = 0; step < 5; step++) {
+                // Limit chain depth: suggest moves up to FT count + 1 (allow 1 hit)
+                const maxSteps = Math.min(5, ftCount + 1);
+
+                for (let step = 0; step < maxSteps; step++) {
                     let bestLink = null;
                     // Find removable players (not already in chain)
                     const candidates = squadScores.filter(x => !usedOut.has(x.p.id));
