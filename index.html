@@ -608,10 +608,12 @@
             fixtures: { 9: { opp: "LIV", diff: 5, is_home: true } }
         };
 
+        // --- STANDARD TRANSFER BOT (FAST) ---
         const TransferBot = {
             getScore: (p, fixtures) => {
                 const teamFix = fixtures[p.team_id];
                 const nextFix = Array.isArray(teamFix) ? teamFix[0] : (teamFix || { diff: 3 });
+                // Simple Formula: Form - (Difficulty * 2)
                 let score = parseFloat(p.form) - (nextFix.diff * 2);
                 if (p.status !== 'a' && p.chance < 75) score -= 50;
                 return score;
@@ -620,17 +622,20 @@
                 let singleMoves = [];
                 let finalSuggestions = [];
 
+                // 1. Sell Candidates
                 const squadScores = myPicks.map(pick => {
                     const p = allPlayers[pick.element];
                     if(!p || p.pos === 1) return null;
                     return { p: p, score: TransferBot.getScore(p, fixtures) };
                 }).filter(x => x).sort((a,b) => a.score - b.score);
 
+                // 2. Buy Candidates
                 const marketScores = Object.values(allPlayers)
                     .filter(p => p.status === 'a' && p.pos > 1)
                     .map(p => ({ p: p, score: TransferBot.getScore(p, fixtures) }))
                     .sort((a,b) => b.score - a.score).slice(0, 50);
 
+                // 3. Find Single Moves
                 for(let i=0; i<Math.min(5, squadScores.length); i++) {
                     const sell = squadScores[i];
                     const maxBudget = bank + sell.p.price;
@@ -643,13 +648,14 @@
                         const diff = (buy.score - sell.score).toFixed(1);
                         if(parseFloat(diff) > -2) { 
                             singleMoves.push({ type: 'Single Move', out: [sell.p], in: [buy.p], diff: parseFloat(diff) });
-                            break; 
+                            break;
                         }
                     }
                 }
                 singleMoves.sort((a,b) => b.diff - a.diff);
                 finalSuggestions.push(...singleMoves.slice(0, 3));
 
+                // 4. Double Moves
                 if(singleMoves.length > 0) {
                     const bestMove = singleMoves[0];
                     const newBank = bank + bestMove.out[0].price - bestMove.in[0].price;
@@ -667,10 +673,13 @@
                         }
                     }
                 }
+
+                // 5. Roll Logic
                 const bestDiff = finalSuggestions.length > 0 ? finalSuggestions[0].diff : 0;
                 if (ftCount < 5 && bestDiff < 4.0) {
                     finalSuggestions.unshift({ type: 'Roll Transfer', out: [], in: [], diff: 0.0 });
                 }
+
                 return finalSuggestions;
             }
         };
@@ -680,29 +689,6 @@
                 const players = Object.values(allPlayers);
                 const movers = [...players].sort((a, b) => b.transfers_in - a.transfers_in).slice(0, 5);
                 return { movers };
-            }
-        };
-
-        const FixtureBot = {
-            getTicker: (teams, fixMap) => {
-                const list = [];
-                try {
-                    if (!teams || !fixMap) return [];
-                    Object.keys(teams).forEach(tid => {
-                        const fixtures = fixMap[tid];
-                        if (fixtures && fixtures.length > 0) {
-                            const next3 = fixtures.slice(0, 3);
-                            let score = 0;
-                            next3.forEach(f => score += (f.diff || 3));
-                            list.push({ id: tid, name: teams[tid], fixtures: next3, score: score });
-                        }
-                    });
-                    // Sort lowest score (easiest) to highest
-                    return list.sort((a,b) => a.score - b.score).slice(0, 5);
-                } catch (e) {
-                    console.log("Ticker Error:", e);
-                    return [];
-                }
             }
         };
 
@@ -733,10 +719,8 @@
                 ];
                 for (let i = 0; i < proxies.length; i++) {
                     try {
-                        const c = new AbortController(); 
-                        const id = setTimeout(() => c.abort(), 8000); 
-                        const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); 
-                        clearTimeout(id);
+                        const c = new AbortController(); const id = setTimeout(() => c.abort(), 8000); 
+                        const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); clearTimeout(id);
                         if(r.ok) return await r.json();
                     } catch (e) {}
                 }
@@ -791,7 +775,6 @@
                     }
                 } else {
                     app.show('transfersView');
-                    
                     document.querySelector('.search-input').value = '';
                     document.getElementById('scoutResults').style.display = 'none';
                     document.getElementById('transferContent').style.display = 'block';
@@ -861,23 +844,7 @@
                             market.movers.forEach(p => {
                                 html += `<div class="trend-card" onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="trend-img"><div class="trend-name">${p.name}</div><div class="trend-team">${p.team}</div><div class="trend-stat"><i class="fa-solid fa-arrow-trend-up"></i> Hot</div></div>`;
                             });
-                            html += `</div>`;
-
-                            // 3. Ticker (SAFE MODE)
-                            try {
-                                const bestRuns = FixtureBot.getTicker(app.teams, app.fixMap);
-                                if (bestRuns && bestRuns.length > 0) {
-                                    html += `<div style="font-size:1.1rem; font-weight:800; margin:30px 0 10px 0; padding-left:5px;">Easiest Upcoming Runs</div><div class="ticker-section">`;
-                                    bestRuns.forEach(run => {
-                                        let runsHtml = '';
-                                        run.fixtures.forEach(f => {
-                                            runsHtml += `<div class="run-box bg-${f.diff || 3}"><div class="run-opp">${f.opp || '-'}</div><div class="run-loc">${f.is_home ? '(H)' : '(A)'}</div></div>`;
-                                        });
-                                        html += `<div class="ticker-row" onclick="app.filterByTeam('${run.name}')"><div class="t-team"><div>${run.name}</div></div><div class="t-run">${runsHtml}</div></div>`;
-                                    });
-                                    html += `</div><div style="height:40px;"></div>`;
-                                }
-                            } catch (errTicker) { console.error(errTicker); }
+                            html += `</div><div style="height:40px;"></div>`;
 
                         } catch (mainErr) {
                             console.error(mainErr);
