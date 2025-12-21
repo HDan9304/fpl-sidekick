@@ -1399,11 +1399,11 @@
     <div id="logoutOverlay" class="logout-overlay">
         <div class="logout-card">
             <div style="font-size: 1.5rem; margin-bottom: 10px;">👋</div>
-            <h3 style="margin-bottom: 8px; color: var(--text-main);">Log Out?</h3>
-            <p style="color: var(--text-sub); font-size: 0.9rem; line-height: 1.4;">Are you sure you want to disconnect your team? You will need your ID to login again.</p>
+            <h3 id="lgTitle" style="margin-bottom: 8px; color: var(--text-main);">Log Out?</h3>
+            <p id="lgMsg" style="color: var(--text-sub); font-size: 0.9rem; line-height: 1.4;">Are you sure you want to disconnect your team? You will need your ID to login again.</p>
             <div class="logout-actions">
-                <button class="l-btn l-btn-cancel" onclick="closeLogout()">Cancel</button>
-                <button class="l-btn l-btn-confirm" onclick="confirmLogout()">Logout</button>
+                <button class="l-btn l-btn-cancel" onclick="closeLogout()">Close</button>
+                <button id="lgConfirm" class="l-btn l-btn-confirm" onclick="confirmLogout()">Logout</button>
             </div>
         </div>
     </div>
@@ -2473,9 +2473,29 @@
     // =========================================
     function toggleMenu() { app.toggleMenu(); }
     function switchTool(t) { app.switchTool(t); }
-    function clearData() { document.getElementById('logoutOverlay').classList.add('open'); app.toggleMenu(); }
+    
+    function clearData() { 
+        const isLogged = !!localStorage.getItem('fpl_id_final');
+        const title = document.getElementById('lgTitle');
+        const msg = document.getElementById('lgMsg');
+        const btn = document.getElementById('lgConfirm');
+        
+        if (isLogged) {
+            title.innerText = "Log Out?";
+            msg.innerText = "Are you sure you want to disconnect your team?";
+            btn.style.display = 'block';
+        } else {
+            title.innerText = "Guest Mode";
+            msg.innerText = "You are not connected. Please enter your Team ID on the home screen.";
+            btn.style.display = 'none';
+        }
+        document.getElementById('logoutOverlay').classList.add('open');
+        // Sidebar toggle removed
+    }
+
     function closeLogout() { document.getElementById('logoutOverlay').classList.remove('open'); }
     function confirmLogout() { localStorage.removeItem('fpl_id_final'); location.reload(); }
+
     function closeModal() { app.closeModal(); }
     
     document.getElementById('playerModalOverlay').addEventListener('click', (e) => { 
