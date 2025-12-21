@@ -1815,22 +1815,21 @@
 
                                 const outIds = JSON.stringify(s.out.map(p => p.id));
                                 const inIds = JSON.stringify(s.in.map(p => p.id));
+                                
                                 html += `<div class="${cardClass}"><div class="t-header" style="flex-direction:column; align-items:flex-start; gap:5px;">${badge}<div style="width:100%; display:flex; justify-content:space-between; align-items:center;"><div class="t-type">${s.type}</div><div class="t-gain">+${s.diff} pts</div></div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                                
+                                // MODIFIED: Use createPill for uniform card size
                                 s.out.forEach(p => {
-                                    const fixtures = app.fixMap[p.team_id] || [];
-                                    let dots = '<div class="t-fdr">';
-                                    fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
-                                    dots += '</div>';
-                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
+                                    html += app.createPill(p, app.fixMap, app.statusMap);
                                 });
+
                                 html += `</div><div class="t-half t-in"><span class="t-label lbl-in">BUY</span>`;
+                                
+                                // MODIFIED: Use createPill for uniform card size
                                 s.in.forEach(p => {
-                                    const fixtures = app.fixMap[p.team_id] || [];
-                                    let dots = '<div class="t-fdr">';
-                                    fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
-                                    dots += '</div>';
-                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m</div>${dots}</div>`;
+                                    html += app.createPill(p, app.fixMap, app.statusMap);
                                 });
+
                                 html += `</div></div><div style="padding:0 15px 15px 15px;"><button class="preview-btn" onclick='app.simulate(${outIds}, ${inIds})'><i class="fa-solid fa-eye"></i> Preview Team</button></div></div>`;
                             });
                         } else {
