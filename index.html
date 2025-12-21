@@ -1594,7 +1594,7 @@
                 }
             });
             const bench = rated.filter(x => !bestLineup.includes(x.p.id)).sort((a,b) => a.p.pos === 1 ? -1 : b.score - a.score); 
-            return { formation: bestForm, bench: bench.map(x => x.p) };
+            return { formation: bestForm, bench: bench.map(x => x.p), bestLineup };
         },
 
         analyze: (myPicks, allPlayers, bank, fixtures, ftCount) => {
@@ -2040,13 +2040,29 @@
                     simPicks[pickIdx].is_vice_captain = false;
                 }
             });
+            // --- AUTO OPTIMIZE FORMATION ---
+            const opt = TransferBot.recommendFormation(simPicks, app.playersCache, app.fixMap);
+            const finalPicks = [];
+            // 1. Add Starters (Indices 0-10)
+            opt.bestLineup.forEach((id, i) => {
+                const p = simPicks.find(x => x.element === id);
+                p.position = i + 1;
+                finalPicks.push(p);
+            });
+            // 2. Add Bench (Indices 11-14)
+            opt.bench.forEach((player, i) => {
+                const p = simPicks.find(x => x.element === player.id);
+                p.position = 12 + i;
+                finalPicks.push(p);
+            });
+
             app.currentTool = 'squad';
             app.isSimulating = true;
             app.simNewIds = inIds;
             document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-squad').classList.add('active');
             const simStats = { ...app.currentStats, bank: simBank * 10, value: app.currentStats.value };
-            app.render(app.userData, simPicks, app.playersCache, app.fixMap, app.statusMap || {}, simStats, app.historyData, app.deadline, app.gwName);
+            app.render(app.userData, finalPicks, app.playersCache, app.fixMap, app.statusMap || {}, simStats, app.historyData, app.deadline, app.gwName);
             const bannerHtml = `<div class="sim-banner"><div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div><div class="sim-btn" onclick="app.switchTool('squad')">Reset</div></div>`;
             const dash = document.getElementById('dashboardView');
             const existingBanner = dash.querySelector('.sim-banner');
