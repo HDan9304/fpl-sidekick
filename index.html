@@ -1810,9 +1810,10 @@
         userData: null, playersCache: {}, fixMap: {}, currentPicks: [], currentBank: 0,
         teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
         currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
-        viewMode: 'live', ftCount: 1,
+        viewMode: 'live', ftCount: 1, lastEvents: {}, liveInterval: null,
 
         init: () => {
+            if ('Notification' in window) Notification.requestPermission();
             const savedId = localStorage.getItem('fpl_id_final');
             const lastTool = localStorage.getItem('fpl_last_tool');
             if (lastTool) app.currentTool = lastTool;
@@ -2241,8 +2242,10 @@
                 document.getElementById('loadingMsg').innerText = "Fetching Live Scores...";
                 const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
                 const liveMap = {};
+                app.lastEvents = {};
                 liveData.elements.forEach(el => {
-                    liveMap[el.id] = { points: el.stats.total_points, mins: el.stats.minutes, goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, own_goals: el.stats.own_goals };
+                    liveMap[el.id] = { points: el.stats.total_points, mins: el.stats.minutes, goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, own_goals: el.stats.own_goals, yellow_cards: el.stats.yellow_cards };
+                    app.lastEvents[el.id] = { goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, yellow_cards: el.stats.yellow_cards };
                 });
 
                 // Fetch 3 fixtures in parallel because it's safe
@@ -2311,6 +2314,10 @@
                 app.currentPicks = picks.picks;
                 app.currentBank = picks.entry_history.bank / 10;
                 document.getElementById('demoAlert').classList.add('hidden');
+                
+                if (app.liveInterval) clearInterval(app.liveInterval);
+                app.liveInterval = setInterval(() => app.checkLiveEvents(gw), 60000);
+
                 app.render(user, picks.picks, players, masterFixMap, app.statusMap, picks.entry_history, history, app.deadline, app.gwName);
 
             } catch (error) {
@@ -2323,6 +2330,36 @@
                     app.render(MOCK_DATA.user, MOCK_DATA.picks, mPlayers, {}, {}, { bank: 5, value: 1000 }, { chips: [] }, new Date().toISOString(), "GW Demo"); 
                 }, 500);
             }
+        },
+        
+        checkLiveEvents: async (gw) => {
+            try {
+                const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
+                liveData.elements.forEach(el => {
+                    const pid = el.id;
+                    const p = app.playersCache[pid];
+                    if (!p) return;
+                    
+                    const newStats = { goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, yellow_cards: el.stats.yellow_cards };
+                    const old = app.lastEvents[pid] || newStats;
+                    
+                    // Update Cache
+                    p.event_points = el.stats.total_points;
+                    p.minutes = el.stats.minutes;
+                    p.stats = { ...p.stats, ...newStats, own_goals: el.stats.own_goals };
+
+                    // Notify Squad
+                    const inSquad = app.currentPicks.some(x => x.element === pid);
+                    if (inSquad) {
+                        if (newStats.goals > old.goals) new Notification(`⚽ Goal! ${p.name}`);
+                        if (newStats.assists > old.assists) new Notification(`🅰️ Assist! ${p.name}`);
+                        if (newStats.red_cards > old.red_cards) new Notification(`🟥 Red Card! ${p.name}`);
+                        if (newStats.yellow_cards > old.yellow_cards) new Notification(`🟨 Yellow Card! ${p.name}`);
+                    }
+                    app.lastEvents[pid] = newStats;
+                });
+                if (app.currentTool === 'squad') app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
+            } catch (e) {}
         },
 
         render: (user, picks, players, fixMap, statusMap, stats, history, deadline, gwName) => {
