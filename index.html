@@ -1859,12 +1859,20 @@
         },
 
         // --- NEW: Filter Players by Position ---
+        // --- NEW: Filter Players by Position (With Toggle Logic) ---
         filterPos: (posId, btnElement) => {
-            // 1. Visual Toggle
+            // 1. TOGGLE OFF: If clicking the active button again, reset to main view
+            if (btnElement.classList.contains('active')) {
+                btnElement.classList.remove('active');
+                document.getElementById('scoutResults').style.display = 'none';
+                document.getElementById('transferContent').style.display = 'block';
+                return;
+            }
+
+            // 2. TOGGLE ON: Activate button and show list
             document.querySelectorAll('.filter-pill').forEach(el => el.classList.remove('active'));
             btnElement.classList.add('active');
 
-            // 2. Hide Suggestions, Show Results
             document.getElementById('transferContent').style.display = 'none';
             const res = document.getElementById('scoutResults');
             res.style.display = 'block';
