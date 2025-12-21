@@ -69,7 +69,8 @@
         }
         .user-avatar.active { background: var(--primary); color: var(--accent); border-color: var(--primary); }
         .header-right { display: flex; align-items: center; gap: 12px; }
-        .trophy-btn { font-size: 1.2rem; color: #fbbf24; cursor: pointer; padding: 5px; }
+        .trophy-btn { font-size: 1.2rem; color: #fbbf24; cursor: pointer; padding: 5px; transition: 0.2s; }
+        .trophy-btn:active { transform: scale(0.9); }
 
         /* Content Area */
         .content { padding: 15px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
@@ -368,7 +369,10 @@
         .rep-item:hover { background: #fee2e2; border-color: #fca5a5; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Leagues Modal */
+        /* Leagues Modal - SCROLLABLE */
+        #leaguesList { max-height: 50vh; overflow-y: auto; scrollbar-width: none; }
+        #leaguesList::-webkit-scrollbar { display: none; }
+
         .league-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
         .league-item:last-child { border-bottom: none; }
         .lg-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
@@ -401,7 +405,7 @@
     <div id="leaguesModalOverlay" class="modal-overlay" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <div class="m-player-name">My Leagues</div>
+                <div class="m-player-name"><i class="fa-solid fa-trophy" style="color:#fbbf24; margin-right:8px;"></i> My Leagues</div>
                 <button class="close-modal" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">×</button>
             </div>
             <div id="leaguesList" style="padding-bottom: 20px;"></div>
