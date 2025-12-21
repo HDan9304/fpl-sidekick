@@ -1945,7 +1945,7 @@
                                 else if (index === 1) html += `<div style="font-size:0.9rem; font-weight:700; color:#888; margin:20px 0 10px 0; padding-left:5px;">Alternative Options</div>`;
 
                                 if (s.type === 'Roll Transfer') {
-                                    html += `<div class="${cardClass}" style="padding:25px; text-align:center;">${badge}<div style="font-size:2rem; margin:10px 0;">🛡️</div><div style="font-weight:800; margin-bottom:5px; font-size:1.1rem;">Save Free Transfer</div><div style="font-size:0.85rem; color:#666; line-height:1.4;">Your team is strong. You have ${app.ftCount} FTs. Saving one gives you flexibility next week.</div></div>`;
+                                    html += `<div class="${cardClass}" style="padding:25px; text-align:center;">${badge}<div style="font-size:2rem; margin:10px 0; color:#059669;"><i class="fa-solid fa-shield-halved"></i></div><div style="font-weight:800; margin-bottom:5px; font-size:1.1rem;">Save Free Transfer</div><div style="font-size:0.85rem; color:#666; line-height:1.4;">Your team is strong. You have ${app.ftCount} FTs. Saving one gives you flexibility next week.</div></div>`;
                                     return;
                                 }
                                
@@ -1954,9 +1954,9 @@
                                 const bankRem = (app.currentBank + s.out.reduce((a,b)=>a+b.price,0) - s.in.reduce((a,b)=>a+b.price,0)).toFixed(1);
                                 
                                 let verdict = '';
-                                if (s.type.includes('(-') && s.diff > 6) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#16a34a; background:#dcfce7; padding:2px 6px; border-radius:4px; margin-left:4px;">💎 Worth Hit</span>';
-                                else if (!s.type.includes('(-') && app.ftCount > 1) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#2563eb; background:#dbeafe; padding:2px 6px; border-radius:4px; margin-left:4px;">✨ Use FT</span>';
-                                else if (s.diff > 8) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#d97706; background:#fef3c7; padding:2px 6px; border-radius:4px; margin-left:4px;">🔥 Hot</span>';
+                                if (s.type.includes('(-') && s.diff > 6) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#16a34a; background:#dcfce7; padding:2px 6px; border-radius:4px; margin-left:4px;"><i class="fa-regular fa-gem"></i> Worth Hit</span>';
+                                else if (!s.type.includes('(-') && app.ftCount > 1) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#2563eb; background:#dbeafe; padding:2px 6px; border-radius:4px; margin-left:4px;"><i class="fa-solid fa-star"></i> Use FT</span>';
+                                else if (s.diff > 8) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#d97706; background:#fef3c7; padding:2px 6px; border-radius:4px; margin-left:4px;"><i class="fa-solid fa-fire-flame-curved"></i> Hot</span>';
 
                                 html += `<div class="${cardClass}"><div class="t-header" style="align-items:center;"><div>${badge}<div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;"><div class="t-type">${s.type}</div>${verdict}</div><div class="t-bank-tag">Bank: £${bankRem}m</div></div><div class="t-gain">+${s.diff}</div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
                                 s.out.forEach(p => {
@@ -2112,7 +2112,7 @@
             if (rec) {
                 aiHtml = `
                 <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:15px; border-radius:12px; margin-bottom:20px; display:flex; gap:12px; align-items:start;">
-                    <div style="font-size:1.5rem;">🤖</div>
+                    <div style="font-size:1.5rem; color:#166534;"><i class="fa-solid fa-robot"></i></div>
                     <div>
                         <div style="font-weight:800; color:#166534; font-size:0.9rem; margin-bottom:2px;">AI Strategy Found</div>
                         <div style="color:#14532d; font-size:0.85rem; line-height:1.4;">
@@ -2365,7 +2365,7 @@
                     const isUrgent = d === 0 ? 'urgent' : '';
                     document.getElementById('gwCountdown').innerHTML = `<div class="cd-label"><div class="status-dot ${isUrgent}"></div>${gwName}</div><div class="cd-time">${d}d : ${h.toString().padStart(2, '0')}h : ${m.toString().padStart(2, '0')}m : ${s.toString().padStart(2, '0')}s</div>`;
                 } else {
-                    document.getElementById('gwCountdown').innerHTML = `<div class="cd-label" style="border:none; padding:0;">⚠️ Deadline Passed</div>`;
+                    document.getElementById('gwCountdown').innerHTML = `<div class="cd-label" style="border:none; padding:0; color:#ef4444;"><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px"></i> Deadline Passed</div>`;
                     clearInterval(app.timer);
                 }
             };
