@@ -2359,7 +2359,34 @@
         
         checkLiveEvents: async (gw) => {
             try {
-                const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/?t=${Date.now()}`);
+                // Fetch both Live Stats AND Fixtures (for Match Clock)
+                const [liveData, fixData] = await Promise.all([
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/?t=${Date.now()}`),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}&t=${Date.now()}`)
+                ]);
+
+                // 1. Update Match Status (Time, HT, FT)
+                if (fixData) {
+                    fixData.forEach(f => {
+                        let status = 'FIX';
+                        let label = new Date(f.kickoff_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        
+                        if (f.finished_provisional || f.finished) { 
+                            status = 'FT'; label = 'FT'; 
+                        } else if (f.started) { 
+                            status = 'LIVE'; 
+                            // Check for Half Time (approx logic) or regular minutes
+                            if (f.minutes === 45 && !f.finished_provisional && Date.now() - new Date(f.kickoff_time).getTime() > 60*60*1000) label = "HT";
+                            else label = f.minutes + "'";
+                        }
+                        
+                        // Update the global map so pills can read it
+                        if (app.statusMap[f.team_h]) { app.statusMap[f.team_h].status = status; app.statusMap[f.team_h].label = label; }
+                        if (app.statusMap[f.team_a]) { app.statusMap[f.team_a].status = status; app.statusMap[f.team_a].label = label; }
+                    });
+                }
+
+                // 2. Update Player Stats
                 liveData.elements.forEach(el => {
                     const pid = el.id;
                     const p = app.playersCache[pid];
@@ -2549,7 +2576,8 @@
                 if (m.status === 'FT') { badgeClass = 'ms-ft'; label = 'FT'; } 
                 else if (m.status === 'LIVE') { 
                     badgeClass = 'ms-live'; 
-                    if (p.minutes > 0) label = p.minutes + "'";
+                    // Removed: if (p.minutes > 0) label = p.minutes + "'"; 
+                    // Now it keeps 'm.label' (The Match Clock)
                 }
                 matchBadge = `<div class="match-status ${badgeClass}">${label}</div>`;
             }
