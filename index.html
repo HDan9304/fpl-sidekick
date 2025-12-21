@@ -1693,6 +1693,12 @@
                             if (buyObj.p.price > budget) continue;
                             if (curPicks.some(p => p.element === buyObj.p.id) || usedIn.has(buyObj.p.id)) continue;
                             
+                            // Check Max 3 Players Per Team Rule
+                            const tId = buyObj.p.team_id;
+                            const countExisting = curPicks.filter(p => allPlayers[p.element].team_id === tId && !usedOut.has(p.element) && p.element !== sell.p.id).length;
+                            const countAdded = [...usedIn].filter(id => allPlayers[id].team_id === tId).length;
+                            if ((countExisting + countAdded) >= 3) continue;
+
                             const gain = buyObj.score - sell.score;
                             // Update best link for this step if gain is higher
                             if (gain > 0.1 && (!bestLink || gain > bestLink.gain)) {
