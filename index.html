@@ -1592,9 +1592,10 @@
             const data = {};
             for (const [tid, fixList] of Object.entries(fixMap)) {
                 let sum = 0;
-                const limit = Math.min(fixList.length, 3);
-                for (let i = 0; i < limit; i++) sum += fixList[i].diff;
-                data[tid] = { avg: limit > 0 ? sum / limit : 3, nextHome: fixList[0] ? fixList[0].is_home : false };
+                // Shift: Use index 1 and 2 (Next Upcoming GWs)
+                const limit = Math.min(fixList.length, 3); 
+                for (let i = 1; i < limit; i++) sum += (fixList[i]?.diff || 3);
+                data[tid] = { avg: limit > 1 ? sum / (limit - 1) : 3, nextHome: fixList[1] ? fixList[1].is_home : false };
             }
             return data;
         },
@@ -1985,7 +1986,8 @@
                                 s.out.forEach(p => {
                                     const fixtures = app.fixMap[p.team_id] || [];
                                     let dots = '<div class="t-fdr">';
-                                    fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
+                                    // Slice 1,4 to skip current GW and show next available
+                                    fixtures.slice(1, 4).forEach(f => { if(f) dots += `<div class="t-dot bg-${f.diff}"></div>` });
                                     dots += '</div>';
                                     const pc = p.cost_change > 0 ? '<span class="pc-arrow pc-up">▲</span>' : (p.cost_change < 0 ? '<span class="pc-arrow pc-down">▼</span>' : '');
                                     
@@ -1999,7 +2001,7 @@
                                 s.in.forEach(p => {
                                     const fixtures = app.fixMap[p.team_id] || [];
                                     let dots = '<div class="t-fdr">';
-                                    fixtures.slice(0, 3).forEach(f => dots += `<div class="t-dot bg-${f.diff}"></div>`);
+                                    fixtures.slice(1, 4).forEach(f => { if(f) dots += `<div class="t-dot bg-${f.diff}"></div>` });
                                     dots += '</div>';
                                     const pc = p.cost_change > 0 ? '<span class="pc-arrow pc-up">▲</span>' : (p.cost_change < 0 ? '<span class="pc-arrow pc-down">▼</span>' : '');
 
