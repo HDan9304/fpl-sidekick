@@ -437,6 +437,24 @@
         }
         .budget-val { color: var(--primary); font-weight: 800; }
         
+        .pitch-loader {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(2px);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: var(--primary);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .pitch-loader.active { opacity: 1; pointer-events: all; }
+        
         .pitch-container {
             background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 20px, var(--grass-2) 20px, var(--grass-2) 40px);
             padding: 25px 5px;
@@ -1476,6 +1494,8 @@
                         <span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span>
                         <span>Value: <span class="budget-val" id="dispValue">£0.0m</span></span>
                     </div>
+                    
+                    <div id="viewLoader" class="pitch-loader"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:8px"></i> Updating...</div>
 
                     <div class="pitch-container">
                         <div class="pitch-lines">
@@ -2018,10 +2038,18 @@
         },
 
         toggleView: (mode) => {
-            app.viewMode = mode;
+            if (app.viewMode === mode) return;
+            const loader = document.getElementById('viewLoader');
+            loader.classList.add('active');
+            
             document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-${mode}`).classList.add('active');
-            app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
+
+            setTimeout(() => {
+                app.viewMode = mode;
+                app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
+                setTimeout(() => { loader.classList.remove('active'); }, 50);
+            }, 300);
         },
 
         simulate: (outIds, inIds) => {
