@@ -2344,17 +2344,23 @@
                     const fid = app.statusMap[teamId]?.id || 0;
                     if (fid) {
                         if (!matchGroups[fid]) matchGroups[fid] = [];
-                        matchGroups[fid].push({ id: el.id, bps: el.stats.bps });
+                        matchGroups[fid].push({ id: el.id, bps: el.stats.bps, bonus: el.stats.bonus });
                     }
                 });
+
                 app.bonusMap = {};
-                Object.values(matchGroups).forEach(pList => {
-                    pList.sort((a, b) => b.bps - a.bps);
-                    if (pList.length > 0) app.bonusMap[pList[0].id] = 3;
-                    if (pList.length > 1) app.bonusMap[pList[1].id] = (pList[1].bps === pList[0].bps) ? 3 : 2;
-                    if (pList.length > 2) {
-                        if (pList[2].bps === pList[1].bps) app.bonusMap[pList[2].id] = app.bonusMap[pList[1].id];
-                        else app.bonusMap[pList[2].id] = 1;
+                Object.values(matchGroups).forEach(players => {
+                    players.sort((a, b) => b.bps - a.bps);
+                    if (players.length > 0 && players[0].bonus === 0) app.bonusMap[players[0].id] = 3;
+
+                    if (players.length > 1) {
+                        const b2 = (players[1].bps === players[0].bps) ? 3 : 2;
+                        if (players[1].bonus === 0) app.bonusMap[players[1].id] = b2;
+
+                        if (players.length > 2 && players[2].bonus === 0) {
+                            if (players[2].bps === players[1].bps) app.bonusMap[players[2].id] = b2;
+                            else app.bonusMap[players[2].id] = 1;
+                        }
                     }
                 });
 
@@ -2442,18 +2448,23 @@
                     const fid = app.statusMap[teamId]?.id || 0;
                     if (fid) {
                         if (!matchGroups[fid]) matchGroups[fid] = [];
-                        matchGroups[fid].push({ id: el.id, bps: el.stats.bps });
+                        matchGroups[fid].push({ id: el.id, bps: el.stats.bps, bonus: el.stats.bonus });
                     }
                 });
-
                 app.bonusMap = {};
-                Object.values(matchGroups).forEach(players => {
-                    players.sort((a, b) => b.bps - a.bps);
-                    if (players.length > 0) app.bonusMap[players[0].id] = 3;
-                    if (players.length > 1) app.bonusMap[players[1].id] = (players[1].bps === players[0].bps) ? 3 : 2;
-                    if (players.length > 2) {
-                        if (players[2].bps === players[1].bps) app.bonusMap[players[2].id] = app.bonusMap[players[1].id];
-                        else app.bonusMap[players[2].id] = 1;
+                Object.values(matchGroups).forEach(pList => {
+                    pList.sort((a, b) => b.bps - a.bps);
+                    // Only apply projection if confirmed bonus is 0
+                    if (pList.length > 0 && pList[0].bonus === 0) app.bonusMap[pList[0].id] = 3;
+                    
+                    if (pList.length > 1) {
+                        const b2 = (pList[1].bps === pList[0].bps) ? 3 : 2;
+                        if (pList[1].bonus === 0) app.bonusMap[pList[1].id] = b2;
+                        
+                        if (pList.length > 2 && pList[2].bonus === 0) {
+                            if (pList[2].bps === pList[1].bps) app.bonusMap[pList[2].id] = b2;
+                            else app.bonusMap[pList[2].id] = 1;
+                        }
                     }
                 });
 
