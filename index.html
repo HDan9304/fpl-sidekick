@@ -1942,18 +1942,10 @@
                         }
 
                         const suggestions = TransferBot.analyze(app.currentPicks, app.playersCache, app.currentBank, app.fixMap, app.ftCount);
-                        const bestForm = TransferBot.recommendFormation(app.currentPicks, app.playersCache, app.fixMap);
+                        // Removed Optimal Lineup Calculation
                         const market = MarketBot.getTrends(app.playersCache);
                         
                         let html = `
-                        <div class="t-card" style="padding:15px; border-left:4px solid #8b5cf6; background:#f5f3ff; border-radius:12px; margin-bottom:15px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                                <div style="font-weight:800; color:#5b21b6; font-size:0.9rem;"><i class="fa-solid fa-chess-board"></i> Optimal Lineup</div>
-                                <div style="background:#8b5cf6; color:white; font-weight:800; padding:2px 8px; border-radius:6px; font-size:0.8rem;">${bestForm.formation}</div>
-                            </div>
-                            <div class="opt-bench">Bench: <span>${bestForm.bench.map(p => p.name).join(', ')}</span></div>
-                        </div>
-
                         <div style="display:flex; justify-content:space-between; padding:10px 15px; background:white; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
                             <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
                             <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Free Transfers: <span style="color:${app.ftCount === 5 ? '#e90052' : '#00ff85'}; font-weight:800;">${app.ftCount}</span></div>
@@ -2178,7 +2170,25 @@
 
             setTimeout(() => {
                 app.viewMode = mode;
-                app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
+                
+                let renderPicks = app.currentPicks;
+                if (mode === 'next') {
+                    // Auto-Optimize Lineup for Next GW View
+                    const opt = TransferBot.recommendFormation(app.currentPicks, app.playersCache, app.fixMap);
+                    renderPicks = [];
+                    // 1. Starters
+                    opt.bestLineup.forEach((id, i) => {
+                        const p = app.currentPicks.find(x => x.element === id);
+                        if (p) renderPicks.push({ ...p, position: i + 1 });
+                    });
+                    // 2. Bench
+                    opt.bench.forEach((player, i) => {
+                        const p = app.currentPicks.find(x => x.element === player.id);
+                        if (p) renderPicks.push({ ...p, position: 12 + i });
+                    });
+                }
+
+                app.render(app.userData, renderPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
                 setTimeout(() => { loader.classList.remove('active'); }, 50);
             }, 300);
         },
@@ -2509,7 +2519,8 @@
             document.getElementById('dispRank').innerHTML = `<div class="rank-wrap">${rankArrow} <span>${currentRank.toLocaleString()}</span></div>`;
 
             document.getElementById('dispBank').innerText = `£${(stats.bank / 10).toFixed(1)}m`;
-            document.getElementById('dispValue').innerText = `£${(stats.value / 10).toFixed(1)}m`;
+            const valHtml = `£${(stats.value / 10).toFixed(1)}m` + (app.viewMode === 'next' ? ' <span style="background:#fbbf24; color:#78350f; font-size:0.6rem; padding:1px 6px; border-radius:4px; font-weight:800; vertical-align:2px;">AI LINEUP</span>' : '');
+            document.getElementById('dispValue').innerHTML = valHtml;
 
             if (app.timer) clearInterval(app.timer);
             const updateTime = () => {
