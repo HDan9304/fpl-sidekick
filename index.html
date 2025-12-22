@@ -2336,6 +2336,28 @@
                 });
 
                 app.playersCache = players;
+
+                // --- LIVE BONUS PROJECTION LOGIC (INITIAL LOAD) ---
+                const matchGroups = {};
+                liveData.elements.forEach(el => {
+                    const teamId = app.playersCache[el.id]?.team_id;
+                    const fid = app.statusMap[teamId]?.id || 0;
+                    if (fid) {
+                        if (!matchGroups[fid]) matchGroups[fid] = [];
+                        matchGroups[fid].push({ id: el.id, bps: el.stats.bps });
+                    }
+                });
+                app.bonusMap = {};
+                Object.values(matchGroups).forEach(pList => {
+                    pList.sort((a, b) => b.bps - a.bps);
+                    if (pList.length > 0) app.bonusMap[pList[0].id] = 3;
+                    if (pList.length > 1) app.bonusMap[pList[1].id] = (pList[1].bps === pList[0].bps) ? 3 : 2;
+                    if (pList.length > 2) {
+                        if (pList[2].bps === pList[1].bps) app.bonusMap[pList[2].id] = app.bonusMap[pList[1].id];
+                        else app.bonusMap[pList[2].id] = 1;
+                    }
+                });
+
                 app.currentPicks = picks.picks;
                 app.currentBank = picks.entry_history.bank / 10;
                 document.getElementById('demoAlert').classList.add('hidden');
