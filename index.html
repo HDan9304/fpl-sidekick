@@ -1833,7 +1833,7 @@
         userData: null, playersCache: {}, fixMap: {}, currentPicks: [], currentBank: 0,
         teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
         currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
-        viewMode: 'live', ftCount: 1, lastEvents: {}, liveInterval: null,
+        viewMode: 'live', ftCount: 1, lastEvents: {}, liveInterval: null, bonusMap: {},
 
         init: () => {
             if ('Notification' in window) Notification.requestPermission();
@@ -2410,6 +2410,31 @@
                     }
                     app.lastEvents[pid] = newStats;
                 });
+
+                // --- LIVE BONUS PROJECTION LOGIC ---
+                const matchGroups = {};
+                liveData.elements.forEach(el => {
+                    const fixtureId = app.playersCache[el.id]?.statusMapId || 0; // Use fixture ID from statusMap if available
+                    // Fallback: Group by team if fixture ID isn't directly on player
+                    const teamId = app.playersCache[el.id]?.team_id;
+                    const fid = app.statusMap[teamId]?.id || 0;
+                    if (fid) {
+                        if (!matchGroups[fid]) matchGroups[fid] = [];
+                        matchGroups[fid].push({ id: el.id, bps: el.stats.bps });
+                    }
+                });
+
+                app.bonusMap = {};
+                Object.values(matchGroups).forEach(players => {
+                    players.sort((a, b) => b.bps - a.bps);
+                    if (players.length > 0) app.bonusMap[players[0].id] = 3;
+                    if (players.length > 1) app.bonusMap[players[1].id] = (players[1].bps === players[0].bps) ? 3 : 2;
+                    if (players.length > 2) {
+                        if (players[2].bps === players[1].bps) app.bonusMap[players[2].id] = app.bonusMap[players[1].id];
+                        else app.bonusMap[players[2].id] = 1;
+                    }
+                });
+
                 // Only re-render live data if the user is NOT in Preview/Simulation mode
                 if (app.currentTool === 'squad' && !app.isSimulating) app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
             } catch (e) {}
@@ -2420,7 +2445,8 @@
             picks.forEach(pick => {
                 if (pick.position <= 11) {
                     const p = players[pick.element];
-                    if (p) liveScore += (p.event_points * pick.multiplier);
+                    const bonus = (app.viewMode === 'live' && app.bonusMap[pick.element]) ? app.bonusMap[pick.element] : 0;
+                    if (p) liveScore += ((p.event_points + bonus) * pick.multiplier);
                 }
             });
             const oldGwScore = user.summary_event_points || 0;
@@ -2599,11 +2625,13 @@
             dotsHtml += '</div>';
             
             const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
-            const displayPoints = p.event_points * (p.multiplier || 1);
+            const bonus = (app.viewMode === 'live' && app.bonusMap[p.id]) ? app.bonusMap[p.id] : 0;
+            const bonusHtml = bonus > 0 ? `<span style="color:var(--accent); font-size:0.55rem; margin-left:2px;">+${bonus}</span>` : '';
+            const displayPoints = (p.event_points + bonus) * (p.multiplier || 1);
 
             // --- NEXT GW MODE ---
             let pcArrow = p.cost_change > 0 ? `<span class="pc-arrow pc-up">▲</span>` : (p.cost_change < 0 ? `<span class="pc-arrow pc-down">▼</span>` : '');
-            let bottomBar = `<div class="pill-data"><span>£${p.price}${pcArrow}</span><span class="points-badge">${displayPoints}</span></div>`;
+            let bottomBar = `<div class="pill-data"><span>£${p.price}${pcArrow}</span><span class="points-badge">${displayPoints}${bonusHtml}</span></div>`;
             
             if (app.viewMode === 'next') {
                 dotsHtml = '';
