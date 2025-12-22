@@ -1357,7 +1357,7 @@
     <div id="leaguesModalOverlay" class="modal-overlay" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <div class="m-player-name"><i class="fa-solid fa-trophy" style="color:#fbbf24; margin-right:8px;"></i> My Leagues</div>
+                <div class="m-player-name"><i class="fa-solid fa-trophy" style="margin-right:8px;"></i> My Leagues</div>
                 <button class="close-modal" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">×</button>
             </div>
             <div id="leaguesList" style="padding-bottom: 20px;"></div>
@@ -2657,7 +2657,7 @@
             fixtures.slice(0, 3).forEach(f => { dotsHtml += `<div class="fdr-dot bg-${f.diff}">${f.opp}</div>`; });
             dotsHtml += '</div>';
             
-            const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
+            const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}${p.pos === 1 ? '_1' : ''}-66.png`;
             const bonus = (app.viewMode === 'live' && app.bonusMap[p.id]) ? app.bonusMap[p.id] : 0;
             const bonusHtml = bonus > 0 ? `<span style="color:var(--accent); font-size:0.55rem; margin-left:2px;">+${bonus}</span>` : '';
             const displayPoints = (p.event_points + bonus) * (p.multiplier || 1);
