@@ -2410,7 +2410,8 @@
                     }
                     app.lastEvents[pid] = newStats;
                 });
-                if (app.currentTool === 'squad') app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
+                // Only re-render live data if the user is NOT in Preview/Simulation mode
+                if (app.currentTool === 'squad' && !app.isSimulating) app.render(app.userData, app.currentPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
             } catch (e) {}
         },
 
