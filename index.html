@@ -456,10 +456,35 @@
         .pitch-loader.active { opacity: 1; pointer-events: all; }
         
         .pitch-container {
-            background: repeating-linear-gradient(0deg, var(--grass-1), var(--grass-1) 20px, var(--grass-2) 20px, var(--grass-2) 40px);
+            background-color: var(--grass-1);
+            background-image: linear-gradient(90deg, rgba(0,0,0,0.1) 50%, transparent 50%), linear-gradient(rgba(0,0,0,0.1) 50%, transparent 50%);
+            background-size: 40px 40px;
             padding: 25px 5px;
             position: relative;
             min-height: 480px;
+        }
+        
+        /* New Captain & CS Styles */
+        .captain-card {
+            border: 2px solid #fbbf24 !important;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+            transform: scale(1.05);
+            z-index: 20;
+        }
+        .cs-shield {
+            position: absolute;
+            top: -6px; right: -6px; left: auto;
+            transform: none;
+            width: 18px; height: 18px;
+            display: flex;
+            align-items: center; justify-content: center;
+            font-size: 0.6rem;
+            color: #064e3b;
+            background: #34d399;
+            border: 1px solid #065f46;
+            border-radius: 4px;
+            z-index: 30;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .pitch-lines {
@@ -531,20 +556,27 @@
         .bench-pill { opacity: 0.85; }
         .bench-num {
             position: absolute;
-            top: 0; left: 0;
-            background: #eee;
-            color: #555;
+            top: -6px; right: -6px; left: auto;
+            background: #374151;
+            color: white;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center; justify-content: center;
             font-size: 0.55rem;
             font-weight: 700;
-            padding: 1px 5px;
-            border-radius: 4px 0 4px 0;
+            z-index: 20;
+            border: 1px solid white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
+        .si-warn { background: #fbbf24; color: #78350f; font-weight:800; font-family:sans-serif; }
+        .si-bad { background: #ef4444; font-weight:800; font-family:sans-serif; }
 
         /* --- Player Pill Components --- */
         .player-pill {
             background: rgba(255,255,255,0.95);
-            width: 68px;
-            padding: 6px 2px;
+            width: 64px; /* Tighter width */
+            padding: 4px 2px; /* Less padding */
             border-radius: 6px;
             text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
@@ -569,10 +601,11 @@
             filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
         }
         .pill-name {
-            font-size: 0.65rem;
+            font-size: 0.6rem; /* Smaller to fit better */
             font-weight: 700;
             color: #111;
             white-space: nowrap;
+            letter-spacing: -0.3px; /* Tighter tracking */
             overflow: hidden;
             text-overflow: ellipsis;
             width: 100%;
@@ -631,6 +664,51 @@
         }
         .vice-badge { background: #666; }
 
+        /* --- Smart Status Stack (New) --- */
+        .status-stack {
+            position: absolute;
+            top: -6px; left: -6px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            z-index: 25;
+        }
+        .status-icon {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55rem;
+            color: white;
+            border: 1px solid white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .si-fire { background: #ef4444; }
+        .si-cold { background: #3b82f6; }
+        .si-gem { background: #8b5cf6; }
+
+        /* --- Legend --- */
+        .legend-bar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            background: white;
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            text-transform: uppercase;
+        }
+
         .status-flag {
             position: absolute;
             top: -4px; right: -4px;
@@ -675,7 +753,7 @@
         }
         .sub-icon {
             position: absolute;
-            top: -5px; left: -5px;
+            top: auto; bottom: 26px; left: -4px;
             background: #00ff85;
             color: #00381b;
             width: 18px; height: 18px;
@@ -691,31 +769,39 @@
         
         .event-row {
             position: absolute;
-            bottom: 38px; left: 50%;
+            bottom: 32px; left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 4px;
+            gap: 2px;
             z-index: 25;
+            align-items: center;
         }
         .evt-icon {
-            width: 16px; height: 16px;
-            border-radius: 50%;
-            font-size: 0.65rem;
+            width: 14px; height: 14px;
+            border-radius: 50%; /* Default circular (Goals/Assists) */
+            font-size: 0.6rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
             border: 1px solid white;
         }
-        .evt-goal { background: #fff; color: #111; }
-        .evt-assist { background: #3b82f6; color: white; }
-        .evt-red { background: #ef4444; color: white; }
+        /* Pro Card Shape */
+        .evt-card {
+            width: 10px; height: 13px;
+            border-radius: 2px; /* Rectangular */
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .evt-goal { background: white; color: #111; border-color:#333; }
+        .evt-assist { background: #3b82f6; color: white; border:none; }
+        .evt-red { background: #ef4444; }
+        .evt-yellow { background: #fbbf24; }
         .evt-own { background: #111; color: #ef4444; }
 
         /* --- FDR Ticker (Fixture Difficulty) --- */
         .fdr-row {
             position: absolute;
-            top: -6px; left: 50%;
+            top: auto; bottom: 42px; left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 1px;
@@ -1502,6 +1588,12 @@
                     </div>
                 </div>
 
+                <div class="legend-bar">
+                    <div class="legend-item"><div class="status-icon si-fire"><i class="fa-solid fa-fire"></i></div> Hot Form</div>
+                    <div class="legend-item"><div class="status-icon si-cold"><i class="fa-regular fa-snowflake"></i></div> Cold Form</div>
+                    <div class="legend-item"><div class="status-icon si-gem"><i class="fa-regular fa-gem"></i></div> Differential</div>
+                </div>
+
                 <div class="pitch-wrapper">
                     <div class="budget-bar">
                         <span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span>
@@ -1802,7 +1894,8 @@
         },
 
         analyzeCaptaincy: (picks, players, fixMap) => {
-            let cur = null, best = null, max = -99;
+            let cur = null, curVice = null;
+            const ranked = [];
             picks.forEach(p => {
                 if (p.position > 11) return;
                 const pl = players[p.element];
@@ -1810,10 +1903,14 @@
                 // Score: Form + (5 - FixtureDiff)*2 + HomeAdvantage
                 const f = (fixMap[pl.team_id]||[])[0] || {diff:3, is_home:false};
                 let score = parseFloat(pl.form) + ((5 - f.diff) * 2.5) + (f.is_home ? 1 : 0);
+                
                 if (p.is_captain) cur = { name: pl.name, score };
-                if (score > max) { max = score; best = { name: pl.name, score }; }
+                if (p.is_vice_captain) curVice = { name: pl.name, score };
+                
+                ranked.push({ name: pl.name, score });
             });
-            return (cur && best) ? { best, cur } : null;
+            ranked.sort((a, b) => b.score - a.score);
+            return (cur && ranked.length > 0) ? { best: ranked[0], vice: ranked[1] || null, cur, curVice } : null;
         }
     };
 
@@ -2063,7 +2160,8 @@
                 top20.forEach(p => {
                     const fixtures = app.fixMap[p.team_id] || [];
                     let dots = '<div class="t-fdr" style="margin-top:4px;">';
-                    fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
+                    // Shift to 1,4 to show next upcoming games
+                    fixtures.slice(1,4).forEach(f => { if(f) dots+=`<div class="t-dot bg-${f.diff}"></div>` });
                     dots += '</div>';
 
                     html += `
@@ -2111,7 +2209,8 @@
                 top20.forEach(p => {
                     const fixtures = app.fixMap[p.team_id] || [];
                     let dots = '<div class="t-fdr" style="margin-top:4px;">';
-                    fixtures.slice(0,3).forEach(f => dots+=`<div class="t-dot bg-${f.diff}"></div>`);
+                    // Shift to 1,4 to show next upcoming games
+                    fixtures.slice(1,4).forEach(f => { if(f) dots+=`<div class="t-dot bg-${f.diff}"></div>` });
                     dots += '</div>';
                     html += `<div class="scout-item" onclick="app.openModal(${p.id})"><div class="scout-left"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;"><div class="scout-info"><div>${p.name}</div><div>${p.team} • ${p.form} Form</div></div></div><div class="scout-right"><div class="scout-price">£${p.price}m</div>${dots}</div></div>`;
                 });
@@ -2143,12 +2242,62 @@
             let html = aiHtml;
             for (let i = 0; i < 5; i++) {
                 const gw = currentGW + i;
+                
+                // 1. Calculate Team Difficulty & Identify Likely Captain (Haaland > Salah > Current Cap)
+                let totalDiff = 0, capId = 0;
+                const haaland = app.currentPicks.find(p => p.element === 9);
+                const salah = app.currentPicks.find(p => p.element === 5);
+                const currCap = app.currentPicks.find(p => p.is_captain);
+                capId = haaland ? 9 : (salah ? 5 : (currCap ? currCap.element : 0));
+                
+                let capOpp = '-', capDiff = 3;
+
+                app.currentPicks.forEach(p => {
+                    const f = (app.fixMap[p.element] || [])[i] || { diff: 3, opp: '-' };
+                    if (p.position <= 11) totalDiff += f.diff;
+                    if (p.element === capId) { capOpp = f.opp; capDiff = f.diff; }
+                });
+
+                const avgDiff = totalDiff / 11;
+                // Bar Visuals: Green (<3) to Red (>4)
+                const barWidth = Math.max(10, Math.min(100, (5.5 - avgDiff) * 35)); 
+                const barColor = avgDiff < 3.0 ? '#00ff85' : (avgDiff > 3.8 ? '#ef4444' : '#fbbf24');
+
+                // 2. Bench Dots
+                let benchHtml = '';
+                app.currentPicks.filter(p => p.position > 11).forEach(p => {
+                     const f = (app.fixMap[p.element] || [])[i] || { diff: 3 };
+                     const bColor = f.diff < 3 ? '#00ff85' : (f.diff > 3 ? '#ef4444' : '#d1d5db');
+                     benchHtml += `<div style="width:5px; height:5px; border-radius:50%; background:${bColor};"></div>`;
+                });
+
                 html += `
-                    <div class="plan-row">
-                        <div class="plan-col-gw">GW${gw}</div>
-                        <div class="plan-col-chip">
-                            <select class="plan-select">
-                                <option value="">Save Chip</option>
+                    <div class="plan-row" style="gap:10px;">
+                        <div class="plan-col-gw" style="display:flex; flex-direction:column; justify-content:center; width:45px;">
+                            <div>GW${gw}</div>
+                            <div style="font-size:0.55rem; color:#888;">Avg ${avgDiff.toFixed(1)}</div>
+                        </div>
+                        
+                        <div style="flex:1;">
+                            <div style="display:flex; align-items:center; gap:8px; margin-bottom:3px;">
+                                <div style="font-size:0.6rem; font-weight:700; color:#9ca3af; width:20px;">XI</div>
+                                <div style="flex:1; background:#f3f4f6; height:6px; border-radius:4px; overflow:hidden;">
+                                    <div style="height:100%; width:${barWidth}%; background:${barColor}; border-radius:4px;"></div>
+                                </div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="font-size:0.6rem; font-weight:700; color:#9ca3af; width:20px;">SUB</div>
+                                <div style="display:flex; gap:2px;">${benchHtml}</div>
+                                <div style="margin-left:auto; font-size:0.65rem; background:#f3f4f6; padding:1px 4px; border-radius:4px; border:1px solid #e5e7eb; display:flex; align-items:center; gap:4px;">
+                                    <span style="color:#6b7280; font-weight:700;">C</span>
+                                    <span class="bg-${capDiff}" style="padding:0 4px; border-radius:2px; font-weight:800;">${capOpp}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="plan-col-chip" style="margin-left:0;">
+                            <select class="plan-select" style="width:80px; font-size:0.7rem; padding:4px;">
+                                <option value="">Save</option>
                                 <option value="wc" ${rec && rec.gw === gw && rec.chip === 'Wildcard' ? 'selected' : ''}>Wildcard</option>
                                 <option value="fh">Free Hit</option>
                                 <option value="bb" ${rec && rec.gw === gw && rec.chip === 'Bench Boost' ? 'selected' : ''}>Bench Boost</option>
@@ -2278,8 +2427,8 @@
                 const liveMap = {};
                 app.lastEvents = {};
                 liveData.elements.forEach(el => {
-                    liveMap[el.id] = { points: el.stats.total_points, mins: el.stats.minutes, goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, own_goals: el.stats.own_goals, yellow_cards: el.stats.yellow_cards };
-                    app.lastEvents[el.id] = { goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, yellow_cards: el.stats.yellow_cards };
+                    liveMap[el.id] = { points: el.stats.total_points, mins: el.stats.minutes, goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, own_goals: el.stats.own_goals, yellow_cards: el.stats.yellow_cards, goals_conceded: el.stats.goals_conceded };
+                    app.lastEvents[el.id] = { goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, yellow_cards: el.stats.yellow_cards, goals_conceded: el.stats.goals_conceded };
                 });
 
                 // Fetch 4 fixtures to ensure we have enough future data for Transfer view
@@ -2430,7 +2579,7 @@
                     const p = app.playersCache[pid];
                     if (!p) return;
                     
-                    const newStats = { goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, yellow_cards: el.stats.yellow_cards };
+                    const newStats = { goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, yellow_cards: el.stats.yellow_cards, goals_conceded: el.stats.goals_conceded };
                     const old = app.lastEvents[pid] || newStats;
                     
                     // Update Cache
@@ -2564,12 +2713,17 @@
                 const msg = isSwitch 
                     ? `Switch <strong>${capRec.cur.name}</strong> <i class="fa-solid fa-arrow-right" style="font-size:0.7rem; margin:0 4px; opacity:0.6;"></i> <strong>${capRec.best.name}</strong>`
                     : `Great choice! <strong>${capRec.cur.name}</strong> is the best option this week.`;
+                
+                const viceMsg = (capRec.vice && capRec.curVice && capRec.vice.name !== capRec.curVice.name)
+                     ? `<div style="font-size:0.75rem; margin-top:4px; color:#666; font-weight:500;">Vice: Switch <strong>${capRec.curVice.name}</strong> to <strong>${capRec.vice.name}</strong></div>`
+                     : (capRec.vice ? `<div style="font-size:0.75rem; margin-top:4px; color:#666; font-weight:500;">Vice: <strong>${capRec.vice.name}</strong> is optimal.</div>` : '');
 
                 capDiv.innerHTML = `<div style="background:${bg}; border:1px solid ${border}; padding:12px; border-radius:12px; margin-bottom:20px; display:flex; align-items:center; gap:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
                     <div style="font-size:1.8rem; color:${iconColor};"><i class="fa-solid fa-copyright"></i></div>
                     <div>
                         <div style="font-size:0.75rem; font-weight:700; color:${titleColor}; text-transform:uppercase; letter-spacing:0.5px;">${title}</div>
                         <div style="font-size:0.9rem; font-weight:600; color:${isSwitch ? '#78350f' : '#14532d'};">${msg}</div>
+                        ${viceMsg}
                     </div>
                 </div>`;
             } else {
@@ -2632,11 +2786,18 @@
 
         createPill: (p, fixMap, statusMap, isBench = false, benchNum = 0, subStatus = null) => {
             let capBadge = p.is_captain ? `<div class="captain-badge">C</div>` : (p.is_vice ? `<div class="captain-badge vice-badge">V</div>` : '');
-            let statusBadge = p.status === 'd' ? `<div class="status-flag status-warn">!</div>` : (['i', 's', 'n'].includes(p.status) ? `<div class="status-flag status-bad">×</div>` : '');
+            // Status moved to Stack
             let extraClass = subStatus === 'out' ? 'did-not-play' : (subStatus === 'in' ? 'coming-on' : '');
             let subIcon = subStatus === 'in' ? `<div class="sub-icon"><i class="fa-solid fa-arrow-up"></i></div>` : '';
             let newBadge = (app.isSimulating && app.simNewIds && app.simNewIds.includes(p.id)) ? `<div class="new-badge">NEW</div>` : '';
             if (newBadge) extraClass += ' sim-new';
+            if (p.is_captain) extraClass += ' captain-card';
+
+            // --- CS SHIELD (Live Only, GK/DEF, >0 Mins, 0 Conceded) ---
+            let csShield = '';
+            if (app.viewMode === 'live' && !app.isSimulating && p.stats && p.pos <= 2 && p.minutes > 0 && p.stats.goals_conceded === 0) {
+                csShield = `<div class="cs-shield"><i class="fa-solid fa-shield-halved"></i></div>`;
+            }
 
             // --- LIVE BADGE LOGIC ---
             let matchBadge = '';
@@ -2656,9 +2817,14 @@
             let evtHtml = '';
             if (app.viewMode === 'live' && p.stats) {
                 evtHtml += '<div class="event-row">';
-                for (let i = 0; i < p.stats.goals; i++) evtHtml += `<div class="evt-icon evt-goal"><i class="fa-regular fa-futbol"></i></div>`;
+                // Goals (Football Icon)
+                for (let i = 0; i < p.stats.goals; i++) evtHtml += `<div class="evt-icon evt-goal"><i class="fa-solid fa-futbol"></i></div>`;
+                // Assists (Blue Arrow)
                 for (let i = 0; i < p.stats.assists; i++) evtHtml += `<div class="evt-icon evt-assist"><i class="fa-solid fa-share" style="transform: scaleX(-1);"></i></div>`;
-                if (p.stats.red_cards > 0) evtHtml += `<div class="evt-icon evt-red"><i class="fa-solid fa-square-full"></i></div>`;
+                // Cards (Rectangles)
+                if (p.stats.red_cards > 0) evtHtml += `<div class="evt-icon evt-card evt-red"></div>`;
+                if (p.stats.yellow_cards > 0) evtHtml += `<div class="evt-icon evt-card evt-yellow"></div>`;
+                // Own Goals
                 if (p.stats.own_goals > 0) evtHtml += `<div class="evt-icon evt-own"><i class="fa-solid fa-futbol"></i></div>`;
                 evtHtml += '</div>';
             }
@@ -2667,6 +2833,9 @@
             let dotsHtml = '<div class="fdr-row">';
             fixtures.slice(0, 3).forEach(f => { dotsHtml += `<div class="fdr-dot bg-${f.diff}">${f.opp}</div>`; });
             dotsHtml += '</div>';
+
+            // Hide FDR dots in Live Mode to reduce clutter
+            if (app.viewMode === 'live') dotsHtml = ''; 
             
             const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}${p.pos === 1 ? '_1' : ''}-66.png`;
             const bonus = (app.viewMode === 'live' && app.bonusMap[p.id]) ? app.bonusMap[p.id] : 0;
@@ -2685,8 +2854,24 @@
                 bottomBar = `<div class="pill-data"><span>£${p.price}</span><span class="points-badge" style="background:var(--fdr-${nextF.diff}); color:var(--fdr-text-${nextF.diff > 2 ? 'dark' : 'light'})">${nextF.opp}</span></div>`;
             }
 
+            // --- SMART STATUS ICONS (STACKED) ---
+            let stackHtml = '<div class="status-stack">';
+            
+            // 1. Availability (Injury/Suspension)
+            if (p.status === 'd') stackHtml += `<div class="status-icon si-warn">!</div>`;
+            else if (['i', 's', 'n'].includes(p.status)) stackHtml += `<div class="status-icon si-bad">×</div>`;
+
+            // 2. Form & Diff
+            const form = parseFloat(p.form);
+            const sel = parseFloat(p.sel);
+            if (form > 6.0) stackHtml += `<div class="status-icon si-fire"><i class="fa-solid fa-fire"></i></div>`;
+            else if (form < 2.0) stackHtml += `<div class="status-icon si-cold"><i class="fa-regular fa-snowflake"></i></div>`;
+            if (sel < 10.0) stackHtml += `<div class="status-icon si-gem"><i class="fa-regular fa-gem"></i></div>`;
+            
+            stackHtml += '</div>';
+
             return `<div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
-                    ${isBench ? `<div class="bench-num">${benchNum}</div>` : ''} ${capBadge} ${statusBadge} ${subIcon} ${newBadge} ${matchBadge} ${dotsHtml} ${evtHtml}
+                    ${isBench ? `<div class="bench-num">${benchNum}</div>` : ''} ${capBadge} ${subIcon} ${csShield} ${stackHtml} ${newBadge} ${matchBadge} ${dotsHtml} ${evtHtml}
                     <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                     <div class="pill-name">${p.name}</div>
                     ${bottomBar}
