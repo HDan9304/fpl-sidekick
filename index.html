@@ -1936,7 +1936,7 @@
             return rec;
         },
 
-        analyzeCaptaincy: (picks, players, fixMap) => {
+        analyzeCaptaincy: (picks, players, fixMap, fixIdx = 0) => {
             let cur = null, curVice = null;
             const ranked = [];
             picks.forEach(p => {
@@ -1944,7 +1944,7 @@
                 const pl = players[p.element];
                 if (!pl) return;
                 // Score: Form + (5 - FixtureDiff)*2 + HomeAdvantage
-                const f = (fixMap[pl.team_id]||[])[0] || {diff:3, is_home:false};
+                const f = (fixMap[pl.team_id]||[])[fixIdx] || {diff:3, is_home:false};
                 let score = parseFloat(pl.form) + ((5 - f.diff) * 2.5) + (f.is_home ? 1 : 0);
                 
                 if (p.is_captain) cur = { name: pl.name, score };
@@ -2870,8 +2870,9 @@
             }).join('');
             document.getElementById('chipBar').innerHTML = chipHtml;
 
-            // CAPTAINCY INTEL
-            const capRec = TransferBot.analyzeCaptaincy(picks, players, fixMap);
+            // CAPTAINCY INTEL (Context Aware: 0 for Live, 1 for Next GW)
+            const fIdx = app.viewMode === 'next' ? 1 : 0;
+            const capRec = TransferBot.analyzeCaptaincy(picks, players, fixMap, fIdx);
             const capDiv = document.getElementById('capRecommendation');
             if (capRec) {
                 const isSwitch = capRec.best.name !== capRec.cur.name && (capRec.best.score - capRec.cur.score) > 0.5;
