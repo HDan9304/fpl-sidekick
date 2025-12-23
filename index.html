@@ -2443,34 +2443,43 @@
             try {
                 document.getElementById('loadingMsg').innerText = "Connecting...";
                 
-                const staticData = await app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/');
-                const user = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`);
+                // Parallel Fetch 1: Core Data (Static, User, History)
+                const [staticData, user, history] = await Promise.all([
+                    app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/'),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`)
+                ]);
+
                 app.userData = user;
-                
-                const history = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`);
                 app.historyData = history;
 
                 const gwEvent = staticData.events.find(e => e.is_current) || staticData.events[0];
                 const gw = gwEvent.id;
-                const picks = await app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`);
                 
                 const nextEvent = staticData.events.find(e => e.is_next);
                 app.deadline = nextEvent ? nextEvent.deadline_time : null;
                 app.gwName = nextEvent ? nextEvent.name : 'GW-';
-                app.currentStats = picks.entry_history;
 
                 document.getElementById('loadingMsg').innerText = "Fetching Live Scores...";
-                const liveData = await app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`);
+                
+                // Parallel Fetch 2: GW Dependent Data (Picks, Live Stats, 4 Weeks of Fixtures)
+                const [picks, liveData, fix1, fix2, fix3, fix4] = await Promise.all([
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw+1}`),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw+2}`),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw+3}`)
+                ]);
+
+                app.currentStats = picks.entry_history;
+                
                 const liveMap = {};
                 app.lastEvents = {};
                 liveData.elements.forEach(el => {
                     liveMap[el.id] = { points: el.stats.total_points, mins: el.stats.minutes, goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, own_goals: el.stats.own_goals, yellow_cards: el.stats.yellow_cards, goals_conceded: el.stats.goals_conceded };
                     app.lastEvents[el.id] = { goals: el.stats.goals_scored, assists: el.stats.assists, red_cards: el.stats.red_cards, yellow_cards: el.stats.yellow_cards, goals_conceded: el.stats.goals_conceded };
                 });
-
-                // Fetch 4 fixtures to ensure we have enough future data for Transfer view
-                const fixReqs = [gw, gw + 1, gw + 2, gw + 3].map(g => app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${g}`));
-                const [fix1, fix2, fix3, fix4] = await Promise.all(fixReqs);
                 
                 const teamShort = {};
                 staticData.teams.forEach(t => teamShort[t.id] = t.short_name);
