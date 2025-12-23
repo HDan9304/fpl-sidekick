@@ -1989,8 +1989,8 @@
             ];
             for (let i = 0; i < proxies.length; i++) {
                 try {
-                    // Reduced timeout to 3s to skip slow proxies faster
-                    const c = new AbortController(); const id = setTimeout(() => c.abort(), 3000); 
+                    // Increased to 6s to allow large files (bootstrap) to finish on slow networks
+                    const c = new AbortController(); const id = setTimeout(() => c.abort(), 6000); 
                     const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); clearTimeout(id);
                     if (r.ok) return await r.json();
                 } catch (e) {}
