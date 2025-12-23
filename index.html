@@ -2985,8 +2985,12 @@
                 dotsHtml = '';
                 evtHtml = '';
                 const nextF = fixtures[1] || { opp: '-', diff: 3 }; 
-                // Use standard "pill-data" style for consistency, but with fixture content
-                bottomBar = `<div class="pill-data"><span>£${p.price}</span><span class="points-badge" style="background:var(--fdr-${nextF.diff}); color:var(--fdr-text-${nextF.diff > 2 ? 'dark' : 'light'})">${nextF.opp}</span></div>`;
+                
+                // Calculate Projected Points (xP) = Form (50%) + Fixture Ease (50%)
+                let xP = (parseFloat(p.form||0) * 0.5) + ((6 - nextF.diff) * 1.0);
+                if (p.is_captain) xP *= 2;
+                
+                bottomBar = `<div class="pill-data"><span style="font-weight:800; color:#374151;"><i class="fa-solid fa-wand-magic-sparkles" style="color:#e90052; font-size:0.55rem; margin-right:3px;"></i>${xP.toFixed(1)}</span><span class="points-badge" style="background:var(--fdr-${nextF.diff}); color:var(--fdr-text-${nextF.diff > 2 ? 'dark' : 'light'})">${nextF.opp}</span></div>`;
             }
 
             // --- SMART STATUS ICONS (STACKED) ---
