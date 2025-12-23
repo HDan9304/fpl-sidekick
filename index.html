@@ -2395,7 +2395,7 @@
 
                 app.render(app.userData, renderPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
                 setTimeout(() => { loader.classList.remove('active'); }, 50);
-            }, 300);
+            }, 10);
         },
 
         simulate: (outIds, inIds) => {
