@@ -2706,11 +2706,60 @@
         },
 
         render: (user, picks, players, fixMap, statusMap, stats, history, deadline, gwName) => {
-            let liveScore = 0;
-            let playedCount = 0;
+            // 1. Calculate Auto-Subs & Score Projection
+            const subOutIds = [];
+            const subInIds = [];
+            const played = (p) => p && p.minutes > 0;
+            const didntPlay = (p) => {
+                if (!p || p.minutes > 0) return false;
+                const m = statusMap[p.team_id];
+                return (m && m.status === 'FT') || p.chance === 0;
+            };
+
+            // Calculate Subs (GK + Outfield)
+            const startGK = players[picks[0].element];
+            const subGK = players[picks[11].element];
+            if (didntPlay(startGK) && played(subGK)) { subOutIds.push(startGK.id); subInIds.push(subGK.id); }
+
+            const outfieldBench = [12, 13, 14].map(i => players[picks[i].element]);
+            let usedBenchIdx = 0;
+            for (let i = 1; i <= 10; i++) {
+                const starter = players[picks[i].element];
+                if (didntPlay(starter)) {
+                    for (let j = usedBenchIdx; j < outfieldBench.length; j++) {
+                        const sub = outfieldBench[j];
+                        if (played(sub)) {
+                            subOutIds.push(starter.id); subInIds.push(sub.id);
+                            usedBenchIdx = j + 1; break;
+                        }
+                    }
+                }
+            }
+
+            // Calculate Score with Subs & VC
+            let liveScore = 0, playedCount = 0;
+            const capPick = picks.find(p => p.is_captain);
+            const capDidntPlay = capPick && subOutIds.includes(capPick.element);
+
             picks.forEach(pick => {
-                if (pick.position <= 11) {
-                    const p = players[pick.element];
+                const p = players[pick.element];
+                if (!p) return;
+                const isStarter = pick.position <= 11;
+                const isSubIn = subInIds.includes(pick.element);
+                const isSubOut = subOutIds.includes(pick.element);
+                
+                if ((isStarter && !isSubOut) || isSubIn) {
+                    let mult = pick.multiplier;
+                    if (capDidntPlay) {
+                        if (pick.is_captain) mult = 1; // Cap didn't play
+                        if (pick.is_vice_captain) mult = capPick.multiplier; // VC becomes Cap (inherits TC)
+                    }
+
+                    const bonus = (app.viewMode === 'live' && app.bonusMap[pick.element]) ? app.bonusMap[pick.element] : 0;
+                    liveScore += ((p.event_points + bonus) * mult);
+                    if (p.minutes > 0) playedCount++;
+                }
+            });
                     const bonus = (app.viewMode === 'live' && app.bonusMap[pick.element]) ? app.bonusMap[pick.element] : 0;
                     if (p) {
                         liveScore += ((p.event_points + bonus) * pick.multiplier);
@@ -2836,34 +2885,7 @@
                 capDiv.innerHTML = '';
             }
 
-            const subOutIds = [];
-            const subInIds = [];
-            const played = (p) => p && p.minutes > 0;
-            // Only sub out if match is Finished (FT) or confirmed injured (0%)
-            const didntPlay = (p) => {
-                if (!p || p.minutes > 0) return false;
-                const m = statusMap[p.team_id];
-                return (m && m.status === 'FT') || p.chance === 0;
-            };
-
-            const startGK = players[picks[0].element];
-            const subGK = players[picks[11].element];
-            if (didntPlay(startGK) && played(subGK)) { subOutIds.push(startGK.id); subInIds.push(subGK.id); }
-
-            const outfieldBench = [12, 13, 14].map(i => players[picks[i].element]);
-            let usedBenchIdx = 0;
-            for (let i = 1; i <= 10; i++) {
-                const starter = players[picks[i].element];
-                if (didntPlay(starter)) {
-                    for (let j = usedBenchIdx; j < outfieldBench.length; j++) {
-                        const sub = outfieldBench[j];
-                        if (played(sub)) {
-                            subOutIds.push(starter.id); subInIds.push(sub.id);
-                            usedBenchIdx = j + 1; break;
-                        }
-                    }
-                }
-            }
+            // (Sub logic moved to top)
 
             const pitchDiv = document.getElementById('pitchRows');
             const benchDiv = document.getElementById('benchRow');
