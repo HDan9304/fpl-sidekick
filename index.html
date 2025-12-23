@@ -1967,7 +1967,7 @@
         teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
         currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
         viewMode: 'live', ftCount: 1, lastEvents: {}, liveInterval: null, bonusMap: {},
-        deadlineNotified: false,
+        deadlineNotified: false, fixtureCache: {},
 
         init: () => {
             if ('Notification' in window) Notification.requestPermission();
@@ -2981,6 +2981,13 @@
             }
 
             overlay.classList.add('open');
+
+            // Cache Check
+            if (app.fixtureCache[playerId]) {
+                document.getElementById('modalFixtures').innerHTML = app.fixtureCache[playerId];
+                return;
+            }
+
             document.getElementById('modalFixtures').innerHTML = '<div style="font-size:0.8rem; color:#888; padding:10px;">Loading fixtures...</div>';
             try {
                 const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
@@ -3001,6 +3008,7 @@
                         </div>
                     `;
                 });
+                app.fixtureCache[playerId] = html;
                 document.getElementById('modalFixtures').innerHTML = html;
             } catch (e) { document.getElementById('modalFixtures').innerHTML = '<div style="color:red; font-size:0.8rem;">Could not load fixtures.</div>'; }
         },
