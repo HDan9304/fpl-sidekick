@@ -3033,7 +3033,23 @@
             
             document.getElementById('modalForm').innerText = p.form;
             document.getElementById('modalSel').innerText = `${p.sel}%`;
-            document.getElementById('modalPts').innerText = p.event_points;
+            
+            // Smart Stats: Show xP if planning (Transfer/Next), Points if Live
+            const isLive = app.currentTool === 'squad' && app.viewMode === 'live';
+            const ptsLabel = document.getElementById('modalPts').parentElement.querySelector('.m-stat-label');
+            
+            if (isLive) {
+                ptsLabel.innerText = "GW Points";
+                document.getElementById('modalPts').innerText = p.event_points;
+                document.getElementById('modalPts').style.color = 'var(--primary)';
+            } else {
+                const nextF = (app.fixMap[p.team_id] || [])[1] || { diff: 3 };
+                let xP = (parseFloat(p.form||0) * 0.5) + ((6 - nextF.diff) * 1.0);
+                ptsLabel.innerText = "xP (Next)";
+                document.getElementById('modalPts').innerHTML = `<i class="fa-solid fa-wand-magic-sparkles" style="font-size:0.8rem; margin-right:4px;"></i>${xP.toFixed(1)}`;
+                document.getElementById('modalPts').style.color = '#e90052';
+            }
+
             const newsEl = document.getElementById('modalNews');
             if (p.news) { newsEl.style.display = 'block'; newsEl.innerText = p.news; } else { newsEl.style.display = 'none'; }
 
