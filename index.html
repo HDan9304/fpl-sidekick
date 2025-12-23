@@ -2804,9 +2804,18 @@
                 }
             }
 
+            let diffStr = '';
+            if (lastRank > 0 && currentRank > 0 && lastRank !== currentRank) {
+                const rawDiff = lastRank - currentRank; 
+                const abs = Math.abs(rawDiff);
+                const fmt = abs > 999999 ? (abs/1000000).toFixed(1)+'m' : (abs > 999 ? (abs/1000).toFixed(0)+'k' : abs);
+                // Green for Rank UP (positive diff), Red for Rank DOWN
+                diffStr = `<span style="font-size:0.6rem; color:${rawDiff > 0 ? '#00ff85' : '#ef4444'}; font-weight:700; margin-left:4px; opacity:0.9;">(${rawDiff > 0 ? '+' : '-'}${fmt})</span>`;
+            }
+
             if (currentRank < lastRank) rankArrow = '<i class="fa-solid fa-arrow-up r-green"></i>';
             else if (currentRank > lastRank) rankArrow = '<i class="fa-solid fa-arrow-down r-red"></i>';
-            document.getElementById('dispRank').innerHTML = `<div class="rank-wrap">${rankArrow} <span>${currentRank.toLocaleString()}</span></div>`;
+            document.getElementById('dispRank').innerHTML = `<div class="rank-wrap">${rankArrow} <span>${currentRank.toLocaleString()}</span>${diffStr}</div>`;
 
             document.getElementById('dispBank').innerText = `£${(stats.bank / 10).toFixed(1)}m`;
             const valHtml = `£${(stats.value / 10).toFixed(1)}m` + (app.viewMode === 'next' ? ' <span style="background:#fbbf24; color:#78350f; font-size:0.6rem; padding:1px 6px; border-radius:4px; font-weight:800; vertical-align:2px;">AI LINEUP</span>' : '');
