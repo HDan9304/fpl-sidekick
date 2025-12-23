@@ -1985,25 +1985,14 @@
                 (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`, 
                 (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
             ];
-            
-            // Race Mechanism: Try all proxies simultaneously, use the first one that works
-            try {
-                return await Promise.any(proxies.map(async (p) => {
-                    const c = new AbortController(); 
-                    const id = setTimeout(() => c.abort(), 8000);
-                    try {
-                        const r = await fetch(p(targetUrl), { signal: c.signal });
-                        clearTimeout(id);
-                        if (!r.ok) throw new Error("Status " + r.status);
-                        return await r.json();
-                    } catch (e) {
-                        clearTimeout(id);
-                        throw e;
-                    }
-                }));
-            } catch (e) {
-                throw new Error("All proxies failed");
+            for (let i = 0; i < proxies.length; i++) {
+                try {
+                    const c = new AbortController(); const id = setTimeout(() => c.abort(), 8000); 
+                    const r = await fetch(proxies[i](targetUrl), { signal: c.signal }); clearTimeout(id);
+                    if (r.ok) return await r.json();
+                } catch (e) {}
             }
+            throw new Error("Failed");
         },
 
         calcFreeTransfers: () => {
