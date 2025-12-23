@@ -2306,19 +2306,19 @@
             for (let i = 0; i < 5; i++) {
                 const gw = currentGW + i;
                 
-                // 1. Calculate Team Difficulty & Identify Likely Captain (Haaland > Salah > Current Cap)
-                let totalDiff = 0, capId = 0;
-                const haaland = app.currentPicks.find(p => p.element === 9);
-                const salah = app.currentPicks.find(p => p.element === 5);
-                const currCap = app.currentPicks.find(p => p.is_captain);
-                capId = haaland ? 9 : (salah ? 5 : (currCap ? currCap.element : 0));
-                
-                let capOpp = '-', capDiff = 3;
+                // 1. Calculate Team Difficulty & Dynamic Captain (Best Fixture)
+                let totalDiff = 0, capDiff = 6, capOpp = '-';
 
                 app.currentPicks.forEach(p => {
                     const f = (app.fixMap[p.element] || [])[i] || { diff: 3, opp: '-' };
-                    if (p.position <= 11) totalDiff += f.diff;
-                    if (p.element === capId) { capOpp = f.opp; capDiff = f.diff; }
+                    if (p.position <= 11) {
+                        totalDiff += f.diff;
+                        // Smart Captain: Starter (Not GK) with Easiest Game
+                        if (p.position > 1 && f.diff < capDiff) {
+                            capDiff = f.diff;
+                            capOpp = f.opp;
+                        }
+                    }
                 });
 
                 const avgDiff = totalDiff / 11;
