@@ -2398,6 +2398,19 @@
                         const p = app.currentPicks.find(x => x.element === player.id);
                         if (p) renderPicks.push({ ...p, position: 12 + i });
                     });
+
+                    // 3. Auto-Captain (Best Next Fixture)
+                    let bestCap = null, maxScore = -99;
+                    renderPicks.forEach(p => {
+                        p.is_captain = false; p.is_vice_captain = false; p.multiplier = 1;
+                        if (p.position <= 11) {
+                            const pl = app.playersCache[p.element];
+                            const f = (app.fixMap[pl.team_id] || [])[1] || { diff: 3 };
+                            const score = (parseFloat(pl.form||0) * 0.5) + ((6 - f.diff) * 2.0);
+                            if (score > maxScore) { maxScore = score; bestCap = p; }
+                        }
+                    });
+                    if (bestCap) { bestCap.is_captain = true; bestCap.multiplier = 2; }
                 }
 
                 app.render(app.userData, renderPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
