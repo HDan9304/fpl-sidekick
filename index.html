@@ -1733,10 +1733,17 @@
             const form = parseFloat(p.form) || 0;
             const ict = parseFloat(p.ict_index) || 0;
             
-            // GOD MODE FORMULA
-            let score = (form * 5) + (ict * 0.15) + (20 - (t.avg * 4));
+            // Refined Logic: Split Defenders vs Attackers
+            let score = 0;
+            if (p.pos <= 2) {
+                // DEF/GK: Prioritize Fixtures (Clean Sheets) over Form
+                score = (form * 2) + (ict * 0.1) + (30 - (t.avg * 6));
+            } else {
+                // MID/FWD: Prioritize Form & Threat over Fixtures
+                score = (form * 6) + (ict * 0.2) + (15 - (t.avg * 2));
+            }
 
-            if (p.status !== 'a' && p.chance < 75) score -= 200; 
+            if (p.status !== 'a' && p.chance < 75) score -= 200;
             if (p.pos === 1) score *= 0.85; 
             if (t.nextHome) score += 2; 
 
@@ -2395,7 +2402,7 @@
 
                 app.render(app.userData, renderPicks, app.playersCache, app.fixMap, app.statusMap, app.currentStats, app.historyData, app.deadline, app.gwName);
                 setTimeout(() => { loader.classList.remove('active'); }, 50);
-            }, 10);
+            }, 300);
         },
 
         simulate: (outIds, inIds) => {
