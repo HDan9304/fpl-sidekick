@@ -1967,7 +1967,7 @@
         teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
         currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
         viewMode: 'live', ftCount: 1, lastEvents: {}, liveInterval: null, bonusMap: {},
-        deadlineNotified: false, fixtureCache: {},
+        deadlineNotified: false, fixtureCache: {}, suggestionCache: null,
 
         init: () => {
             if ('Notification' in window) Notification.requestPermission();
@@ -2056,7 +2056,17 @@
                 document.getElementById('transferContent').style.display = 'block';
 
                 app.ftCount = app.calcFreeTransfers();
+
+                // Memoization: Check Cache
+                const sig = app.currentPicks.map(p => p.element).join('-') + '|' + app.currentBank + '|' + app.ftCount;
+                if (app.suggestionCache && app.suggestionCache.sig === sig) {
+                    document.getElementById('transferContent').innerHTML = app.suggestionCache.html;
+                    return;
+                }
+
                 const bankTxt = app.currentStats ? (app.currentStats.bank/10).toFixed(1) : '0.0';
+                
+                // Show Spinner immediately
                 
                 // Show Spinner immediately
                 const headerHtml = `
@@ -2152,6 +2162,7 @@
                         });
                         html += `</div><div style="height:40px;"></div>`;
                         
+                        app.suggestionCache = { sig, html };
                         container.innerHTML = html;
                     } catch (err) {
                         console.error("Transfer Error", err);
@@ -2440,6 +2451,7 @@
             const id = savedId || document.getElementById('teamID').value;
             if (!id) return alert("Enter ID");
             localStorage.setItem('fpl_id_final', id);
+            app.suggestionCache = null; // Clear cache on reload
             document.getElementById('userIcon').classList.add('active');
             app.show('loadingView');
 
