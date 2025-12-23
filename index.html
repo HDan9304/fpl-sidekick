@@ -2935,6 +2935,15 @@
             // --- NEXT GW MODE ---
             let pcArrow = p.cost_change > 0 ? `<span class="pc-arrow pc-up">▲</span>` : (p.cost_change < 0 ? `<span class="pc-arrow pc-down">▼</span>` : '');
             let bottomBar = `<div class="pill-data"><span>£${p.price}${pcArrow}</span><span class="points-badge">${displayPoints}${bonusHtml}</span></div>`;
+
+            // Smart Live: Show Fixture if match hasn't started yet
+            if (app.viewMode === 'live' && !app.isSimulating) {
+                const m = statusMap ? statusMap[p.team_id] : null;
+                if (m && m.status === 'FIX') {
+                    const f = fixtures[0] || { opp: '-', diff: 3 };
+                    bottomBar = `<div class="pill-data"><span>£${p.price}</span><span class="points-badge" style="background:var(--fdr-${f.diff}); color:var(--fdr-text-${f.diff > 2 ? 'dark' : 'light'})">${f.opp}</span></div>`;
+                }
+            }
             
             if (app.viewMode === 'next') {
                 dotsHtml = '';
