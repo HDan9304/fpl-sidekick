@@ -1931,6 +1931,7 @@
         teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
         currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
         viewMode: 'live', ftCount: 1, lastEvents: {}, liveInterval: null, bonusMap: {},
+        deadlineNotified: false,
 
         init: () => {
             if ('Notification' in window) Notification.requestPermission();
@@ -2681,6 +2682,13 @@
                     const h = Math.floor((gap % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const m = Math.floor((gap % (1000 * 60 * 60)) / (1000 * 60));
                     const s = Math.floor((gap % (1000 * 60)) / 1000);
+
+                    // 1 Hour Deadline Warning
+                    if (gap <= 3600000 && !app.deadlineNotified) {
+                        if (Notification.permission === "granted") new Notification(`⚠️ FPL Deadline in 1 Hour!`, { body: "Finalize your team now." });
+                        app.deadlineNotified = true;
+                    }
+
                     const isUrgent = d === 0 ? 'urgent' : '';
                     document.getElementById('gwCountdown').innerHTML = `<div class="cd-label"><div class="status-dot ${isUrgent}"></div>${gwName}</div><div class="cd-time">${d}d : ${h.toString().padStart(2, '0')}h : ${m.toString().padStart(2, '0')}m : ${s.toString().padStart(2, '0')}s</div>`;
                 } else {
