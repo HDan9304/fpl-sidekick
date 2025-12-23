@@ -1967,7 +1967,7 @@
         teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
         currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
         viewMode: 'live', ftCount: 1, lastEvents: {}, liveInterval: null, bonusMap: {},
-        deadlineNotified: false, fixtureCache: {}, suggestionCache: null,
+        deadlineNotified: false, fixtureCache: {}, suggestionCache: null, searchTimer: null,
 
         init: () => {
             if ('Notification' in window) Notification.requestPermission();
@@ -2236,6 +2236,11 @@
         },
         
         searchScout: (query) => {
+            clearTimeout(app.searchTimer);
+            app.searchTimer = setTimeout(() => app.performSearch(query), 300);
+        },
+
+        performSearch: (query) => {
             const resultsContainer = document.getElementById('scoutResults');
             const mainContent = document.getElementById('transferContent');
             if (!query || query.length < 2) {
