@@ -2760,13 +2760,6 @@
                     if (p.minutes > 0) playedCount++;
                 }
             });
-                    const bonus = (app.viewMode === 'live' && app.bonusMap[pick.element]) ? app.bonusMap[pick.element] : 0;
-                    if (p) {
-                        liveScore += ((p.event_points + bonus) * pick.multiplier);
-                        if (p.minutes > 0) playedCount++;
-                    }
-                }
-            });
             const oldGwScore = user.summary_event_points || 0;
             const totalDiff = liveScore - oldGwScore;
             const liveTotal = (user.summary_overall_points || 0) + totalDiff;
