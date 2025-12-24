@@ -381,13 +381,15 @@
             overflow-x: auto; /* Scroll horizontally */
             padding-bottom: 5px;
             margin-bottom: 20px;
-            scrollbar-width: none; 
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+            -webkit-overflow-scrolling: touch;
         }
+        .chip-bar::-webkit-scrollbar { display: none; /* Hide scrollbar Chrome/Safari */ }
 
         .chip-pill {
             background: #e5e7eb;
-            white-space: nowrap; /* Prevent stacking */
-            flex-shrink: 0;
+            white-space: nowrap; 
+            flex-shrink: 0; /* Prevent shrinking */
             color: #9ca3af;
             padding: 6px 12px;
             border-radius: 20px;
@@ -395,6 +397,7 @@
             font-weight: 800;
             border: 1px solid #d1d5db;
             letter-spacing: 0.5px;
+            transition: all 0.2s;
         }
         .chip-pill.active {
             background: #fff;
