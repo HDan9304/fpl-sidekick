@@ -387,7 +387,7 @@
         }
         .chip-bar::-webkit-scrollbar { display: none; }
 
-        ..chip-pill {
+        .chip-pill {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -2781,7 +2781,7 @@
                     if (inSquad) {
                         if (newStats.goals > old.goals) new Notification(`⚽ Goal! ${p.name}`);
                         if (newStats.assists > old.assists) new Notification(`🅰️ Assist! ${p.name}`);
-                        if (newStats.red_cards > old.red_cards) new Notification(`🟥 Red Card! ${p.name}`);
+                        if (newStats.red_cards > old.red_cards) new Notification(`?? Red Card! ${p.name}`);
                         if (newStats.yellow_cards > old.yellow_cards) new Notification(`🟨 Yellow Card! ${p.name}`);
                     }
                     app.lastEvents[pid] = newStats;
