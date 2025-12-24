@@ -1622,11 +1622,6 @@
                          
 </div>
                 </div>
-                
-                <div id="historyGraph" class="hist-box"></div>
-
-                <div id="chipBar" class="chip-bar"></div>
-                <div id="capRecommendation"></div>
 
                 <div class="view-toggle">
                     <div id="btn-live" class="vt-btn active" onclick="app.toggleView('live')">
@@ -1635,12 +1630,6 @@
                     <div id="btn-next" class="vt-btn" onclick="app.toggleView('next')">
                         <i class="fa-regular fa-calendar"></i> Next GW
                     </div>
-                </div>
-
-                <div class="legend-bar">
-                    <div class="legend-item"><div class="status-icon si-fire"><i class="fa-solid fa-fire"></i></div> Hot Form</div>
-                    <div class="legend-item"><div class="status-icon si-cold"><i class="fa-regular fa-snowflake"></i></div> Cold Form</div>
-                    <div class="legend-item"><div class="status-icon si-gem"><i class="fa-regular fa-gem"></i></div> Differential</div>
                 </div>
 
                 <div class="pitch-wrapper">
@@ -1666,6 +1655,16 @@
                     <div class="bench-header">Substitutes</div>
                     <div id="benchRow" class="bench-row"></div>
                 </div>
+
+                <div class="legend-bar" style="margin-top:20px;">
+                    <div class="legend-item"><div class="status-icon si-fire"><i class="fa-solid fa-fire"></i></div> Hot Form</div>
+                    <div class="legend-item"><div class="status-icon si-cold"><i class="fa-regular fa-snowflake"></i></div> Cold Form</div>
+                    <div class="legend-item"><div class="status-icon si-gem"><i class="fa-regular fa-gem"></i></div> Differential</div>
+                </div>
+
+                <div id="capRecommendation"></div>
+                <div id="chipBar" class="chip-bar"></div>
+                <div id="historyGraph" class="hist-box" style="border-bottom:none;"></div>
             </div> 
 
             <div id="transfersView" class="hidden">
