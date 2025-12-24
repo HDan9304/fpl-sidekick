@@ -3060,7 +3060,12 @@
 
             const fixtures = fixMap[p.team_id] || [{ diff: 3, opp: '-' }, { diff: 3, opp: '-' }, { diff: 3, opp: '-' }];
             let dotsHtml = '<div class="fdr-row">';
-            fixtures.slice(0, 3).forEach(f => { dotsHtml += `<div class="fdr-dot bg-${f.diff}">${f.opp}</div>`; });
+            // Refinement: Home = BOLD CAPS, Away = lighter lowercase
+            fixtures.slice(0, 3).forEach(f => { 
+                const opp = f.is_home ? f.opp : f.opp.toLowerCase();
+                const style = f.is_home ? '' : 'font-weight:500; opacity:0.9;';
+                dotsHtml += `<div class="fdr-dot bg-${f.diff}" style="${style}">${opp}</div>`; 
+            });
             dotsHtml += '</div>';
 
             // Hide FDR dots in Live Mode to reduce clutter
