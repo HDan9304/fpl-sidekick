@@ -378,13 +378,16 @@
         .chip-bar {
             display: flex;
             gap: 8px;
-            justify-content: center;
+            overflow-x: auto; /* Scroll horizontally */
+            padding-bottom: 5px;
             margin-bottom: 20px;
-            flex-wrap: wrap;
+            scrollbar-width: none; 
         }
 
         .chip-pill {
             background: #e5e7eb;
+            white-space: nowrap; /* Prevent stacking */
+            flex-shrink: 0;
             color: #9ca3af;
             padding: 6px 12px;
             border-radius: 20px;
@@ -602,7 +605,7 @@
             padding: 15px;
             background: #fdfdfd;
         }
-        .bench-pill { opacity: 0.85; }
+        .bench-pill { opacity: 1; /* A11y: Full visibility on dark theme */ }
         .bench-num {
             position: absolute;
             top: -6px; right: -6px; left: auto;
@@ -618,8 +621,8 @@
             border: 1px solid white;
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
-        .si-warn { background: #fbbf24; color: #78350f; font-weight:800; font-family:sans-serif; }
-        .si-bad { background: #ef4444; font-weight:800; font-family:sans-serif; }
+        .si-warn { background: #fbbf24; color: #78350f; } /* Font removed for Icon */
+        .si-bad { background: #ef4444; }
 
         /* --- Player Pill Components --- */
         .player-pill {
@@ -3142,8 +3145,8 @@
             let stackHtml = '<div class="status-stack">';
             
             // 1. Availability (Injury/Suspension)
-            if (p.status === 'd') stackHtml += `<div class="status-icon si-warn">!</div>`;
-            else if (['i', 's', 'n'].includes(p.status)) stackHtml += `<div class="status-icon si-bad">×</div>`;
+            if (p.status === 'd') stackHtml += `<div class="status-icon si-warn"><i class="fa-solid fa-exclamation"></i></div>`;
+            else if (['i', 's', 'n'].includes(p.status)) stackHtml += `<div class="status-icon si-bad"><i class="fa-solid fa-xmark"></i></div>`;
 
             // 2. Form & Diff
             const form = parseFloat(p.form);
