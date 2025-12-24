@@ -2501,8 +2501,23 @@
             const simStats = { ...app.currentStats, bank: simBank * 10, value: app.currentStats.value };
             app.render(app.userData, finalPicks, app.playersCache, app.fixMap, app.statusMap || {}, simStats, app.historyData, app.deadline, app.gwName);
             
+            // Calculate XP Gain (Optimized vs Optimized)
+            const calcXP = (pList) => {
+                const o = TransferBot.recommendFormation(pList, app.playersCache, app.fixMap);
+                let t = 0, m = 0;
+                o.bestLineup.forEach(id => {
+                    const pl = app.playersCache[id];
+                    const f = (app.fixMap[pl.team_id]||[])[1] || {diff:3};
+                    const pts = (parseFloat(pl.form||0)*0.5) + (6-f.diff);
+                    t += pts; m = Math.max(m, pts);
+                });
+                return t + m;
+            };
+            const gain = (calcXP(simPicks) - calcXP(app.currentPicks)).toFixed(1);
+            const gainHtml = gain > 0 ? `<span style="font-size:0.75rem; background:rgba(255,255,255,0.25); padding:3px 8px; border-radius:6px; margin-left:10px; font-weight:800;">+${gain} xP</span>` : '';
+
             // Redirect Reset to Transfers
-            const bannerHtml = `<div class="sim-banner"><div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview Mode</div><div class="sim-btn" onclick="app.switchTool('transfers', true)">Reset</div></div>`;
+            const bannerHtml = `<div class="sim-banner"><div><i class="fa-solid fa-wand-magic-sparkles"></i> Preview ${gainHtml}</div><div class="sim-btn" onclick="app.switchTool('transfers', true)">Reset</div></div>`;
             const dash = document.getElementById('dashboardView');
             const existingBanner = dash.querySelector('.sim-banner');
             if (existingBanner) existingBanner.remove();
