@@ -413,12 +413,12 @@
 
         /* Used: Etched Stone Look */
         .chip-pill.used {
-            background: #f3f4f6;
-            color: #9ca3af;
-            border: 1px solid #e5e7eb;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.06); /* Etched Depth */
-            opacity: 1; /* Clearer legibility */
-            text-decoration: none; /* Removed messy strikethrough */
+            background: #e5e7eb; /* Darker Stone for Contrast */
+            color: #6b7280;
+            border: 1px solid #d1d5db; /* Defined Border */
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+            opacity: 1; 
+            text-decoration: none; 
         }
 
         /* --- View Toggle --- */
@@ -644,9 +644,9 @@
         /* --- Player Pill Components --- */
         .player-pill {
             background: rgba(255,255,255,0.95);
-            width: 64px; /* Tighter width */
-            padding: 4px 2px; /* Less padding */
-            border-radius: 6px;
+            width: 68px; /* More breathing room */
+            padding: 6px 2px; /* Better vertical spacing */
+            border-radius: 8px;
             text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
             display: flex;
@@ -736,12 +736,14 @@
         /* --- Smart Status Stack (New) --- */
         .status-stack {
             position: absolute;
-            top: -4px; left: -4px; /* Tighter fit to pill */
+            top: -4px; left: -4px; 
             display: flex;
             flex-direction: column;
             gap: 2px;
             z-index: 25;
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); /* Separation from kit */
+            transform: scale(0.9); /* Reduce visual noise */
+            transform-origin: top left;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
         }
         .status-icon {
             width: 14px; height: 14px;
@@ -1135,7 +1137,7 @@
             padding: 10px 0;
             background: white; 
             border: 1px solid var(--border);
-            border-radius: 12px; 
+            border-radius: 10px; /* Match Chip Squircle */
             text-align: center;
             font-weight: 800;
             font-size: 0.75rem; 
@@ -2781,7 +2783,7 @@
                     if (inSquad) {
                         if (newStats.goals > old.goals) new Notification(`⚽ Goal! ${p.name}`);
                         if (newStats.assists > old.assists) new Notification(`🅰️ Assist! ${p.name}`);
-                        if (newStats.red_cards > old.red_cards) new Notification(`?? Red Card! ${p.name}`);
+                        if (newStats.red_cards > old.red_cards) new Notification(`🟥 Red Card! ${p.name}`);
                         if (newStats.yellow_cards > old.yellow_cards) new Notification(`🟨 Yellow Card! ${p.name}`);
                     }
                     app.lastEvents[pid] = newStats;
