@@ -3156,6 +3156,14 @@
             try {
                 const data = await app.fetchUrl(`https://fantasy.premierleague.com/api/element-summary/${playerId}/`);
                 let html = '';
+
+                // History (Last 3 Games)
+                if (data.history) {
+                    data.history.slice(-3).forEach(h => {
+                        const opp = app.teams ? app.teams[h.opponent_team] : '-';
+                        html += `<div class="fix-box" style="opacity:0.6;"><div class="fix-gw-label">GW${h.round}</div><div class="fix-opp-pill" style="background:#f3f4f6; color:#4b5563;"><div>${opp} <span style="font-size:0.6rem; font-weight:400;">${h.was_home?'(H)':'(A)'}</span></div><div class="fix-loc" style="font-weight:800; color:${h.total_points>=6?'#16a34a':'#4b5563'}">${h.total_points}pts</div></div></div>`;
+                    });
+                }
                 
                 data.fixtures.slice(0, 5).forEach(f => {
                     const isHome = f.is_home;
