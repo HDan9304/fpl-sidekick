@@ -330,18 +330,18 @@
         .countdown-container {
             display: flex;
             justify-content: center;
+            margin-top: -15px; /* Pull closer to scoreboard */
             margin-bottom: 20px;
         }
 
         .countdown-pill { 
-            background: white;
-            border: 1px solid #e5e7eb;
+            background: rgba(0,0,0,0.04); /* Subtle Status Pill */
             border-radius: 100px;
-            padding: 8px 20px;
+            padding: 6px 16px;
             display: inline-flex;
             align-items: center;
-            gap: 15px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
+            gap: 12px;
+            border: 1px solid rgba(0,0,0,0.02);
         }
 
         .cd-label {
@@ -1600,10 +1600,6 @@
                     <i class="fa-solid fa-triangle-exclamation"></i> Network Busy. Showing <b>Demo Data</b>.
                 </div>
 
-                <div class="countdown-container">
-                    <div id="gwCountdown" class="countdown-pill">Loading...</div>
-                </div>
-                
                 <div class="scoreboard">
                     <div class="manager-name" id="dispName">...</div>
                     <div class="stats-grid">
@@ -1623,6 +1619,10 @@
 </div>
                 </div>
 
+                <div class="countdown-container">
+                    <div id="gwCountdown" class="countdown-pill">Loading...</div>
+                </div>
+
                 <div class="view-toggle">
                     <div id="btn-live" class="vt-btn active" onclick="app.toggleView('live')">
                         <i class="fa-solid fa-bolt"></i> Live Points
@@ -1631,6 +1631,8 @@
                         <i class="fa-regular fa-calendar"></i> Next GW
                     </div>
                 </div>
+
+                <div id="capRecommendation"></div>
 
                 <div class="pitch-wrapper">
                     <div class="budget-bar">
@@ -1662,7 +1664,6 @@
                     <div class="legend-item"><div class="status-icon si-gem"><i class="fa-regular fa-gem"></i></div> Differential</div>
                 </div>
 
-                <div id="capRecommendation"></div>
                 <div id="chipBar" class="chip-bar"></div>
                 <div id="historyGraph" class="hist-box" style="border-bottom:none;"></div>
             </div> 
