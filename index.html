@@ -3345,7 +3345,7 @@
                 </div>`;
             
             // Target the first child div of modal-header to replace default text
-            document.querySelector('.modal-header > div').innerHTML = headerHtml;
+            document.querySelector('#playerModalOverlay .modal-header > div').innerHTML = headerHtml;
             
             const fVal = parseFloat(p.form);
             const fColor = fVal > 6.0 ? '#16a34a' : (fVal < 2.0 ? '#ef4444' : 'var(--primary)');
