@@ -1918,21 +1918,21 @@
                         let sellPrice = sell.p.price;
                         
                         // FIX: Calculate Dynamic Selling Price (Purchase Price vs Fresh Current Price)
-                        // API 'selling_price' is a snapshot at deadline and becomes stale if price rises during the week.
-                        if (pick && pick.purchase_price) {
+                        if (pick && typeof pick.purchase_price === 'number') {
                             const pp = pick.purchase_price;
-                            const cp = Math.round(sell.p.price * 10); // Fresh price
+                            const cp = Math.round(sell.p.price * 10);
                             
+                            // Exact FPL Formula: Sell = Purchase + Floor((Current - Purchase) / 2)
                             if (cp > pp) {
                                 const profit = cp - pp;
-                                const gain = Math.floor(profit / 2); // 50% Tax on profit
+                                const gain = Math.floor(profit / 2);
                                 sellPrice = (pp + gain) / 10;
                             } else {
-                                sellPrice = cp / 10; // Loss or Break-even: Sell at current price
+                                sellPrice = cp / 10; // Price Drop = Full Loss
                             }
                         } 
                         else if (pick && pick.selling_price) {
-                            sellPrice = pick.selling_price / 10; // Fallback to snapshot if PP missing
+                            sellPrice = pick.selling_price / 10; // Fallback
                         }
 
                         const budget = curBank + sellPrice;
@@ -2653,11 +2653,12 @@
             try {
                 document.getElementById('loadingMsg').innerText = "Connecting...";
                 
-                // Parallel Fetch 1: Core Data (Static, User, History)
+                // Parallel Fetch 1: Core Data (Static, User, History) - Added Timestamp to bust cache
+                const t = Date.now();
                 const [staticData, user, history] = await Promise.all([
-                    app.fetchUrl('https://fantasy.premierleague.com/api/bootstrap-static/'),
-                    app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/`),
-                    app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/`)
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/bootstrap-static/?t=${t}`),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/?t=${t}`),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/history/?t=${t}`)
                 ]);
 
                 app.userData = user;
