@@ -2156,8 +2156,10 @@
                                     const net = (p.transfers_in || 0) - (p.transfers_out || 0);
                                     const netClass = net >= 0 ? 't-net-pos' : 't-net-neg';
                                     const netStr = (Math.abs(net) > 999) ? (net/1000).toFixed(1) + 'k' : net;
+                                    
+                                    const warn = p.status === 'd' ? '<i class="fa-solid fa-triangle-exclamation" style="color:#fbbf24; margin-left:4px; font-size:0.75rem;"></i>' : (['i','s','n'].includes(p.status) ? '<i class="fa-solid fa-circle-exclamation" style="color:#ef4444; margin-left:4px; font-size:0.75rem;"></i>' : '');
 
-                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m${pc}</div><div class="t-net ${netClass}"><i class="fa-solid fa-users" style="font-size:0.55rem; margin-right:2px; opacity:0.8;"></i>${net >= 0 ? '+' : ''}${netStr}</div>${dots}</div>`;
+                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}${warn}</div><div class="t-meta">£${p.price}m${pc}</div><div class="t-net ${netClass}"><i class="fa-solid fa-users" style="font-size:0.55rem; margin-right:2px; opacity:0.8;"></i>${net >= 0 ? '+' : ''}${netStr}</div>${dots}</div>`;
                                 });
                                 html += `</div><div class="t-half t-in"><span class="t-label lbl-in">BUY</span>`;
                                 s.in.forEach(p => {
@@ -2170,8 +2172,10 @@
                                     const net = (p.transfers_in || 0) - (p.transfers_out || 0);
                                     const netClass = net >= 0 ? 't-net-pos' : 't-net-neg';
                                     const netStr = (Math.abs(net) > 999) ? (net/1000).toFixed(1) + 'k' : net;
+                                    
+                                    const warn = p.status === 'd' ? '<i class="fa-solid fa-triangle-exclamation" style="color:#fbbf24; margin-left:4px; font-size:0.75rem;"></i>' : (['i','s','n'].includes(p.status) ? '<i class="fa-solid fa-circle-exclamation" style="color:#ef4444; margin-left:4px; font-size:0.75rem;"></i>' : '');
 
-                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}</div><div class="t-meta">£${p.price}m${pc}</div><div class="t-net ${netClass}"><i class="fa-solid fa-users" style="font-size:0.55rem; margin-right:2px; opacity:0.8;"></i>${net >= 0 ? '+' : ''}${netStr}</div>${dots}</div>`;
+                                    html += `<div onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="t-kit"><div class="t-name">${p.name}${warn}</div><div class="t-meta">£${p.price}m${pc}</div><div class="t-net ${netClass}"><i class="fa-solid fa-users" style="font-size:0.55rem; margin-right:2px; opacity:0.8;"></i>${net >= 0 ? '+' : ''}${netStr}</div>${dots}</div>`;
                                 });
                                 html += `</div></div><div style="padding:0 15px 15px 15px;"><button class="preview-btn" onclick='app.simulate(${outIds}, ${inIds})'><i class="fa-solid fa-eye"></i> Preview Team</button></div></div>`;
                             });
