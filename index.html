@@ -1917,16 +1917,22 @@
                         const pick = myPicks.find(p => p.element === sell.p.id);
                         let sellPrice = sell.p.price;
                         
-                        // If we don't have exact sell price, estimate conservatively based on total rise
-                        if (pick && pick.selling_price) {
-                            sellPrice = pick.selling_price / 10;
-                        } else {
-                            const rise = sell.p.cost_change_start || 0;
-                            if (rise > 0) {
-                                // Formula: Purchase Price + Floor(Profit / 2)
-                                const nowCost = Math.round(sell.p.price * 10);
-                                sellPrice = ((nowCost - rise) + Math.floor(rise / 2)) / 10;
+                        // FIX: Calculate Dynamic Selling Price (Purchase Price vs Fresh Current Price)
+                        // API 'selling_price' is a snapshot at deadline and becomes stale if price rises during the week.
+                        if (pick && pick.purchase_price) {
+                            const pp = pick.purchase_price;
+                            const cp = Math.round(sell.p.price * 10); // Fresh price
+                            
+                            if (cp > pp) {
+                                const profit = cp - pp;
+                                const gain = Math.floor(profit / 2); // 50% Tax on profit
+                                sellPrice = (pp + gain) / 10;
+                            } else {
+                                sellPrice = cp / 10; // Loss or Break-even: Sell at current price
                             }
+                        } 
+                        else if (pick && pick.selling_price) {
+                            sellPrice = pick.selling_price / 10; // Fallback to snapshot if PP missing
                         }
 
                         const budget = curBank + sellPrice;
