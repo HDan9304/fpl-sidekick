@@ -1408,28 +1408,26 @@
 
         /* Leagues Modal */
         #leaguesList { max-height: 50vh; overflow-y: auto; scrollbar-width: none; }
+        /* Search Clear Button */
+        .clear-btn { color:#9ca3af; padding:5px; cursor:pointer; display:none; }
+        .search-box:focus-within .clear-btn, .search-box:hover .clear-btn { display:block; }
+
+        /* League Rank Cards */
         .league-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid var(--border);
+            padding: 15px;
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: 0.2s;
         }
-        .league-item:last-child { border-bottom: none; }
-        .lg-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
-        .lg-rank-box { text-align: right; }
-        .lg-rank {
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 6px;
-        }
-        .arrow-up { color: #16a34a; }
-        .arrow-down { color: #ef4444; }
-        .arrow-same { color: #d1d5db; }
+        .league-item:active { transform: scale(0.98); background: #f3f4f6; }
+        .lg-name { font-weight: 700; font-size: 0.85rem; color: var(--text-main); }
+        .lg-rank-box { text-align: right; line-height: 1; }
+        .lg-rank { font-weight: 800; font-size: 1rem; color: var(--primary); display:flex; align-items:center; gap:6px; justify-content:flex-end; }
         
         /* Util Classes */
         .welcome-card {
@@ -1440,17 +1438,22 @@
             border: 1px solid var(--border);
             margin-top: 20px;
         }
+        /* Standardized Login Input */
         input {
             width: 100%;
             padding: 14px;
-            border: 2px solid var(--border);
+            border: 1px solid var(--border); /* Pro styling */
             border-radius: 12px;
             text-align: center;
             margin: 20px 0;
             outline: none;
             background: white;
             font-size: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-weight: 600;
+            transition: 0.2s;
         }
+        input:focus { border-color: var(--primary); }
         .btn {
             width: 100%;
             padding: 14px;
@@ -1745,7 +1748,8 @@
                 <div class="search-container">
                     <div class="search-box">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" class="search-input" placeholder="Scout players (e.g. Palmer)..." onkeyup="app.searchScout(this.value)">
+                        <input type="text" id="scoutInput" class="search-input" placeholder="Scout players (e.g. Palmer)..." onkeyup="app.searchScout(this.value)">
+                        <i class="fa-solid fa-circle-xmark clear-btn" onclick="app.clearSearch()"></i>
                     </div>
                 </div>
                 
@@ -2061,6 +2065,13 @@
     const app = {
         userData: null, playersCache: {}, fixMap: {}, currentPicks: [], currentBank: 0,
         teams: null, currentTool: 'squad', historyData: null, deadline: null, gwName: '',
+        
+        clearSearch: () => {
+            const el = document.getElementById('scoutInput');
+            el.value = '';
+            app.searchScout('');
+            el.focus();
+        },
         currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
         viewMode: 'live', ftCount: 1, lastEvents: {}, liveInterval: null, bonusMap: {},
         deadlineNotified: false, fixtureCache: {}, suggestionCache: null, searchTimer: null,
@@ -3365,8 +3376,19 @@
                 html = '<div style="text-align:center; padding:20px; color:#888;">No Classic Leagues found.</div>';
             } else {
                 leagues.forEach(lg => {
-                    let arrow = lg.entry_rank < lg.entry_last_rank ? '<i class="fa-solid fa-arrow-up arrow-up"></i>' : (lg.entry_rank > lg.entry_last_rank ? '<i class="fa-solid fa-arrow-down arrow-down"></i>' : '<i class="fa-solid fa-minus arrow-same"></i>');
-                    html += `<div class="league-item"><div class="lg-name">${lg.name}</div><div class="lg-rank-box"><div class="lg-rank">${arrow} <span>${lg.entry_rank.toLocaleString()}</span></div><div style="font-size:0.65rem; color:#888;">Rank</div></div></div>`;
+                    let arrow = lg.entry_rank < lg.entry_last_rank ? '<i class="fa-solid fa-arrow-up arrow-up" style="font-size:0.8rem"></i>' : (lg.entry_rank > lg.entry_last_rank ? '<i class="fa-solid fa-arrow-down arrow-down" style="font-size:0.8rem"></i>' : '<i class="fa-solid fa-minus arrow-same" style="font-size:0.8rem"></i>');
+                    // Pro Card Layout
+                    html += `
+                    <div class="league-item">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="background:#e0e7ff; color:#3730a3; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem;">${lg.entry_rank <= 5 ? '<i class="fa-solid fa-trophy"></i>' : '#'}</div>
+                            <div class="lg-name">${lg.name}</div>
+                        </div>
+                        <div class="lg-rank-box">
+                            <div class="lg-rank">${lg.entry_rank.toLocaleString()}</div>
+                            <div style="font-size:0.65rem; color:#888; margin-top:2px;">${arrow} Prev: ${lg.entry_last_rank.toLocaleString()}</div>
+                        </div>
+                    </div>`;
                 });
             }
             container.innerHTML = html;
