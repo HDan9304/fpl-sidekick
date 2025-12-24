@@ -1879,13 +1879,13 @@
             // B. Score Squad
             const squadScores = myPicks.map(pick => {
                 const p = allPlayers[pick.element];
-                if (!p || p.pos === 1) return null; // Skip GK
+                if (!p) return null; // Allow GK
                 return { p: p, score: TransferBot.getScore(p, teamStats) };
             }).filter(x => x).sort((a,b) => a.score - b.score);
 
             // C. Score Market (Top 40 for speed)
             const marketScores = Object.values(allPlayers)
-                .filter(p => p.status === 'a' && p.pos > 1 && parseFloat(p.form) > 0.5)
+                .filter(p => p.status === 'a' && parseFloat(p.form) > 0.5) // Allow GK
                 .map(p => ({ p: p, score: TransferBot.getScore(p, teamStats) }))
                 .sort((a,b) => b.score - a.score)
                 .slice(0, 40);
@@ -2904,7 +2904,8 @@
             // Calculate Score with Subs & VC
             let liveScore = 0, playedCount = 0;
             const capPick = picks.find(p => p.is_captain);
-            const capDidntPlay = capPick && subOutIds.includes(capPick.element);
+            // Fix: Check minutes directly (armband passes even if no sub possible)
+            const capDidntPlay = capPick && didntPlay(players[capPick.element]);
 
             picks.forEach(pick => {
                 const p = players[pick.element];
