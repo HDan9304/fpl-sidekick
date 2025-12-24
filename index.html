@@ -377,32 +377,32 @@
 
         .chip-bar {
             display: flex;
-            gap: 8px;
+            gap: 12px; /* Better separation */
             overflow-x: auto;
-            padding: 4px; /* Fix shadows clipping */
-            margin-bottom: 20px;
-            justify-content: center; /* Fix alignment */
+            padding: 4px 20px; /* Side padding for scroll access */
+            margin-bottom: 25px;
+            justify-content: flex-start; /* Fix: Prevents clipping on overflow */
             scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
         }
         .chip-bar::-webkit-scrollbar { display: none; }
 
         .chip-pill {
-            display: inline-flex; /* Fix vertical alignment */
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             background: #e5e7eb;
             white-space: nowrap; 
             flex-shrink: 0;
             color: #9ca3af;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
+            padding: 10px 18px; /* A11y: Larger Touch Target */
+            border-radius: 100px;
+            font-size: 0.75rem; /* Readable Text */
             font-weight: 800;
             border: 1px solid #d1d5db;
             letter-spacing: 0.5px;
             transition: all 0.2s;
-            min-width: 40px;
+            min-width: auto;
         }
         .chip-pill.active {
             background: #fff;
@@ -459,7 +459,7 @@
         .r-grey { color: #9ca3af; }
         
         /* New Stock Ticker Style Pill */
-        .rank-pill { font-size:0.55rem; font-weight:800; padding:2px 6px; border-radius:4px; display:inline-flex; align-items:center; gap:3px; color:white; margin-left:4px; }
+        .rank-pill { font-size:0.7rem; font-weight:800; padding:3px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px; color:white; margin-left:6px; }
         .rp-up { background:#16a34a; }
         .rp-down { background:#ef4444; }
 
@@ -616,18 +616,18 @@
         .bench-pill { opacity: 1; /* A11y: Full visibility on dark theme */ }
         .bench-num {
             position: absolute;
-            top: -6px; right: -6px; left: auto;
+            top: -8px; right: -8px; left: auto;
             background: #374151;
             color: white;
-            width: 16px; height: 16px;
+            width: 20px; height: 20px; /* Larger visibility */
             border-radius: 50%;
             display: flex;
             align-items: center; justify-content: center;
-            font-size: 0.55rem;
+            font-size: 0.7rem; /* Readable number */
             font-weight: 700;
             z-index: 20;
-            border: 1px solid white;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            border: 2px solid white; /* Distinct border */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .si-warn { background: #fbbf24; color: #78350f; } /* Font removed for Icon */
         .si-bad { background: #ef4444; }
