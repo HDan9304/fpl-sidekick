@@ -2181,7 +2181,13 @@
 
                         html += `<div style="font-size:1.1rem; font-weight:800; margin:30px 0 15px 0; padding-left:5px;">Market Trends</div><div class="trend-scroll">`;
                         market.movers.forEach(p => {
-                            html += `<div class="trend-card" onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="trend-img"><div class="trend-name">${p.name}</div><div class="trend-team">${p.team}</div><div class="trend-stat"><i class="fa-solid fa-arrow-trend-up"></i> Hot</div></div>`;
+                            // Add Fixture Dots (Next 3 Games)
+                            const fixtures = app.fixMap[p.team_id] || [];
+                            let dots = '<div class="t-fdr" style="justify-content:center; margin-top:6px;">';
+                            fixtures.slice(1,4).forEach(f => { if(f) dots+=`<div class="t-dot bg-${f.diff}">${f.opp}</div>` });
+                            dots += '</div>';
+
+                            html += `<div class="trend-card" onclick="app.openModal(${p.id})"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" class="trend-img"><div class="trend-name">${p.name}</div><div class="trend-team">${p.team}</div><div class="trend-stat"><i class="fa-solid fa-arrow-trend-up"></i> Hot</div>${dots}</div>`;
                         });
                         html += `</div><div style="height:40px;"></div>`;
                         
