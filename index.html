@@ -2563,8 +2563,9 @@
                             status = 'LIVE'; 
                             label = 'LIVE'; 
                         }
-                        statusMap[f.team_h] = { status, label, id: f.id };
-                        statusMap[f.team_a] = { status, label, id: f.id };
+                        const score = (f.started || f.finished || f.finished_provisional) ? { h: f.team_h_score, a: f.team_a_score } : null;
+                        statusMap[f.team_h] = { status, label, id: f.id, score };
+                        statusMap[f.team_a] = { status, label, id: f.id, score };
                     });
                 }
                 app.statusMap = statusMap;
@@ -2678,9 +2679,10 @@
                             else label = f.minutes + "'";
                         }
                         
+                        const score = (f.started || f.finished || f.finished_provisional) ? { h: f.team_h_score, a: f.team_a_score } : null;
                         // Update the global map so pills can read it
-                        if (app.statusMap[f.team_h]) { app.statusMap[f.team_h].status = status; app.statusMap[f.team_h].label = label; }
-                        if (app.statusMap[f.team_a]) { app.statusMap[f.team_a].status = status; app.statusMap[f.team_a].label = label; }
+                        if (app.statusMap[f.team_h]) { Object.assign(app.statusMap[f.team_h], { status, label, score }); }
+                        if (app.statusMap[f.team_a]) { Object.assign(app.statusMap[f.team_a], { status, label, score }); }
                     });
                 }
 
@@ -3002,11 +3004,14 @@
                 const m = statusMap[p.team_id];
                 let badgeClass = 'ms-fix';
                 let label = m.label;
-                if (m.status === 'FT') { badgeClass = 'ms-ft'; label = 'FT'; } 
+                
+                if (m.status === 'FT') { 
+                    badgeClass = 'ms-ft'; 
+                    if (m.score) label = `${m.score.h}-${m.score.a}`;
+                } 
                 else if (m.status === 'LIVE') { 
                     badgeClass = 'ms-live'; 
-                    // Removed: if (p.minutes > 0) label = p.minutes + "'"; 
-                    // Now it keeps 'm.label' (The Match Clock)
+                    if (m.score) label = `${m.score.h}-${m.score.a}`;
                 }
                 matchBadge = `<div class="match-status ${badgeClass}">${label}</div>`;
             }
