@@ -2803,8 +2803,31 @@
             const liveTotal = (user.summary_overall_points || 0) + totalDiff;
 
             document.getElementById('dispName').innerText = user.name;
-            document.getElementById('dispGW').innerHTML = `${liveScore} <div style="font-size:0.5rem; color:white; opacity:0.8; line-height:1;">${playedCount}/11</div>`;
-            document.getElementById('dispTotal').innerText = liveTotal;
+
+            if (app.viewMode === 'next') {
+                let xpTotal = 0, diffTotal = 0, count = 0;
+                picks.forEach(p => {
+                    if (p.position <= 11) {
+                        const pl = players[p.element];
+                        if (pl) {
+                            const f = (fixMap[pl.team_id]||[])[1] || {diff:3};
+                            // xP Formula: Form*0.5 + Ease*1.0
+                            let xP = (parseFloat(pl.form||0)*0.5) + ((6-f.diff)*1.0);
+                            xpTotal += (xP * (p.multiplier || 1));
+                            diffTotal += f.diff; count++;
+                        }
+                    }
+                });
+                document.getElementById('dispGW').previousElementSibling.innerText = "Projected Pts";
+                document.getElementById('dispGW').innerHTML = `${xpTotal.toFixed(1)} <div style="font-size:0.5rem; color:white; opacity:0.8; line-height:1;">xP</div>`;
+                document.getElementById('dispTotal').previousElementSibling.innerText = "Avg Difficulty";
+                document.getElementById('dispTotal').innerText = count ? (diffTotal/count).toFixed(1) : '0.0';
+            } else {
+                document.getElementById('dispGW').previousElementSibling.innerText = "GW Points";
+                document.getElementById('dispGW').innerHTML = `${liveScore} <div style="font-size:0.5rem; color:white; opacity:0.8; line-height:1;">${playedCount}/11</div>`;
+                document.getElementById('dispTotal').previousElementSibling.innerText = "Total Pts";
+                document.getElementById('dispTotal').innerText = liveTotal;
+            }
 
             // --- HISTORY GRAPH (Last 5 GWs) ---
             if (history.current && history.current.length > 0) {
