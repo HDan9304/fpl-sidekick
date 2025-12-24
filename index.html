@@ -3081,7 +3081,14 @@
             
             stackHtml += '</div>';
 
-            return `<div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" onclick="app.openModal(${p.id})">
+            // Heatmap Border: Next GW only, ignore Captains (who have gold border)
+            let pillStyle = '';
+            if (app.viewMode === 'next' && !p.is_captain) {
+                const nextF = fixtures[1] || { diff: 3 };
+                pillStyle = `style="border-color:var(--fdr-${nextF.diff});"`;
+            }
+
+            return `<div class="player-pill ${isBench ? 'bench-pill' : ''} ${extraClass}" ${pillStyle} onclick="app.openModal(${p.id})">
                     ${isBench ? `<div class="bench-num">${benchNum}</div>` : ''} ${capBadge} ${subIcon} ${csShield} ${stackHtml} ${newBadge} ${matchBadge} ${dotsHtml} ${evtHtml}
                     <img src="${kitUrl}" class="kit-img" onerror="this.style.display='none'">
                     <div class="pill-name">${p.name}</div>
