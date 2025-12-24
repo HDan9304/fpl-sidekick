@@ -3076,9 +3076,15 @@
             const bonusHtml = bonus > 0 ? `<span style="color:var(--accent); font-size:0.55rem; margin-left:2px;">+${bonus}</span>` : '';
             const displayPoints = (p.event_points + bonus) * (p.multiplier || 1);
 
+            // Performance Colors: Gold (10+), Green (6+), Grey (<3)
+            let ptsBg = 'var(--primary)';
+            if (displayPoints >= 10) ptsBg = '#ca8a04';
+            else if (displayPoints >= 6) ptsBg = '#16a34a';
+            else if (displayPoints < 3) ptsBg = '#6b7280';
+
             // --- NEXT GW MODE ---
             let pcArrow = p.cost_change > 0 ? `<span class="pc-arrow pc-up">▲</span>` : (p.cost_change < 0 ? `<span class="pc-arrow pc-down">▼</span>` : '');
-            let bottomBar = `<div class="pill-data"><span>£${p.price}${pcArrow}</span><span class="points-badge">${displayPoints}${bonusHtml}</span></div>`;
+            let bottomBar = `<div class="pill-data"><span>£${p.price}${pcArrow}</span><span class="points-badge" style="background:${ptsBg}">${displayPoints}${bonusHtml}</span></div>`;
 
             // Smart Live: Show Fixture if match hasn't started yet
             if (app.viewMode === 'live' && !app.isSimulating) {
