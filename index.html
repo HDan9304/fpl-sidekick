@@ -378,18 +378,22 @@
         .chip-bar {
             display: flex;
             gap: 8px;
-            overflow-x: auto; /* Scroll horizontally */
-            padding-bottom: 5px;
+            overflow-x: auto;
+            padding: 4px; /* Fix shadows clipping */
             margin-bottom: 20px;
-            scrollbar-width: none; /* Hide scrollbar Firefox */
+            justify-content: center; /* Fix alignment */
+            scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
         }
-        .chip-bar::-webkit-scrollbar { display: none; /* Hide scrollbar Chrome/Safari */ }
+        .chip-bar::-webkit-scrollbar { display: none; }
 
         .chip-pill {
+            display: inline-flex; /* Fix vertical alignment */
+            align-items: center;
+            justify-content: center;
             background: #e5e7eb;
             white-space: nowrap; 
-            flex-shrink: 0; /* Prevent shrinking */
+            flex-shrink: 0;
             color: #9ca3af;
             padding: 6px 12px;
             border-radius: 20px;
@@ -398,6 +402,7 @@
             border: 1px solid #d1d5db;
             letter-spacing: 0.5px;
             transition: all 0.2s;
+            min-width: 40px;
         }
         .chip-pill.active {
             background: #fff;
