@@ -443,6 +443,11 @@
         .r-red { color: #ef4444; }
         .r-grey { color: #9ca3af; }
         
+        /* New Stock Ticker Style Pill */
+        .rank-pill { font-size:0.55rem; font-weight:800; padding:2px 6px; border-radius:4px; display:inline-flex; align-items:center; gap:3px; color:white; margin-left:4px; }
+        .rp-up { background:#16a34a; }
+        .rp-down { background:#ef4444; }
+
         .pc-arrow { font-size: 0.6rem; margin-left: 2px; font-weight: 800; }
         .pc-up { color: #16a34a; }
         .pc-down { color: #ef4444; }
@@ -2899,13 +2904,15 @@
                 const rawDiff = lastRank - currentRank; 
                 const abs = Math.abs(rawDiff);
                 const fmt = abs > 999999 ? (abs/1000000).toFixed(1)+'m' : (abs > 999 ? (abs/1000).toFixed(0)+'k' : abs);
-                // Green for Rank UP (positive diff), Red for Rank DOWN
-                diffStr = `<span style="font-size:0.6rem; color:${rawDiff > 0 ? '#00ff85' : '#ef4444'}; font-weight:700; margin-left:4px; opacity:0.9;">(${rawDiff > 0 ? '+' : '-'}${fmt})</span>`;
+                
+                // Pill Logic: Up (Green) or Down (Red)
+                const pClass = rawDiff > 0 ? 'rp-up' : 'rp-down';
+                const pIcon = rawDiff > 0 ? '▲' : '▼';
+                diffStr = `<div class="rank-pill ${pClass}">${pIcon} ${fmt}</div>`;
             }
 
-            if (currentRank < lastRank) rankArrow = '<i class="fa-solid fa-arrow-up r-green"></i>';
-            else if (currentRank > lastRank) rankArrow = '<i class="fa-solid fa-arrow-down r-red"></i>';
-            document.getElementById('dispRank').innerHTML = `<div class="rank-wrap">${rankArrow} <span>${currentRank.toLocaleString()}</span>${diffStr}</div>`;
+            // Clean Display: Value + Ticker Pill
+            document.getElementById('dispRank').innerHTML = `<div class="rank-wrap"><span>${currentRank.toLocaleString()}</span>${diffStr}</div>`;
 
             document.getElementById('dispBank').innerText = `£${(stats.bank / 10).toFixed(1)}m`;
             const valHtml = `£${(stats.value / 10).toFixed(1)}m` + (app.viewMode === 'next' ? ' <span style="background:#fbbf24; color:#78350f; font-size:0.6rem; padding:1px 6px; border-radius:4px; font-weight:800; vertical-align:2px;">AI LINEUP</span>' : '');
