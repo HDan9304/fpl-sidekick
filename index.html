@@ -500,8 +500,9 @@
         
         .pitch-container {
             background-color: var(--grass-1);
-            background-image: linear-gradient(90deg, rgba(0,0,0,0.1) 50%, transparent 50%), linear-gradient(rgba(0,0,0,0.1) 50%, transparent 50%);
-            background-size: 40px 40px;
+            /* Pro Broadcast Stripes + Vignette */
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,0,0,0.06) 40px, rgba(0,0,0,0.06) 80px);
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.25); 
             padding: 25px 5px;
             position: relative;
             min-height: 480px;
@@ -1634,6 +1635,12 @@
 
                 <div id="capRecommendation"></div>
 
+                <div class="legend-bar" style="margin-bottom:10px;">
+                    <div class="legend-item"><div class="status-icon si-fire"><i class="fa-solid fa-fire"></i></div> Hot</div>
+                    <div class="legend-item"><div class="status-icon si-cold"><i class="fa-regular fa-snowflake"></i></div> Cold</div>
+                    <div class="legend-item"><div class="status-icon si-gem"><i class="fa-regular fa-gem"></i></div> Diff</div>
+                </div>
+
                 <div class="pitch-wrapper">
                     <div class="budget-bar">
                         <span>Bank: <span class="budget-val" id="dispBank">£0.0m</span></span>
@@ -1656,12 +1663,6 @@
                 <div class="bench-wrapper">
                     <div class="bench-header">Substitutes</div>
                     <div id="benchRow" class="bench-row"></div>
-                </div>
-
-                <div class="legend-bar" style="margin-top:20px;">
-                    <div class="legend-item"><div class="status-icon si-fire"><i class="fa-solid fa-fire"></i></div> Hot Form</div>
-                    <div class="legend-item"><div class="status-icon si-cold"><i class="fa-regular fa-snowflake"></i></div> Cold Form</div>
-                    <div class="legend-item"><div class="status-icon si-gem"><i class="fa-regular fa-gem"></i></div> Differential</div>
                 </div>
 
                 <div id="chipBar" class="chip-bar"></div>
