@@ -3324,14 +3324,23 @@
             const netStr = (Math.abs(net) > 999) ? (net/1000).toFixed(1) + 'k' : net;
             const pc = p.cost_change > 0 ? '<span class="pc-arrow pc-up">▲</span>' : (p.cost_change < 0 ? '<span class="pc-arrow pc-down">▼</span>' : '');
 
-            // Pro: Inject Kit Image for Identity
+            // FIX: Show User Pricing Logic (PP/SP) for Debugging
+            const myPick = app.currentPicks.find(px => px.element === p.id);
+            let priceInfo = `<span style="font-weight:700">£${p.price}m</span>${pc}`;
+            
+            if (myPick && typeof myPick.selling_price === 'number') {
+                priceInfo += `<div style="font-size:0.7rem; color:#666; margin-top:4px; font-weight:500;">
+                    Paid: £${(myPick.purchase_price).toFixed(1)}m | Sell: <span style="color:var(--primary); font-weight:800;">£${(myPick.selling_price).toFixed(1)}m</span>
+                </div>`;
+            }
+
             const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
             const headerHtml = `
                 <div style="display:flex; align-items:center; gap:15px;">
                     <img src="${kitUrl}" style="width:50px; height:64px; object-fit:contain; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.2));">
                     <div>
                         <div class="m-player-name">${p.name}</div>
-                        <div class="m-player-team">${p.team} • <span style="font-weight:700">£${p.price}m</span>${pc}</div>
+                        <div class="m-player-team">${p.team} • ${priceInfo}</div>
                     </div>
                 </div>`;
             
