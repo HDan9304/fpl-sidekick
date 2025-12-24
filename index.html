@@ -2143,7 +2143,8 @@
                                     else if ((pOut.price - pIn.price) > 0.5) stratBadge = '<span style="font-size:0.6rem; background:#e0e7ff; color:#3730a3; padding:2px 6px; border-radius:4px; font-weight:800; border:1px solid #c7d2fe; margin-left:4px;">Frees Funds</span>';
                                 }
 
-                                html += `<div class="${cardClass}"><div class="t-header" style="align-items:center;"><div>${badge}<div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;"><div class="t-type">${s.type}</div>${verdict}${stratBadge}</div><div class="t-bank-tag">Bank: £${bankRem}m</div></div><div class="t-gain">+${s.diff}</div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                                // FIX: Added flex-wrap:wrap to prevent badge overflow on mobile
+                                html += `<div class="${cardClass}"><div class="t-header" style="align-items:center;"><div>${badge}<div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:4px;"><div class="t-type">${s.type}</div>${verdict}${stratBadge}</div><div class="t-bank-tag">Bank: £${bankRem}m</div></div><div class="t-gain">+${s.diff}</div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
                                 s.out.forEach(p => {
                                     const fixtures = app.fixMap[p.team_id] || [];
                                     let dots = '<div class="t-fdr">';
