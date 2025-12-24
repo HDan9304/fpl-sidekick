@@ -85,13 +85,15 @@
 
         /* --- Header --- */
         header {
-            background: var(--bg-app);
+            background: rgba(255, 255, 255, 0.8); /* Glass Background */
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             height: 60px;
             padding: 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgba(0,0,0,0.05); /* Softer Border */
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02); /* Subtle Depth */
             flex-shrink: 0;
             z-index: 50;
         }
@@ -254,12 +256,14 @@
            4. SCOREBOARD & DASHBOARD UI
            ========================================= */
         .scoreboard {
-            background: var(--primary);
+            background: linear-gradient(135deg, #37003c 0%, #6a1b6e 100%); /* Pro Gradient */
             color: white;
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 20px rgba(55, 0, 60, 0.2);
+            padding: 24px 20px;
+            border-radius: 24px; /* Smoother Corners */
+            margin-bottom: 25px;
+            box-shadow: 0 20px 40px -10px rgba(55, 0, 60, 0.5); /* Deep Glow */
+            border: 1px solid rgba(255,255,255,0.15); /* Glass Edge */
+            position: relative; overflow: hidden;
         }
 
         .manager-name {
