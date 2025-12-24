@@ -2788,27 +2788,36 @@
                 // FIX: Reconstruct Purchase Price from History to Calculate Real Budget
                 app.currentPicks = picks.picks.map(pick => {
                     const p = players[pick.element];
-                    // Default: Owned since start (Current - Total Rise)
-                    let pp = p.now_cost - p.cost_change_start; 
                     
-                    // Check transfer history for latest purchase price
+                    // 1. Get Official Data First (Safe Fallback)
+                    let finalSellingPrice = pick.selling_price; // Value from API
+                    let pp = p.now_cost - p.cost_change_start; // Default to original price
+                    let foundHistory = false;
+
+                    // 2. Try to find EXACT purchase price from history
                     if (transfers && transfers.length > 0) {
-                        // Filter for this player and sort by time (newest first)
                         const history = transfers.filter(t => t.element_in === pick.element)
                                                  .sort((a,b) => new Date(b.time) - new Date(a.time));
-                        if (history.length > 0) pp = history[0].element_in_cost;
+                        
+                        if (history.length > 0) {
+                            pp = history[0].element_in_cost;
+                            foundHistory = true;
+                        }
                     }
 
-                    // Calculate Selling Price (Purchase + 50% of Profit)
-                    let sp = pp;
-                    if (p.now_cost > pp) {
-                        const profit = p.now_cost - pp;
-                        sp = pp + Math.floor(profit / 2);
-                    } else if (p.now_cost < pp) {
-                        sp = p.now_cost; // Full loss
+                    // 3. Only override API price if we CONFIRMED the purchase price
+                    if (foundHistory) {
+                        if (p.now_cost > pp) {
+                            const profit = p.now_cost - pp;
+                            const gain = Math.floor(profit / 2);
+                            finalSellingPrice = pp + gain;
+                        } else {
+                            finalSellingPrice = p.now_cost; // Loss or break-even
+                        }
                     }
 
-                    return { ...pick, purchase_price: pp, selling_price: sp };
+                    // Store both for debugging, but 'selling_price' is the one used by the bot
+                    return { ...pick, purchase_price: pp, selling_price: finalSellingPrice };
                 });
                 
                 app.currentBank = picks.entry_history.bank / 10;
