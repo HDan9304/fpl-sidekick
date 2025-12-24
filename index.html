@@ -800,9 +800,9 @@
         /* --- Live Match Badges --- */
         .match-status {
             position: absolute;
-            top: -18px; left: 50%;
+            top: -20px; left: 50%;
             transform: translateX(-50%);
-            font-size: 0.55rem;
+            font-size: 0.65rem; /* Readable */
             font-weight: 800;
             padding: 2px 6px;
             border-radius: 4px;
@@ -882,8 +882,8 @@
             overflow: hidden;
         }
         .fdr-dot {
-            width: 22px; height: 12px;
-            font-size: 0.5rem;
+            width: 24px; height: 16px; /* Larger touch/vis */
+            font-size: 0.65rem; /* Readable */
             font-weight: 800;
             color: rgba(0,0,0,0.7);
             display: flex;
@@ -972,19 +972,26 @@
             text-align: center;
         }
         /* No Borders, just soft colors */
-        .t-out { background: #fff1f2; border-right: none; }
-        .t-in { background: #ecfdf5; }
+        /* Clean Ticket Style */
+        .t-out { background: transparent; position: relative; }
+        .t-in { background: transparent; }
+        .t-out::after {
+            content: ""; position: absolute; right: 0; top: 10px; bottom: 10px;
+            width: 1px; background: #f3f4f6; /* Subtle Divider */
+        }
         
         .t-label {
-            font-size: 0.6rem;
+            font-size: 0.7rem; /* Readable */
             font-weight: 800;
-            margin-bottom: 8px;
-            padding: 2px 8px;
-            border-radius: 4px;
+            margin-bottom: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
         }
-        .lbl-out { background: #fee2e2; color: #ef4444; }
-        .lbl-in { background: #dcfce7; color: #16a34a; }
+        .lbl-out { background: #fee2e2; color: #b91c1c; }
+        .lbl-in { background: #dcfce7; color: #15803d; }
 
         .t-kit {
             width: 40px; height: 50px;
@@ -1508,7 +1515,21 @@
         .plan-row { display: flex; align-items: center; padding: 15px; background: white; border-bottom: 1px solid var(--border); }
         .plan-col-gw { font-weight: 800; width: 60px; color: var(--primary); font-size: 0.9rem; }
         .plan-col-chip { margin-left: auto; }
-        .plan-select { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-weight: 700; color: #4b5563; background: #fff; }
+        .plan-select { 
+            padding: 6px 10px; 
+            border-radius: 20px; /* Pill Shape */
+            border: 1px solid var(--border); 
+            font-weight: 700; 
+            color: var(--text-main); 
+            background: #f9fafb;
+            font-size: 0.75rem;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+            -webkit-appearance: none; /* Remove native UI */
+            text-align: center;
+        }
+        .plan-select:focus { border-color: var(--primary); background: white; }
 
         /* UI/UX Polish: Skeleton Loading State */
         .skeleton { background: #f3f4f6; overflow: hidden; position: relative; }
@@ -2447,7 +2468,7 @@
                         </div>
 
                         <div class="plan-col-chip" style="margin-left:0;">
-                            <select class="plan-select" style="width:80px; font-size:0.7rem; padding:4px;">
+                            <select class="plan-select">
                                 <option value="">Save</option>
                                 <option value="wc" ${rec && rec.gw === gw && rec.chip === 'Wildcard' ? 'selected' : ''}>Wildcard</option>
                                 <option value="fh">Free Hit</option>
