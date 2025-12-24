@@ -1822,7 +1822,10 @@
                     // Look for best single swap to extend chain
                     for (let i = 0; i < Math.min(8, candidates.length); i++) {
                         const sell = candidates[i];
-                        const budget = curBank + sell.p.price;
+                        // FIX: Use real selling price (after 50% tax)
+                        const pick = myPicks.find(p => p.element === sell.p.id);
+                        const sellPrice = pick && pick.selling_price ? (pick.selling_price / 10) : sell.p.price;
+                        const budget = curBank + sellPrice;
                         
                         for (const buyObj of marketScores) {
                             if (buyObj.p.pos !== sell.p.pos) continue;
@@ -1838,7 +1841,7 @@
                             const gain = buyObj.score - sell.score;
                             // Update best link for this step if gain is higher
                             if (gain > 0.1 && (!bestLink || gain > bestLink.gain)) {
-                                bestLink = { sell: sell.p, buy: buyObj.p, gain };
+                                bestLink = { sell: sell.p, buy: buyObj.p, gain, sellPrice };
                             }
                         }
                     }
@@ -1848,7 +1851,7 @@
                         usedIn.add(bestLink.buy.id);
                         pathOut.push(bestLink.sell);
                         pathIn.push(bestLink.buy);
-                        curBank = curBank + bestLink.sell.price - bestLink.buy.price;
+                        curBank = curBank + bestLink.sellPrice - bestLink.buy.price;
                         rawDiff += bestLink.gain;
                         
                         // Calculate cost
