@@ -2131,7 +2131,19 @@
                                 else if (!s.type.includes('(-') && app.ftCount > 1) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#2563eb; background:#dbeafe; padding:2px 6px; border-radius:4px; margin-left:4px;"><i class="fa-solid fa-star"></i> Use FT</span>';
                                 else if (s.diff > 8) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#d97706; background:#fef3c7; padding:2px 6px; border-radius:4px; margin-left:4px;"><i class="fa-solid fa-fire-flame-curved"></i> Hot</span>';
 
-                                html += `<div class="${cardClass}"><div class="t-header" style="align-items:center;"><div>${badge}<div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;"><div class="t-type">${s.type}</div>${verdict}</div><div class="t-bank-tag">Bank: £${bankRem}m</div></div><div class="t-gain">+${s.diff}</div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
+                                // Strategy Badge Logic
+                                let stratBadge = '';
+                                if (s.out.length > 0 && s.in.length > 0) {
+                                    const pOut = s.out[0], pIn = s.in[0]; 
+                                    const outF = (app.fixMap[pOut.team_id]||[]).slice(1,4).reduce((a,b)=>a+(b.diff||3),0);
+                                    const inF = (app.fixMap[pIn.team_id]||[]).slice(1,4).reduce((a,b)=>a+(b.diff||3),0);
+                                    
+                                    if ((outF - inF) >= 3) stratBadge = '<span style="font-size:0.6rem; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; font-weight:800; border:1px solid #bbf7d0; margin-left:4px;">Fixture Swing</span>';
+                                    else if ((parseFloat(pIn.form)-parseFloat(pOut.form)) > 2.0) stratBadge = '<span style="font-size:0.6rem; background:#ffedd5; color:#9a3412; padding:2px 6px; border-radius:4px; font-weight:800; border:1px solid #fed7aa; margin-left:4px;">Form Upgrade</span>';
+                                    else if ((pOut.price - pIn.price) > 0.5) stratBadge = '<span style="font-size:0.6rem; background:#e0e7ff; color:#3730a3; padding:2px 6px; border-radius:4px; font-weight:800; border:1px solid #c7d2fe; margin-left:4px;">Frees Funds</span>';
+                                }
+
+                                html += `<div class="${cardClass}"><div class="t-header" style="align-items:center;"><div>${badge}<div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;"><div class="t-type">${s.type}</div>${verdict}${stratBadge}</div><div class="t-bank-tag">Bank: £${bankRem}m</div></div><div class="t-gain">+${s.diff}</div></div><div class="t-body"><div class="t-mid-arrow"><i class="fa-solid fa-arrow-right"></i></div><div class="t-half t-out"><span class="t-label lbl-out">SELL</span>`;
                                 s.out.forEach(p => {
                                     const fixtures = app.fixMap[p.team_id] || [];
                                     let dots = '<div class="t-fdr">';
