@@ -1883,12 +1883,12 @@
                 return { p: p, score: TransferBot.getScore(p, teamStats) };
             }).filter(x => x).sort((a,b) => a.score - b.score);
 
-            // C. Score Market (Top 40 for speed)
+            // C. Score Market (Top 200 to ensure coverage across all positions)
             const marketScores = Object.values(allPlayers)
-                .filter(p => p.status === 'a' && parseFloat(p.form) > 0.5) // Allow GK
+                .filter(p => p.status === 'a' && parseFloat(p.form) > 0.5) 
                 .map(p => ({ p: p, score: TransferBot.getScore(p, teamStats) }))
                 .sort((a,b) => b.score - a.score)
-                .slice(0, 40);
+                .slice(0, 200);
 
             // --- CHAIN BUILDER (1 to 5 Moves) ---
             const buildChain = () => {
@@ -2886,16 +2886,39 @@
             const subGK = players[picks[11].element];
             if (didntPlay(startGK) && played(subGK)) { subOutIds.push(startGK.id); subInIds.push(subGK.id); }
 
+            // Fix: Track formation counts to ensure valid sub (Min 3 Def, Min 1 Fwd)
+            let defCount = 0, fwdCount = 0;
+            for (let i = 1; i <= 10; i++) {
+                const p = players[picks[i].element];
+                if (p.pos === 2) defCount++;
+                if (p.pos === 4) fwdCount++;
+            }
+
             const outfieldBench = [12, 13, 14].map(i => players[picks[i].element]);
-            let usedBenchIdx = 0;
+            const usedBenchIds = new Set(); 
+
             for (let i = 1; i <= 10; i++) {
                 const starter = players[picks[i].element];
                 if (didntPlay(starter)) {
-                    for (let j = usedBenchIdx; j < outfieldBench.length; j++) {
-                        const sub = outfieldBench[j];
-                        if (played(sub)) {
+                    // Check validity constraints
+                    const needsDef = (starter.pos === 2 && defCount <= 3);
+                    const needsFwd = (starter.pos === 4 && fwdCount <= 1);
+
+                    for (const sub of outfieldBench) {
+                        if (played(sub) && !usedBenchIds.has(sub.id)) {
+                            // Skip if sub breaks formation rules
+                            if (needsDef && sub.pos !== 2) continue; 
+                            if (needsFwd && sub.pos !== 4) continue;
+
                             subOutIds.push(starter.id); subInIds.push(sub.id);
-                            usedBenchIdx = j + 1; break;
+                            usedBenchIds.add(sub.id);
+                            
+                            // Update counts
+                            if (starter.pos === 2) defCount--;
+                            if (starter.pos === 4) fwdCount--;
+                            if (sub.pos === 2) defCount++;
+                            if (sub.pos === 4) fwdCount++;
+                            break;
                         }
                     }
                 }
