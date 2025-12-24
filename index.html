@@ -2250,6 +2250,10 @@
                     dots += '</div>';
                     
                     const warn = p.status === 'd' ? '<i class="fa-solid fa-triangle-exclamation" style="color:#fbbf24; margin-left:4px; font-size:0.75rem;"></i>' : '';
+                    
+                    // Ownership: Purple for Diff (<10%), Red for Template (>40%)
+                    const s = parseFloat(p.sel);
+                    const sStyle = s < 10 ? 'color:#8b5cf6; font-weight:800;' : (s > 40 ? 'color:#ef4444; font-weight:800;' : 'color:#6b7280;');
 
                     html += `
                         <div class="scout-item" onclick="app.openModal(${p.id})">
@@ -2257,7 +2261,7 @@
                                 <img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;">
                                 <div class="scout-info">
                                     <div>${p.name}${warn}</div>
-                                    <div>${p.team} • ${p.form} Form</div>
+                                    <div style="font-size:0.75rem; color:#6b7280;">${p.team} • <span style="${sStyle}">${p.sel}% TSB</span></div>
                                 </div>
                             </div>
                             <div class="scout-right">
@@ -2304,7 +2308,11 @@
                     // Shift to 1,4 to show next upcoming games
                     fixtures.slice(1,4).forEach(f => { if(f) dots+=`<div class="t-dot bg-${f.diff}">${f.opp}</div>` });
                     dots += '</div>';
-                    html += `<div class="scout-item" onclick="app.openModal(${p.id})"><div class="scout-left"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;"><div class="scout-info"><div>${p.name}</div><div>${p.team} • ${p.form} Form</div></div></div><div class="scout-right"><div class="scout-price">£${p.price}m</div>${dots}</div></div>`;
+                    
+                    const s = parseFloat(p.sel);
+                    const sStyle = s < 10 ? 'color:#8b5cf6; font-weight:800;' : (s > 40 ? 'color:#ef4444; font-weight:800;' : 'color:#6b7280;');
+
+                    html += `<div class="scout-item" onclick="app.openModal(${p.id})"><div class="scout-left"><img src="https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png" style="width:36px; height:45px; object-fit:contain;"><div class="scout-info"><div>${p.name}</div><div style="font-size:0.75rem; color:#6b7280;">${p.team} • <span style="${sStyle}">${p.sel}% TSB</span></div></div></div><div class="scout-right"><div class="scout-price">£${p.price}m</div>${dots}</div></div>`;
                 });
             }
             resultsContainer.innerHTML = html;
