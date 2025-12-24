@@ -1912,9 +1912,23 @@
                     // Look for best single swap to extend chain
                     for (let i = 0; i < Math.min(8, candidates.length); i++) {
                         const sell = candidates[i];
-                        // FIX: Use real selling price (after 50% tax)
+                        
+                        // FIX: Conservative Sell Price (Account for 50% Profit Tax)
                         const pick = myPicks.find(p => p.element === sell.p.id);
-                        const sellPrice = pick && pick.selling_price ? (pick.selling_price / 10) : sell.p.price;
+                        let sellPrice = sell.p.price;
+                        
+                        // If we don't have exact sell price, estimate conservatively based on total rise
+                        if (pick && pick.selling_price) {
+                            sellPrice = pick.selling_price / 10;
+                        } else {
+                            const rise = sell.p.cost_change_start || 0;
+                            if (rise > 0) {
+                                // Formula: Purchase Price + Floor(Profit / 2)
+                                const nowCost = Math.round(sell.p.price * 10);
+                                sellPrice = ((nowCost - rise) + Math.floor(rise / 2)) / 10;
+                            }
+                        }
+
                         const budget = curBank + sellPrice;
                         
                         for (const buyObj of marketScores) {
@@ -2727,9 +2741,11 @@
                         minutes: live ? live.mins : 0,
                         stats: live || { goals: 0, assists: 0, red_cards: 0 },
                         team_code: p.team_code, status: p.status, chance: p.chance_of_playing_next_round, news: p.news, cost_change: p.cost_change_event,
-                        sel: parseFloat(p.selected_by_percent), form: p.form, transfers_in: p.transfers_in_event, transfers_out: p.transfers_out_event, total_points: p.total_points, ict_index: p.ict_index
-                    };
-                });
+        // Track total price rise for budget calculation
+        cost_change_start: p.cost_change_start,
+        sel: parseFloat(p.selected_by_percent), form: p.form, transfers_in: p.transfers_in_event, transfers_out: p.transfers_out_event, total_points: p.total_points, ict_index: p.ict_index
+    };
+});
 
                 app.playersCache = players;
 
