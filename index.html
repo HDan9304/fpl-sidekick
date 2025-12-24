@@ -461,10 +461,11 @@
            ========================================= */
         .pitch-wrapper {
             background: #fff;
-            border-radius: 16px;
+            border-radius: 24px;
             overflow: hidden;
-            border: 1px solid var(--border);
-            margin-bottom: 20px;
+            border: none; /* Borderless */
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); /* Floating Effect */
+            margin-bottom: 25px;
         }
 
         .budget-bar {
@@ -575,19 +576,22 @@
         /* --- Bench --- */
         .bench-wrapper {
             background: white;
-            border-radius: 16px;
-            border: 1px solid var(--border);
+            border-radius: 20px;
+            border: none;
             overflow: hidden;
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.06);
         }
         .bench-header {
-            background: #f8f9fa;
-            padding: 8px 15px;
+            background: white;
+            padding: 15px;
             font-size: 0.7rem;
             font-weight: 800;
             color: var(--text-sub);
             text-transform: uppercase;
             letter-spacing: 1px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: none; /* Cleaner look */
+            text-align: center;
+            opacity: 0.6;
         }
         .bench-row {
             display: flex;
