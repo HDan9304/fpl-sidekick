@@ -2673,14 +2673,15 @@
 
                 document.getElementById('loadingMsg').innerText = "Fetching Live Scores...";
                 
-                // Parallel Fetch 2: GW Dependent Data (Picks, Live Stats, 4 Weeks of Fixtures)
-                const [picks, liveData, fix1, fix2, fix3, fix4] = await Promise.all([
+                // Parallel Fetch 2: GW Dependent Data (+ TRANSFERS for Budget Calc)
+                const [picks, liveData, fix1, fix2, fix3, fix4, transfers] = await Promise.all([
                     app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/event/${gw}/picks/`),
                     app.fetchUrl(`https://fantasy.premierleague.com/api/event/${gw}/live/`),
                     app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw}`),
                     app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw+1}`),
                     app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw+2}`),
-                    app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw+3}`)
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/fixtures/?event=${gw+3}`),
+                    app.fetchUrl(`https://fantasy.premierleague.com/api/entry/${id}/transfers/`)
                 ]);
 
                 app.currentStats = picks.entry_history;
@@ -2744,6 +2745,7 @@
                     players[p.id] = {
                         id: p.id, name: p.web_name, team: teamShort[p.team], team_id: p.team,
                         pos: p.element_type, price: p.now_cost / 10,
+                        now_cost: p.now_cost, // Store raw integer for precision math
                         event_points: live ? live.points : p.event_points,
                         minutes: live ? live.mins : 0,
                         stats: live || { goals: 0, assists: 0, red_cards: 0 },
@@ -2783,7 +2785,34 @@
                     }
                 });
 
-                app.currentPicks = picks.picks;
+                });
+
+                // FIX: Reconstruct Purchase Price from History to Calculate Real Budget
+                app.currentPicks = picks.picks.map(pick => {
+                    const p = players[pick.element];
+                    // Default: Owned since start (Current - Total Rise)
+                    let pp = p.now_cost - p.cost_change_start; 
+                    
+                    // Check transfer history for latest purchase price
+                    if (transfers && transfers.length > 0) {
+                        // Filter for this player and sort by time (newest first)
+                        const history = transfers.filter(t => t.element_in === pick.element)
+                                                 .sort((a,b) => new Date(b.time) - new Date(a.time));
+                        if (history.length > 0) pp = history[0].element_in_cost;
+                    }
+
+                    // Calculate Selling Price (Purchase + 50% of Profit)
+                    let sp = pp;
+                    if (p.now_cost > pp) {
+                        const profit = p.now_cost - pp;
+                        sp = pp + Math.floor(profit / 2);
+                    } else if (p.now_cost < pp) {
+                        sp = p.now_cost; // Full loss
+                    }
+
+                    return { ...pick, purchase_price: pp, selling_price: sp };
+                });
+                
                 app.currentBank = picks.entry_history.bank / 10;
                 document.getElementById('demoAlert').classList.add('hidden');
                 
