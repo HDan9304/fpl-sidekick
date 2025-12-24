@@ -1237,19 +1237,22 @@
         /* =========================================
            7. MODALS & UTILITIES
            ========================================= */
+        .scroll-lock { overflow: hidden; height: 100vh; } /* Prevent BG Scroll */
+
         .modal-overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6); /* Darker focus */
             z-index: 1000;
             display: flex;
             justify-content: center;
             align-items: flex-end;
             opacity: 0;
             visibility: hidden;
-            transition: 0.3s;
-            backdrop-filter: blur(2px);
+            transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+            backdrop-filter: blur(8px); /* Pro Blur */
+            -webkit-backdrop-filter: blur(8px);
         }
         .modal-overlay.open { opacity: 1; visibility: visible; }
         
@@ -1257,12 +1260,12 @@
             background: white;
             width: 100%;
             max-width: 600px;
-            border-radius: 20px 20px 0 0;
+            border-radius: 24px 24px 0 0; /* Softer Curve */
             padding: 25px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
             margin: 0;
             transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); /* Spring Physics */
         }
         .modal-overlay.open .modal-card { transform: translateY(0); }
         
@@ -1315,8 +1318,11 @@
             display: flex;
             gap: 8px;
             overflow-x: auto;
-            padding: 5px 0 15px 0;
+            padding: 5px 20px 15px 5px; /* Right padding hint */
             scrollbar-width: none;
+            /* Fade Edge Hint */
+            mask-image: linear-gradient(to right, black 90%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
         }
         .fix-box {
             min-width: 70px;
@@ -1553,11 +1559,11 @@
 
 <body>
 
-    <div id="leaguesModalOverlay" class="modal-overlay" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">
+    <div id="leaguesModalOverlay" class="modal-overlay" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open'); document.body.classList.remove('scroll-lock')">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div class="m-player-name"><i class="fa-solid fa-trophy" style="margin-right:8px;"></i> My Leagues</div>
-                <button class="close-modal" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open')">×</button>
+                <button class="close-modal" onclick="document.getElementById('leaguesModalOverlay').classList.remove('open'); document.body.classList.remove('scroll-lock')">×</button>
             </div>
             <div id="leaguesList" style="padding-bottom: 20px;"></div>
         </div>
@@ -3225,6 +3231,7 @@
         openModal: async (playerId) => {
             const p = app.playersCache[playerId];
             if (!p) return;
+            document.body.classList.add('scroll-lock'); // Lock BG
             const overlay = document.getElementById('playerModalOverlay');
             
             const net = (p.transfers_in || 0) - (p.transfers_out || 0);
@@ -3343,6 +3350,7 @@
         },
 
         openLeagues: async () => {
+            document.body.classList.add('scroll-lock'); // Lock BG
             const id = localStorage.getItem('fpl_id_final') || document.getElementById('teamID').value;
             if (!id) return alert("Please log in first.");
             if (!app.userData) {
@@ -3364,7 +3372,10 @@
             container.innerHTML = html;
             document.getElementById('leaguesModalOverlay').classList.add('open');
         },
-        closeModal: () => { document.getElementById('playerModalOverlay').classList.remove('open'); }
+        closeModal: () => { 
+            document.getElementById('playerModalOverlay').classList.remove('open');
+            document.body.classList.remove('scroll-lock'); // Unlock BG
+        }
     };
 
     // =========================================
