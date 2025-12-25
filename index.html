@@ -1935,11 +1935,15 @@
                             sellPrice = pick.selling_price / 10; // Fallback
                         }
 
-                        const budget = Number((curBank + sellPrice).toFixed(1)); // allow negative balance, match official rounding
+                        // FIX: Strict Integer Math (x10) to prevent floating point drift (e.g. 0.1 + 0.2 != 0.3)
+                        const budgetInt = Math.round((curBank + sellPrice) * 10);
                         
                         for (const buyObj of marketScores) {
                             if (buyObj.p.pos !== sell.p.pos) continue;
-                            if (buyObj.p.price > budget) continue;
+                            
+                            // Check Price using Integers (Exact Match)
+                            if (Math.round(buyObj.p.price * 10) > budgetInt) continue;
+
                             if (curPicks.some(p => p.element === buyObj.p.id) || usedIn.has(buyObj.p.id)) continue;
                             
                             // Check Max 3 Players Per Team Rule
