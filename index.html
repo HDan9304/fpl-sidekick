@@ -33,6 +33,29 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
+        
+        /* New Pitch Background */
+        .pitch-bg {
+            background: linear-gradient(180deg, #1a904e 0%, #158043 100%);
+            border: 2px solid rgba(255,255,255,0.2);
+            position: relative;
+        }
+        /* Pitch Lines */
+        .pitch-bg::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+        .pitch-bg::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px; height: 80px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body class="bg-gray-100 pb-20">
@@ -74,10 +97,14 @@
 
         <div>
             <div class="flex justify-between items-end mb-4">
-                <h3 class="text-lg font-bold text-gray-800">The "Template" <span class="text-xs text-gray-500 font-normal ml-1">(GW15)</span></h3>
-                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold">3-5-2</span>
+                <h3 class="text-lg font-bold text-gray-800">The "Template" <span class="text-xs text-gray-500 font-normal ml-1">(Live)</span></h3>
+                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold" id="formation-label">Loading...</span>
             </div>
-            <div id="template-grid" class="space-y-4"></div>
+            <div id="template-grid" class="pitch-bg w-full rounded-xl p-4 flex flex-col justify-between h-[600px] shadow-inner">
+                <div class="flex justify-center items-center h-full text-white/50 animate-pulse">
+                    Loading Live Data...
+                </div>
+            </div>
         </div>
 
     </main>
@@ -110,65 +137,83 @@
     </main>
 
     <script>
-        // 1. TEMPLATE DATA (Grouped by Position)
-        const templateTeam = {
-            GKP: [{ name: "Raya", team: "ARS", price: "£5.6m" }],
-            DEF: [
-                { name: "Gabriel", team: "ARS", price: "£6.2m" },
-                { name: "Gvardiol", team: "MCI", price: "£6.0m" },
-                { name: "Ait-Nouri", team: "WOL", price: "£4.7m" }
-            ],
-            MID: [
-                { name: "Salah (C)", team: "LIV", price: "£13.3m" },
-                { name: "Palmer", team: "CHE", price: "£11.0m" },
-                { name: "Saka", team: "ARS", price: "£10.5m" },
-                { name: "Mbeumo", team: "BRE", price: "£7.8m" },
-                { name: "Rogers", team: "AVL", price: "£5.4m" }
-            ],
-            FWD: [
-                { name: "Haaland", team: "MCI", price: "£15.2m" },
-                { name: "Isak", team: "NEW", price: "£8.5m" }
-            ]
-        };
+        // 1. CONFIGURATION & HELPERS
+        const PROXY_URL = "https://api.allorigins.win/raw?url=";
+        const FPL_API = "https://fantasy.premierleague.com/api/bootstrap-static/";
+        const IMG_URL = "https://resources.premierleague.com/premierleague/photos/players/110x140/p";
 
-        // 2. RENDER FUNCTION
-        function renderTemplateTeam() {
+        // 2. FETCH LIVE DATA
+        async function fetchAndRender() {
+            try {
+                // Fetch Data via Proxy
+                const response = await fetch(PROXY_URL + encodeURIComponent(FPL_API));
+                const data = await response.json();
+                
+                // Process: Get Top Owned Players for a 3-5-2 (Standard Template)
+                const players = data.elements.sort((a, b) => parseFloat(b.selected_by_percent) - parseFloat(a.selected_by_percent));
+                const teams = data.teams;
+                
+                const getTop = (posId, count) => players.filter(p => p.element_type === posId).slice(0, count);
+                
+                // Simple logic: Force a 3-5-2 for the Template view
+                const formation = {
+                    GKP: getTop(1, 1),
+                    DEF: getTop(2, 3),
+                    MID: getTop(3, 5),
+                    FWD: getTop(4, 2)
+                };
+
+                renderPitch(formation, teams);
+                document.getElementById('formation-label').innerText = "3-5-2";
+
+            } catch (error) {
+                console.error("Error fetching FPL data:", error);
+                document.getElementById('template-grid').innerHTML = '<p class="text-white text-center m-auto">Failed to load live data.</p>';
+            }
+        }
+
+        // 3. RENDER PITCH
+        function renderPitch(formation, teams) {
             const container = document.getElementById('template-grid');
             let html = '';
 
-            const positions = ['GKP', 'DEF', 'MID', 'FWD'];
-            
-            positions.forEach(pos => {
-                html += `
-                    <div class="relative">
-                        <div class="absolute -left-3 top-3 -rotate-90 w-8 text-center">
-                            <span class="text-[10px] font-bold text-gray-400 tracking-widest">${pos}</span>
-                        </div>
-                        <div class="ml-6 grid grid-cols-1 gap-2">
-                `;
+            const rows = ['GKP', 'DEF', 'MID', 'FWD'];
+
+            rows.forEach(pos => {
+                html += `<div class="flex justify-around items-center w-full">`; // Flex row for each position line
                 
-                templateTeam[pos].forEach(player => {
+                formation[pos].forEach(p => {
+                    const teamName = teams.find(t => t.id === p.team).short_name;
+                    const imageCode = p.code;
+                    const price = (p.now_cost / 10).toFixed(1);
+                    const ownership = p.selected_by_percent;
+
                     html += `
-                        <div class="glass-card p-3 flex justify-between items-center border-l-4 ${pos === 'GKP' ? 'border-yellow-400' : pos === 'DEF' ? 'border-blue-400' : pos === 'MID' ? 'border-green-400' : 'border-red-400'}">
-                            <div>
-                                <h4 class="font-bold text-gray-800 text-sm">${player.name}</h4>
-                                <span class="text-xs text-gray-500">${player.team}</span>
+                        <div class="flex flex-col items-center w-1/5">
+                            <div class="relative mb-1">
+                                <img src="${IMG_URL}${imageCode}.png" class="w-10 h-12 object-cover" onerror="this.src='https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_0-66.png'">
                             </div>
-                            <span class="text-xs font-bold fpl-purple bg-purple-100 px-2 py-1 rounded">${player.price}</span>
+                            <div class="bg-white/90 backdrop-blur px-2 py-1 rounded text-center w-full max-w-[80px] shadow-sm">
+                                <p class="text-[10px] font-bold truncate leading-tight">${p.web_name}</p>
+                                <p class="text-[9px] text-gray-600">${teamName}</p>
+                                <div class="flex justify-between items-center mt-0.5 border-t border-gray-200 pt-0.5">
+                                    <span class="text-[9px] font-bold text-fpl-purple">£${price}</span>
+                                    <span class="text-[8px] text-gray-500">${ownership}%</span>
+                                </div>
+                            </div>
                         </div>
                     `;
                 });
-
-                html += `</div></div>`;
+                
+                html += `</div>`;
             });
 
             container.innerHTML = html;
         }
 
-        // 3. INITIALIZE
+        // 4. INITIALIZE
         document.addEventListener('DOMContentLoaded', () => {
-            renderTemplateTeam(); // Updated function call
-            console.log("FPL Sidekick Loaded");
+            fetchAndRender();
         });
     </script>
 </body>
