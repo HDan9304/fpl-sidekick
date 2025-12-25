@@ -2825,10 +2825,10 @@ if (transfers && transfers.length > 0) {
     }
 }
 
-                    // Step B: If no history found, assume bought at Current Price (Safe Fallback)
-                    // We treat missing history as "bought today" (0 profit) to avoid assuming profits you don't possess.
+                    // Step B: If no history found, assume bought at Season Start (Conservative Fallback)
+                    // This ensures we don't overestimate budget. Better to have "hidden funds" than "insufficient funds".
                     if (pp === null) {
-                        pp = p.now_cost; 
+                        pp = p.now_cost - p.cost_change_start;
                     }
 
                     // Step C: Calculate Fresh Selling Price
