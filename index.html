@@ -1935,7 +1935,7 @@
                             sellPrice = pick.selling_price / 10; // Fallback
                         }
 
-                        const budget = curBank + sellPrice;
+                        const budget = Number((curBank + sellPrice).toFixed(1)); // allow negative balance, match official rounding
                         
                         for (const buyObj of marketScores) {
                             if (buyObj.p.pos !== sell.p.pos) continue;
@@ -2795,12 +2795,15 @@
                     const p = players[pick.element];
                     
                     // Step A: Try to find confirmed purchase in History
-                    let pp = null;
-                    if (transfers && transfers.length > 0) {
-                        const history = transfers.filter(t => t.element_in === pick.element)
-                                                 .sort((a,b) => new Date(b.time) - new Date(a.time));
-                        if (history.length > 0) pp = history[0].element_in_cost;
-                    }
+                    let pp = pick.purchase_price ?? null;
+if (transfers && transfers.length > 0) {
+    const history = transfers
+        .filter(t => t.element_in === pick.element)
+        .sort((a,b) => new Date(b.time) - new Date(a.time));
+    if (history.length > 0 && typeof history[0].element_in_cost === 'number') {
+        pp = history[0].element_in_cost;
+    }
+}
 
                     // Step B: If no history, checks if we can calculate it safely
                     // If you started GW1, we know the purchase price = Current - Total Rise
