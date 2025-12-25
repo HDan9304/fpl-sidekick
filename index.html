@@ -139,7 +139,8 @@
 
             for (let i = 0; i < proxies.length; i++) {
                 try {
-                    statusEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Trying Proxy ${i+1}...`;
+                    if(statusEl) statusEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Trying Proxy ${i+1}...`;
+                    
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
 
@@ -147,21 +148,25 @@
                     clearTimeout(timeoutId);
 
                     if (response.ok) {
-                        statusEl.innerHTML = `<i class="fa-solid fa-check text-green-400"></i> Live`;
-                        statusEl.classList.add('text-green-400');
+                        if(statusEl) {
+                            statusEl.innerHTML = `<i class="fa-solid fa-check text-green-400"></i> Live`;
+                            statusEl.classList.add('text-green-400');
+                        }
                         return await response.json();
                     }
                 } catch (e) { console.warn(`Proxy ${i+1} failed`); }
             }
-            statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-400"></i> Error`;
+            if(statusEl) statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-400"></i> Error`;
             throw new Error("All proxies failed");
         }
 
         // 3. FETCH DATA FUNCTION
         async function fetchAndRender() {
             try {
-                // Use new Multi-Proxy Fetcher
-                const bootstrapData = await fetchWithFallback(FPL_API);
+                // Use Promise.all (Ready for adding more endpoints like Fixtures later)
+                const [bootstrapData] = await Promise.all([
+                    fetchWithFallback(FPL_API)
+                ]);
                 
                 // DATA PROCESSING
                 const players = bootstrapData.elements.sort((a, b) => parseFloat(b.selected_by_percent) - parseFloat(a.selected_by_percent));
