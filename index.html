@@ -701,9 +701,9 @@
             font-weight: 700;
         }
         .fix-badge {
-            font-size: 0.5rem;
-            font-weight: 700;
-            padding: 1px 4px;
+            font-size: 0.65rem; /* Increased for readability */
+            font-weight: 750;
+            padding: 2px 5px;
             border-radius: 3px;
             position: absolute;
             top: -6px; left: 50%;
@@ -745,12 +745,12 @@
             filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
         }
         .status-icon {
-            width: 14px; height: 14px;
+            width: 16px; height: 16px; /* Larger touch target */
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.55rem;
+            font-size: 0.65rem; /* Increased from 0.55rem */
             color: white;
             border: 1px solid white;
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
@@ -881,8 +881,8 @@
             overflow: hidden;
         }
         .fdr-dot {
-            width: 24px; height: 16px; /* Larger touch/vis */
-            font-size: 0.65rem; /* Readable */
+            width: 26px; height: 18px; 
+            font-size: 0.7rem; /* Increased from 0.65rem */
             font-weight: 800;
             color: rgba(0,0,0,0.7);
             display: flex;
@@ -2825,10 +2825,10 @@ if (transfers && transfers.length > 0) {
     }
 }
 
-                    // Step B: If no history found, assume bought at Season Start (Safe Fallback)
-                    // This prevents over-estimating budget for players with missing purchase data
+                    // Step B: If no history found, assume bought at Current Price (Safe Fallback)
+                    // We treat missing history as "bought today" (0 profit) to avoid assuming profits you don't possess.
                     if (pp === null) {
-                        pp = p.now_cost - p.cost_change_start;
+                        pp = p.now_cost; 
                     }
 
                     // Step C: Calculate Fresh Selling Price
