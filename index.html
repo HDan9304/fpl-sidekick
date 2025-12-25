@@ -1918,21 +1918,10 @@
                         let sellPrice = sell.p.price;
                         
                         // FIX: Calculate Dynamic Selling Price (Purchase Price vs Fresh Current Price)
-                        if (pick && typeof pick.purchase_price === 'number') {
-                            const pp = pick.purchase_price;
-                            const cp = Math.round(sell.p.price * 10);
-                            
-                            // Exact FPL Formula: Sell = Purchase + Floor((Current - Purchase) / 2)
-                            if (cp > pp) {
-                                const profit = cp - pp;
-                                const gain = Math.floor(profit / 2);
-                                sellPrice = (pp + gain) / 10;
-                            } else {
-                                sellPrice = cp / 10; // Price Drop = Full Loss
-                            }
-                        } 
-                        else if (pick && pick.selling_price) {
-                            sellPrice = pick.selling_price / 10; // Fallback
+                        // Use the exact selling price we calculated during app.load
+                        // Note: Public API does NOT provide selling_price, so we rely entirely on our app.load calculation
+                        if (pick && typeof pick.selling_price === 'number') {
+                            sellPrice = pick.selling_price / 10;
                         }
 
                         // FIX: Strict Integer Math (x10) to prevent floating point drift (e.g. 0.1 + 0.2 != 0.3)
@@ -2809,9 +2798,9 @@ if (transfers && transfers.length > 0) {
     }
 }
 
-                    // Step B: If no history, checks if we can calculate it safely
-                    // If you started GW1, we know the purchase price = Current - Total Rise
-                    if (pp === null && startGw === 1) {
+                    // Step B: If no history found, assume bought at Season Start (Safe Fallback)
+                    // This prevents over-estimating budget for players with missing purchase data
+                    if (pp === null) {
                         pp = p.now_cost - p.cost_change_start;
                     }
 
