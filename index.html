@@ -993,19 +993,20 @@
         .lbl-in { background: #dcfce7; color: #15803d; }
 
         .t-kit {
-            width: 40px; height: 50px;
+            width: 44px; height: 54px; /* Larger visual */
             object-fit: contain;
-            margin: 5px 0;
-            filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2));
+            margin: 8px 0;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.15));
         }
         .t-name {
-            font-weight: 700;
-            font-size: 0.85rem;
-            margin-bottom: 2px;
-            line-height: 1.2;
+            font-weight: 800;
+            font-size: 0.95rem; /* Stronger hierarchy */
+            margin-bottom: 4px;
+            line-height: 1.1;
+            color: var(--primary);
         }
-        .t-meta { font-size: 0.7rem; color: var(--text-sub); font-weight: 500; }
-        .t-net { font-size: 0.65rem; font-weight: 700; margin-top: 2px; }
+        .t-meta { font-size: 0.8rem; color: #4b5563; font-weight: 600; }
+        .t-net { font-size: 0.75rem; font-weight: 700; margin-top: 4px; }
         .t-net-pos { color: #16a34a; }
         .t-net-neg { color: #ef4444; }
         .t-fdr { display: flex; gap: 2px; margin-top: 6px; justify-content: center; }
@@ -1271,11 +1272,13 @@
         .modal-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center; /* Better alignment */
             margin-bottom: 20px;
+            padding-bottom: 15px; /* Visual separation */
+            border-bottom: 1px solid var(--border);
         }
         
-        .m-player-name { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
+        .m-player-name { font-size: 1.4rem; font-weight: 800; color: var(--primary); line-height: 1.1; }
         .m-player-team { font-size: 0.9rem; color: var(--text-sub); }
         .close-modal {
             background: #f3f4f6;
