@@ -72,7 +72,7 @@
         </div>
     </nav>
 
-    <main class="max-w-md mx-auto p-4 space-y-6">
+    <main class="max-w-6xl mx-auto p-4 space-y-6">
 
         <div class="fpl-purple rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#00ff85] rounded-full opacity-20 blur-2xl"></div>
@@ -145,12 +145,14 @@
         // 2. FETCH LIVE DATA
         async function fetchAndRender() {
             try {
-                // Fetch Data via Proxy
-                const response = await fetch(PROXY_URL + encodeURIComponent(FPL_API));
-                const data = await response.json();
+                // Fetch Data via Proxy using Promise.all (Ready for adding more endpoints later)
+                const [bootstrapData] = await Promise.all([
+                    fetch(PROXY_URL + encodeURIComponent(FPL_API)).then(response => response.json())
+                ]);
                 
                 // Process: Get Top Owned Players for a 3-5-2 (Standard Template)
-                const players = data.elements.sort((a, b) => parseFloat(b.selected_by_percent) - parseFloat(a.selected_by_percent));
+                const players = bootstrapData.elements.sort((a, b) => parseFloat(b.selected_by_percent) - parseFloat(a.selected_by_percent));
+                const teams = bootstrapData.teams;
                 const teams = data.teams;
                 
                 const getTop = (posId, count) => players.filter(p => p.element_type === posId).slice(0, count);
