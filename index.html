@@ -2785,38 +2785,43 @@
                     }
                 });
 
-                // FIX: Reconstruct Purchase Price from History to Calculate Real Budget
+                // FIX: SMART BUDGET CALCULATION
+                // 1. If player exists in transfer history -> Use that price (Exact)
+                // 2. If player is from Initial Squad (GW1) -> Use Cost Change Math (Fixes Stale Data)
+                // 3. If Late Joiner & No History -> Fallback to API (Safe)
+                const startGw = user.started_event || 1;
+
                 app.currentPicks = picks.picks.map(pick => {
                     const p = players[pick.element];
                     
-                    // 1. Get Official Data First (Safe Fallback)
-                    let finalSellingPrice = pick.selling_price; // Value from API
-                    let pp = p.now_cost - p.cost_change_start; // Default to original price
-                    let foundHistory = false;
-
-                    // 2. Try to find EXACT purchase price from history
+                    // Step A: Try to find confirmed purchase in History
+                    let pp = null;
                     if (transfers && transfers.length > 0) {
                         const history = transfers.filter(t => t.element_in === pick.element)
                                                  .sort((a,b) => new Date(b.time) - new Date(a.time));
-                        
-                        if (history.length > 0) {
-                            pp = history[0].element_in_cost;
-                            foundHistory = true;
-                        }
+                        if (history.length > 0) pp = history[0].element_in_cost;
                     }
 
-                    // 3. Only override API price if we CONFIRMED the purchase price
-                    if (foundHistory) {
+                    // Step B: If no history, checks if we can calculate it safely
+                    // If you started GW1, we know the purchase price = Current - Total Rise
+                    if (pp === null && startGw === 1) {
+                        pp = p.now_cost - p.cost_change_start;
+                    }
+
+                    // Step C: Calculate Fresh Selling Price
+                    let finalSellingPrice = pick.selling_price; // Default to API
+                    
+                    if (pp !== null) {
+                        // We have a confirmed purchase price, so we can fix stale API data
                         if (p.now_cost > pp) {
                             const profit = p.now_cost - pp;
-                            const gain = Math.floor(profit / 2);
+                            const gain = Math.floor(profit / 2); // Round Down (FPL Rule)
                             finalSellingPrice = pp + gain;
                         } else {
-                            finalSellingPrice = p.now_cost; // Loss or break-even
+                            finalSellingPrice = p.now_cost; // Loss or Break-even
                         }
                     }
 
-                    // Store both for debugging, but 'selling_price' is the one used by the bot
                     return { ...pick, purchase_price: pp, selling_price: finalSellingPrice };
                 });
                 
