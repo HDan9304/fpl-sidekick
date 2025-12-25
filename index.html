@@ -2098,7 +2098,7 @@
         },
         currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
         viewMode: 'live', ftCount: 1, lastEvents: {}, liveInterval: null, bonusMap: {},
-        deadlineNotified: false, fixtureCache: {}, suggestionCache: null, searchTimer: null,
+        deadlineNotified: false, dayNotified: false, fixtureCache: {}, suggestionCache: null, searchTimer: null,
 
         init: () => {
             if ('Notification' in window) Notification.requestPermission();
@@ -2915,10 +2915,11 @@ if (transfers && transfers.length > 0) {
                     // Notify Squad
                     const inSquad = app.currentPicks.some(x => x.element === pid);
                     if (inSquad) {
-                        if (newStats.goals > old.goals) new Notification(`⚽ Goal! ${p.name}`);
-                        if (newStats.assists > old.assists) new Notification(`🅰️ Assist! ${p.name}`);
-                        if (newStats.red_cards > old.red_cards) new Notification(`🟥 Red Card! ${p.name}`);
-                        if (newStats.yellow_cards > old.yellow_cards) new Notification(`🟨 Yellow Card! ${p.name}`);
+                        const icon = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
+                        if (newStats.goals > old.goals) new Notification(`⚽ GOAL! ${p.name}`, { body: `${p.team} • Total: ${el.stats.total_points}pts`, icon });
+                        if (newStats.assists > old.assists) new Notification(`🅰️ ASSIST! ${p.name}`, { body: `${p.team} • Total: ${el.stats.total_points}pts`, icon });
+                        if (newStats.red_cards > old.red_cards) new Notification(`🟥 RED CARD! ${p.name}`, { body: `Sent off for ${p.team}`, icon });
+                        if (newStats.yellow_cards > old.yellow_cards) new Notification(`🟨 Yellow Card! ${p.name}`, { body: `${p.team}`, icon });
                     }
                     app.lastEvents[pid] = newStats;
                 });
@@ -3132,6 +3133,12 @@ if (transfers && transfers.length > 0) {
                     const h = Math.floor((gap % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const m = Math.floor((gap % (1000 * 60 * 60)) / (1000 * 60));
                     const s = Math.floor((gap % (1000 * 60)) / 1000);
+
+                    // 24 Hour Reminder
+                    if (gap <= 86400000 && !app.dayNotified) {
+                        if (Notification.permission === "granted") new Notification(`📅 1 Day to Deadline`, { body: "Check injury news & price changes.", icon: "https://fantasy.premierleague.com/static/libs/theme-legacy/icons/touch-icon-192x192.png" });
+                        app.dayNotified = true;
+                    }
 
                     // 1 Hour Deadline Warning
                     if (gap <= 3600000 && !app.deadlineNotified) {
