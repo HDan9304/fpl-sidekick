@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* Custom FPL Gradient & Fonts */
+        /* --- BRANDING & FONTS --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
         
         body {
@@ -16,52 +16,54 @@
             background-color: #f0f2f5;
         }
         
-        /* FPL Brand Colors */
         .fpl-purple { background-color: #37003c; }
         .fpl-green { color: #00ff85; }
-        .fpl-green-bg { background-color: #00ff85; }
         
-        /* Glassmorphism Card Effect */
+        /* --- UTILITY CLASSES --- */
         .glass-card {
             background: rgba(255, 255, 255, 1);
-            border-radius: 16px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.3);
             transition: transform 0.2s ease;
         }
         .glass-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
         }
         
-        /* New Pitch Background */
+        /* --- PITCH VISUALIZATION --- */
         .pitch-bg {
             background: linear-gradient(180deg, #1a904e 0%, #158043 100%);
             border: 2px solid rgba(255,255,255,0.2);
             position: relative;
+            overflow: hidden;
         }
-        /* Pitch Lines */
+        /* Center Line */
         .pitch-bg::before {
             content: '';
             position: absolute;
             top: 50%; left: 0; right: 0;
             border-top: 1px solid rgba(255,255,255,0.3);
+            z-index: 0;
         }
+        /* Center Circle */
         .pitch-bg::after {
             content: '';
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 80px; height: 80px;
+            width: 100px; height: 100px;
             border: 1px solid rgba(255,255,255,0.3);
             border-radius: 50%;
+            z-index: 0;
         }
     </style>
 </head>
-<body class="bg-gray-100 pb-20">
+<body class="bg-gray-100 min-h-screen">
 
     <nav class="fpl-purple text-white p-4 sticky top-0 z-50 shadow-lg">
-        <div class="max-w-md mx-auto flex justify-between items-center">
+        <div class="max-w-6xl mx-auto flex justify-between items-center px-2">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-shirt text-2xl fpl-green"></i>
                 <h1 class="text-xl font-bold tracking-tight">FPL <span class="fpl-green">Sidekick</span></h1>
@@ -74,90 +76,73 @@
 
     <main class="max-w-6xl mx-auto p-4 space-y-6">
 
-        <div class="fpl-purple rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
-            <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#00ff85] rounded-full opacity-20 blur-2xl"></div>
-            <h2 class="text-2xl font-bold mb-2">Welcome to FPL Sidekick</h2>
-            <p class="text-gray-300 text-sm mb-4">Your elite fantasy companion designed to optimize your rank.</p>
+        <div class="fpl-purple rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-48 h-48 bg-[#00ff85] rounded-full opacity-20 blur-3xl"></div>
             
-            <div class="space-y-2">
-                <div class="flex items-center gap-3 bg-white/10 p-2 rounded-lg">
-                    <i class="fa-solid fa-chart-line fpl-green"></i>
-                    <span class="text-sm font-semibold">Live Price Predictor</span>
+            <div class="relative z-10 md:flex md:justify-between md:items-center">
+                <div class="mb-6 md:mb-0">
+                    <h2 class="text-3xl font-bold mb-2">Welcome to FPL Sidekick</h2>
+                    <p class="text-gray-300 max-w-lg">Your elite fantasy companion. We analyze live data to help you make the smartest transfers and optimize your rank.</p>
                 </div>
-                <div class="flex items-center gap-3 bg-white/10 p-2 rounded-lg">
-                    <i class="fa-solid fa-chess-knight fpl-green"></i>
-                    <span class="text-sm font-semibold">Transfer Planner & Strategy</span>
-                </div>
-                <div class="flex items-center gap-3 bg-white/10 p-2 rounded-lg">
-                    <i class="fa-solid fa-robot fpl-green"></i>
-                    <span class="text-sm font-semibold">AI Points Projections</span>
-                </div>
-            </div>
-        </div>
-
-        <div>
-            <div class="flex justify-between items-end mb-4">
-                <h3 class="text-lg font-bold text-gray-800">The "Template" <span class="text-xs text-gray-500 font-normal ml-1">(Live)</span></h3>
-                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold" id="formation-label">Loading...</span>
-            </div>
-            <div id="template-grid" class="pitch-bg w-full rounded-xl p-4 flex flex-col justify-between h-[600px] shadow-inner">
-                <div class="flex justify-center items-center h-full text-white/50 animate-pulse">
-                    Loading Live Data...
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="flex items-center gap-3 bg-white/10 p-3 rounded-lg backdrop-blur-sm">
+                        <i class="fa-solid fa-chart-line fpl-green text-xl"></i>
+                        <span class="text-sm font-semibold">Live Prices</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-white/10 p-3 rounded-lg backdrop-blur-sm">
+                        <i class="fa-solid fa-chess-knight fpl-green text-xl"></i>
+                        <span class="text-sm font-semibold">Strategy</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-white/10 p-3 rounded-lg backdrop-blur-sm">
+                        <i class="fa-solid fa-robot fpl-green text-xl"></i>
+                        <span class="text-sm font-semibold">AI Points</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-    </main>
-            
-            <p class="text-sm text-gray-300 font-medium uppercase tracking-wider">Next Deadline</p>
-            <h2 class="text-3xl font-bold mt-1">Gameweek 15</h2>
-            <div class="mt-4 flex gap-4">
-                <div class="bg-white/10 backdrop-blur-md rounded-lg p-3 text-center min-w-[70px]">
-                    <span class="block text-2xl font-bold fpl-green" id="days">02</span>
-                    <span class="text-xs text-gray-300">Days</span>
+        <div class="bg-white rounded-xl p-1 shadow-sm border border-gray-200">
+            <div class="p-4 flex justify-between items-end border-b border-gray-100 mb-2">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">The "Template" Team</h3>
+                    <p class="text-xs text-gray-500">Based on highest live ownership %</p>
                 </div>
-                <div class="bg-white/10 backdrop-blur-md rounded-lg p-3 text-center min-w-[70px]">
-                    <span class="block text-2xl font-bold fpl-green" id="hours">14</span>
-                    <span class="text-xs text-gray-300">Hrs</span>
-                </div>
-            </div>
-            <p class="mt-4 text-xs text-gray-400">Sat 28 Dec, 11:00 AM</p>
-        </div>
-
-        <div>
-            <div class="flex justify-between items-end mb-4">
-                <h3 class="text-lg font-bold text-gray-800">Scout Recommendations</h3>
-                <a href="#" class="text-sm text-purple-700 font-semibold">View all</a>
+                <span class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-bold shadow-sm" id="formation-label">Loading...</span>
             </div>
 
-            <div id="player-grid" class="grid grid-cols-1 gap-4">
+            <div id="template-grid" class="pitch-bg w-full rounded-lg flex flex-col justify-between h-[650px] md:h-[750px] p-2 md:p-6 shadow-inner">
+                <div class="flex flex-col justify-center items-center h-full text-white/70 animate-pulse gap-2">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl"></i>
+                    <span class="text-sm font-semibold">Fetching Live FPL Data...</span>
                 </div>
+            </div>
         </div>
 
     </main>
 
     <script>
-        // 1. CONFIGURATION & HELPERS
+        // 1. CONFIGURATION
         const PROXY_URL = "https://api.allorigins.win/raw?url=";
         const FPL_API = "https://fantasy.premierleague.com/api/bootstrap-static/";
         const IMG_URL = "https://resources.premierleague.com/premierleague/photos/players/110x140/p";
 
-        // 2. FETCH LIVE DATA
+        // 2. FETCH DATA FUNCTION
         async function fetchAndRender() {
             try {
-                // Fetch Data via Proxy using Promise.all (Ready for adding more endpoints later)
+                // Use Promise.all to prepare for multiple data sources
                 const [bootstrapData] = await Promise.all([
-                    fetch(PROXY_URL + encodeURIComponent(FPL_API)).then(response => response.json())
+                    fetch(PROXY_URL + encodeURIComponent(FPL_API)).then(res => res.json())
                 ]);
                 
-                // Process: Get Top Owned Players for a 3-5-2 (Standard Template)
+                // DATA PROCESSING
                 const players = bootstrapData.elements.sort((a, b) => parseFloat(b.selected_by_percent) - parseFloat(a.selected_by_percent));
                 const teams = bootstrapData.teams;
-                const teams = data.teams;
                 
+                // Helper to get top players by position
                 const getTop = (posId, count) => players.filter(p => p.element_type === posId).slice(0, count);
                 
-                // Simple logic: Force a 3-5-2 for the Template view
+                // FORCE 3-5-2 FORMATION FOR TEMPLATE VIEW
                 const formation = {
                     GKP: getTop(1, 1),
                     DEF: getTop(2, 3),
@@ -166,15 +151,20 @@
                 };
 
                 renderPitch(formation, teams);
-                document.getElementById('formation-label').innerText = "3-5-2";
+                document.getElementById('formation-label').innerText = "Active: 3-5-2";
 
             } catch (error) {
                 console.error("Error fetching FPL data:", error);
-                document.getElementById('template-grid').innerHTML = '<p class="text-white text-center m-auto">Failed to load live data.</p>';
+                document.getElementById('template-grid').innerHTML = `
+                    <div class="flex flex-col justify-center items-center h-full text-white text-center">
+                        <i class="fa-solid fa-triangle-exclamation text-4xl mb-2 text-yellow-300"></i>
+                        <p class="font-bold">Failed to load data.</p>
+                        <p class="text-xs opacity-70 mt-1">Check your connection or CORS proxy.</p>
+                    </div>`;
             }
         }
 
-        // 3. RENDER PITCH
+        // 3. RENDER PITCH VISUALS
         function renderPitch(formation, teams) {
             const container = document.getElementById('template-grid');
             let html = '';
@@ -182,23 +172,30 @@
             const rows = ['GKP', 'DEF', 'MID', 'FWD'];
 
             rows.forEach(pos => {
-                html += `<div class="flex justify-around items-center w-full">`; // Flex row for each position line
+                // Z-index 10 ensures players sit above the pitch lines
+                html += `<div class="flex justify-around items-center w-full z-10 relative">`; 
                 
                 formation[pos].forEach(p => {
-                    const teamName = teams.find(t => t.id === p.team).short_name;
+                    const teamObj = teams.find(t => t.id === p.team);
+                    const teamName = teamObj ? teamObj.short_name : "UNK";
                     const imageCode = p.code;
                     const price = (p.now_cost / 10).toFixed(1);
                     const ownership = p.selected_by_percent;
 
                     html += `
-                        <div class="flex flex-col items-center w-1/5">
-                            <div class="relative mb-1">
-                                <img src="${IMG_URL}${imageCode}.png" class="w-10 h-12 object-cover" onerror="this.src='https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_0-66.png'">
+                        <div class="flex flex-col items-center w-1/5 group cursor-pointer transition-transform hover:scale-105">
+                            <div class="relative mb-[-5px]">
+                                <img src="${IMG_URL}${imageCode}.png" 
+                                     class="w-12 h-14 md:w-16 md:h-20 object-cover drop-shadow-lg" 
+                                     alt="${p.web_name}"
+                                     onerror="this.src='https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_0-66.png'">
                             </div>
-                            <div class="bg-white/90 backdrop-blur px-2 py-1 rounded text-center w-full max-w-[80px] shadow-sm">
-                                <p class="text-[10px] font-bold truncate leading-tight">${p.web_name}</p>
-                                <p class="text-[9px] text-gray-600">${teamName}</p>
-                                <div class="flex justify-between items-center mt-0.5 border-t border-gray-200 pt-0.5">
+                            
+                            <div class="bg-white/95 backdrop-blur px-2 py-1.5 rounded-lg text-center w-full max-w-[85px] shadow-md border border-gray-200">
+                                <p class="text-[10px] md:text-xs font-bold truncate leading-tight text-gray-800">${p.web_name}</p>
+                                <p class="text-[9px] text-gray-500 uppercase tracking-wide mb-0.5">${teamName}</p>
+                                
+                                <div class="flex justify-between items-center mt-1 border-t border-gray-200 pt-1">
                                     <span class="text-[9px] font-bold text-fpl-purple">£${price}</span>
                                     <span class="text-[8px] text-gray-500">${ownership}%</span>
                                 </div>
@@ -213,7 +210,7 @@
             container.innerHTML = html;
         }
 
-        // 4. INITIALIZE
+        // 4. INIT
         document.addEventListener('DOMContentLoaded', () => {
             fetchAndRender();
         });
