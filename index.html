@@ -2235,7 +2235,12 @@
                                
                                 const outIds = JSON.stringify(s.out.map(p => p.id));
                                 const inIds = JSON.stringify(s.in.map(p => p.id));
-                                const bankRem = (app.currentBank + s.out.reduce((a,b)=>a+b.price,0) - s.in.reduce((a,b)=>a+b.price,0)).toFixed(1);
+                                
+                                // FIX: Use Real Selling Price for Bank Calculation
+                                const bankRem = (app.currentBank + s.out.reduce((a,b)=> {
+                                    const p = app.currentPicks.find(px => px.element === b.id);
+                                    return a + (p && p.selling_price ? p.selling_price/10 : b.price);
+                                },0) - s.in.reduce((a,b)=>a+b.price,0)).toFixed(1);
                                 
                                 let verdict = '';
                                 if (s.type.includes('(-') && s.diff > 6) verdict = '<span style="font-size:0.65rem; font-weight:800; color:#16a34a; background:#dcfce7; padding:2px 6px; border-radius:4px; margin-left:4px;"><i class="fa-regular fa-gem"></i> Worth Hit</span>';
@@ -2576,7 +2581,11 @@
                     simPicks[pickIdx].element = inId;
                     const pOut = app.playersCache[outId];
                     const pIn = app.playersCache[inId];
-                    simBank = simBank + pOut.price - pIn.price;
+                    
+                    // FIX: Use Real Selling Price (Pre-calculated in app.load)
+                    const realSellPrice = (simPicks[pickIdx].selling_price) ? simPicks[pickIdx].selling_price / 10 : pOut.price;
+                    simBank = simBank + realSellPrice - pIn.price;
+
                     simPicks[pickIdx].multiplier = 1; 
                     simPicks[pickIdx].is_captain = false;
                     simPicks[pickIdx].is_vice_captain = false;
