@@ -53,6 +53,34 @@
 
         <div class="fpl-purple rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#00ff85] rounded-full opacity-20 blur-2xl"></div>
+            <h2 class="text-2xl font-bold mb-2">Welcome to FPL Sidekick</h2>
+            <p class="text-gray-300 text-sm mb-4">Your elite fantasy companion designed to optimize your rank.</p>
+            
+            <div class="space-y-2">
+                <div class="flex items-center gap-3 bg-white/10 p-2 rounded-lg">
+                    <i class="fa-solid fa-chart-line fpl-green"></i>
+                    <span class="text-sm font-semibold">Live Price Predictor</span>
+                </div>
+                <div class="flex items-center gap-3 bg-white/10 p-2 rounded-lg">
+                    <i class="fa-solid fa-chess-knight fpl-green"></i>
+                    <span class="text-sm font-semibold">Transfer Planner & Strategy</span>
+                </div>
+                <div class="flex items-center gap-3 bg-white/10 p-2 rounded-lg">
+                    <i class="fa-solid fa-robot fpl-green"></i>
+                    <span class="text-sm font-semibold">AI Points Projections</span>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="flex justify-between items-end mb-4">
+                <h3 class="text-lg font-bold text-gray-800">The "Template" <span class="text-xs text-gray-500 font-normal ml-1">(GW15)</span></h3>
+                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold">3-5-2</span>
+            </div>
+            <div id="template-grid" class="space-y-4"></div>
+        </div>
+
+    </main>
             
             <p class="text-sm text-gray-300 font-medium uppercase tracking-wider">Next Deadline</p>
             <h2 class="text-3xl font-bold mt-1">Gameweek 15</h2>
@@ -82,76 +110,64 @@
     </main>
 
     <script>
-        // 1. MOCK DATA (Simulating the API for now)
-        const mockPlayers = [
-            { 
-                name: "Erling Haaland", 
-                team: "MCI", 
-                position: "FWD", 
-                price: "£14.3m", 
-                points: 112, 
-                form: "8.5",
-                difficulty: 2 // Green fixture
-            },
-            { 
-                name: "Mohamed Salah", 
-                team: "LIV", 
-                position: "MID", 
-                price: "£13.1m", 
-                points: 125, 
-                form: "9.2",
-                difficulty: 3 // Grey fixture
-            },
-            { 
-                name: "Cole Palmer", 
-                team: "CHE", 
-                position: "MID", 
-                price: "£10.8m", 
-                points: 98, 
-                form: "7.1",
-                difficulty: 4 // Red fixture
-            }
-        ];
+        // 1. TEMPLATE DATA (Grouped by Position)
+        const templateTeam = {
+            GKP: [{ name: "Raya", team: "ARS", price: "£5.6m" }],
+            DEF: [
+                { name: "Gabriel", team: "ARS", price: "£6.2m" },
+                { name: "Gvardiol", team: "MCI", price: "£6.0m" },
+                { name: "Ait-Nouri", team: "WOL", price: "£4.7m" }
+            ],
+            MID: [
+                { name: "Salah (C)", team: "LIV", price: "£13.3m" },
+                { name: "Palmer", team: "CHE", price: "£11.0m" },
+                { name: "Saka", team: "ARS", price: "£10.5m" },
+                { name: "Mbeumo", team: "BRE", price: "£7.8m" },
+                { name: "Rogers", team: "AVL", price: "£5.4m" }
+            ],
+            FWD: [
+                { name: "Haaland", team: "MCI", price: "£15.2m" },
+                { name: "Isak", team: "NEW", price: "£8.5m" }
+            ]
+        };
 
         // 2. RENDER FUNCTION
-        function renderPlayers() {
-            const grid = document.getElementById('player-grid');
+        function renderTemplateTeam() {
+            const container = document.getElementById('template-grid');
             let html = '';
 
-            mockPlayers.forEach(player => {
-                // Determine difficulty color
-                let difficultyColor = 'bg-gray-200 text-gray-600';
-                if(player.difficulty <= 2) difficultyColor = 'bg-green-100 text-green-700';
-                if(player.difficulty >= 4) difficultyColor = 'bg-red-100 text-red-700';
-
+            const positions = ['GKP', 'DEF', 'MID', 'FWD'];
+            
+            positions.forEach(pos => {
                 html += `
-                <div class="glass-card p-4 flex items-center justify-between cursor-pointer">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center text-purple-700 font-bold text-lg border-2 border-white shadow-sm">
-                            ${player.position.substring(0,1)}
+                    <div class="relative">
+                        <div class="absolute -left-3 top-3 -rotate-90 w-8 text-center">
+                            <span class="text-[10px] font-bold text-gray-400 tracking-widest">${pos}</span>
                         </div>
-                        <div>
-                            <h4 class="font-bold text-gray-800">${player.name}</h4>
-                            <div class="flex items-center gap-2 text-xs mt-1">
-                                <span class="bg-slate-200 px-2 py-0.5 rounded text-slate-600 font-semibold">${player.team}</span>
-                                <span class="${difficultyColor} px-2 py-0.5 rounded font-semibold">Next: FDR ${player.difficulty}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="block text-sm font-bold text-purple-900">${player.price}</span>
-                        <span class="text-xs text-gray-500">Pts: ${player.points}</span>
-                    </div>
-                </div>
+                        <div class="ml-6 grid grid-cols-1 gap-2">
                 `;
+                
+                templateTeam[pos].forEach(player => {
+                    html += `
+                        <div class="glass-card p-3 flex justify-between items-center border-l-4 ${pos === 'GKP' ? 'border-yellow-400' : pos === 'DEF' ? 'border-blue-400' : pos === 'MID' ? 'border-green-400' : 'border-red-400'}">
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">${player.name}</h4>
+                                <span class="text-xs text-gray-500">${player.team}</span>
+                            </div>
+                            <span class="text-xs font-bold fpl-purple bg-purple-100 px-2 py-1 rounded">${player.price}</span>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
             });
 
-            grid.innerHTML = html;
+            container.innerHTML = html;
         }
 
         // 3. INITIALIZE
         document.addEventListener('DOMContentLoaded', () => {
-            renderPlayers();
+            renderTemplateTeam(); // Updated function call
             console.log("FPL Sidekick Loaded");
         });
     </script>
