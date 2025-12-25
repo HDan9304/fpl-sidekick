@@ -669,8 +669,8 @@
             filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
         }
         .pill-name {
-            font-size: 0.7rem; /* Increased from 0.6rem */
-            font-weight: 700;
+            font-size: 0.75rem; /* Fixed: Larger for readability */
+            font-weight: 750;
             color: #111;
             white-space: nowrap;
             letter-spacing: -0.3px; /* Tighter tracking */
@@ -682,7 +682,7 @@
             padding: 1px 0;
         }
         .pill-data {
-            font-size: 0.65rem; /* Increased from 0.6rem */
+            font-size: 0.7rem; /* Fixed: Minimum legible size */
             color: #444;
             font-weight: 600;
             display: flex;
@@ -2087,6 +2087,15 @@
             app.searchScout('');
             el.focus();
         },
+        
+        updateBank: () => {
+            const current = (app.currentBank).toFixed(1);
+            const newVal = prompt("Sync Bank Balance:\nEnter your exact bank from the Official FPL site (e.g. 1.5):", current);
+            if (newVal !== null && !isNaN(parseFloat(newVal))) {
+                app.currentBank = parseFloat(newVal);
+                app.switchTool('transfers', true); // Refresh view
+            }
+        },
         currentStats: null, isSimulating: false, simNewIds: [], timer: null, statusMap: {},
         viewMode: 'live', ftCount: 1, lastEvents: {}, liveInterval: null, bonusMap: {},
         deadlineNotified: false, fixtureCache: {}, suggestionCache: null, searchTimer: null,
@@ -2191,7 +2200,7 @@
                 // Show Skeleton Loader (Perceived Performance)
                 const headerHtml = `
                     <div style="display:flex; justify-content:space-between; padding:15px; background:white; border-bottom:1px solid var(--border); margin:-15px -15px 15px -15px;">
-                        <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary);">£${bankTxt}m</span></div>
+                        <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Bank: <span style="color:var(--primary); cursor:pointer; border-bottom:1px dashed var(--primary);" onclick="app.updateBank()" title="Click to fix budget">£${bankTxt}m <i class="fa-solid fa-pen" style="font-size:0.7rem;"></i></span></div>
                         <div style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">Free Transfers: <span style="color:${app.ftCount === 5 ? 'var(--primary)' : '#00ff85'}; font-weight:800;">${app.ftCount}</span></div>
                     </div>
                     <div style="padding:0 10px;">
@@ -2413,7 +2422,14 @@
             const players = Object.values(app.playersCache);
             const matches = players.filter(p => p.name.toLowerCase().includes(q) || (p.team && p.team.toLowerCase().includes(q)));
 
-            matches.sort((a,b) => parseFloat(b.form) - parseFloat(a.form));
+            // Fix: Sort by Form first, but fallback to Ownership (sel) if form is low/zero
+            // This ensures returning stars (like Palmer/Saka) appear even if Form is 0.0
+            matches.sort((a,b) => {
+                const fA = parseFloat(a.form);
+                const fB = parseFloat(b.form);
+                if (Math.abs(fA - fB) > 0.5) return fB - fA; // Use Form if difference is significant
+                return parseFloat(b.sel) - parseFloat(a.sel); // Otherwise use Ownership
+            });
             const top20 = matches.slice(0, 20);
             
             let html = '';
