@@ -23,38 +23,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await bootstrapRes.json();     // Main Data
         const fixtures = await fixturesRes.json();  // Fixtures Data (Available for future features)
         
-        // --- A. REAL DEADLINE LOGIC ---
-        // Find the first event (Gameweek) where 'finished' is false
-        const nextGw = data.events.find(event => event.finished === false);
+        // --- A. REAL DEADLINE LOGIC (Live Countdown) ---
+        // Find the first event where the deadline is in the future (ignoring active-but-closed GWs)
+        const now = new Date();
+        const nextGw = data.events.find(event => new Date(event.deadline_time) > now);
         
         if (nextGw) {
             const deadlineDate = new Date(nextGw.deadline_time);
-            const now = new Date();
-            
-            // Format time for user's locale
-            const userTime = deadlineDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const userDay = deadlineDate.toLocaleDateString([], { weekday: 'short' });
 
-            // Calculate hours left
-            const diffMs = deadlineDate - now;
-            const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+            // Update timer every second
+            const updateTimer = () => {
+                const currentTime = new Date();
+                const diffMs = deadlineDate - currentTime;
 
-            // Update DOM
-            deadlineElement.innerHTML = `GW${nextGw.id}: ${userDay} ${userTime} <span style="font-size:0.7em; color:#888;">(${diffHrs}h left)</span>`;
-            
-            // Update Average Score (using previous GW data if available, or current)
-            const currentGw = data.events.find(event => event.is_current === true);
-            if (currentGw) {
-                avgElement.innerText = `${currentGw.average_entry_score} pts`;
-            } else {
-                avgElement.innerText = "-"; // Season break or pre-season
-            }
+                if (diffMs > 0) {
+                    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+                    
+                    // Display: 05d 10h 30m 15s
+                    deadlineElement.innerText = `GW${nextGw.id}: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                } else {
+                    deadlineElement.innerText = "Deadline Passing...";
+                }
+            };
+
+            // Run immediately and then interval
+            updateTimer();
+            setInterval(updateTimer, 1000);
 
         } else {
             deadlineElement.innerText = "Season Finished";
         }
 
-        // --- B. REAL MARKET MOVER (Most Transferred In) ---
+        // --- B. PREVIOUS GW MVP (Replaces Avg Score) ---
+        // Find the last finished gameweek to get the top scorer
+        const lastFinishedGw = data.events.filter(event => event.finished === true).pop();
+        
+        if (lastFinishedGw && lastFinishedGw.top_element_info) {
+            // Find player name using the ID from top_element_info
+            const mvpId = lastFinishedGw.top_element_info.id;
+            const mvpPoints = lastFinishedGw.top_element_info.points;
+            const mvpPlayer = data.elements.find(p => p.id === mvpId);
+            
+            if (mvpPlayer) {
+                avgElement.innerText = `${mvpPlayer.web_name} (${mvpPoints} pts)`;
+            } else {
+                 avgElement.innerText = "-";
+            }
+        } else {
+            avgElement.innerText = "-";
+        }
+
+        // --- C. REAL MARKET MOVER (Most Transferred In) ---
         // We need to look at the 'elements' (players) array
         // Sort by 'transfers_in_event' (current GW transfers)
         const players = data.elements;
@@ -66,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             marketElement.innerHTML = `${topMover.web_name} <span style="font-size:0.7em; color:#00ff85;">+${countK}</span>`;
         }
 
-        // --- C. SCOUT PICK (Still Simulated for now) ---
+        // --- D. SCOUT PICK (Still Simulated for now) ---
         // The bootstrap-static API doesn't give "Scout Picks" directly.
         // We will keep your logic or placeholder here until we build a "Scout" scraper.
         scoutElement.innerText = "Haaland (vs LIV)"; 

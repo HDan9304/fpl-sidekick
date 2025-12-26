@@ -236,7 +236,7 @@ footer {
     backdrop-filter: blur(10px);
     border-radius: 16px;
     padding: 1.2rem;
-    min-height: 110px; /* Forces uniform size */
+    min-height: 130px; /* Increased to fit 3-line content */
     display: flex;
     align-items: center;
     gap: 15px;
