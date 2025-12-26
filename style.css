@@ -154,21 +154,25 @@ footer {
 .nav-burger span { width: 25px; height: 3px; background-color: white; transition: all 0.3s; border-radius: 2px; }
 
 @media (max-width: 768px) {
-    .nav-burger { display: flex; }
+    /* Ensure burger stays on top of the sliding menu */
+    .nav-burger { display: flex; z-index: 1001; position: relative; }
     
     .nav-links {
-        position: absolute; top: 100%; left: 0; width: 100%;
-        background-color: var(--primary-color);
-        flex-direction: column; align-items: center; gap: 0;
-        max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        position: fixed; top: 0; right: 0; height: 100vh; width: 70%; max-width: 300px;
+        background-color: #0f0f0f; /* Darker bg for contrast */
+        flex-direction: column; align-items: center; justify-content: center; gap: 2rem;
+        transform: translateX(100%); /* Hide off-screen to the right */
+        transition: transform 0.3s ease-in-out;
+        box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        z-index: 1000;
+        border-left: 1px solid #333;
     }
     
     .nav-links li { width: 100%; text-align: center; }
-    .nav-links a { display: block; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .nav-links a { display: block; padding: 10px; border: none; font-size: 1.2rem; }
 
-    /* Open State */
-    .nav-toggle:checked ~ .nav-links { max-height: 300px; }
+    /* Open State - Slide in */
+    .nav-toggle:checked ~ .nav-links { transform: translateX(0); }
     
     /* Burger Animation */
     .nav-toggle:checked ~ .nav-burger span:nth-child(1) { transform: rotate(45deg) translate(5px, 6px); }
@@ -192,3 +196,9 @@ footer {
     color: var(--text-muted);
 }
 .tutorial-pill strong { color: var(--accent-color); }
+
+/* --- Gameweek Dashboard --- */
+.stats-strip { background: var(--card-bg); border-bottom: 1px solid #333; padding: 2rem 0; }
+.stats-flex { display: flex; justify-content: space-around; text-align: center; flex-wrap: wrap; gap: 20px; }
+.stat-box span { display: block; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.stat-box strong { font-size: 1.5rem; color: var(--accent-color); font-weight: 800; }
