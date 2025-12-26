@@ -249,6 +249,49 @@ footer {
 .stat-info span { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .stat-info strong { font-size: 1.1rem; color: #fff; font-weight: 700; margin-top: 2px; }
 
+/* --- Template Team Styles --- */
+.template-section { padding: 2rem 0; }
+.template-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+/* Toggle Switch */
+.view-toggle { background: #333; border-radius: 50px; padding: 4px; display: flex; }
+.toggle-btn { background: transparent; border: none; color: #888; padding: 8px 20px; border-radius: 50px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+.toggle-btn.active { background: var(--accent-color); color: #000; }
+
+/* The FPL Pitch (CSS Only) */
+.pitch-container {
+    position: relative; width: 100%; max-width: 600px; height: 750px; margin: 0 auto;
+    background: repeating-linear-gradient(to bottom, #417505, #417505 10%, #4a8505 10%, #4a8505 20%);
+    border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Pitch Markings */
+.pitch-lines div { position: absolute; border: 2px solid rgba(255,255,255,0.4); }
+.box-18 { width: 60%; height: 16%; left: 20%; }
+.box-18.top { top: -2px; border-top: none; }
+.box-18.bottom { bottom: -2px; border-bottom: none; }
+.box-6 { width: 26%; height: 6%; left: 37%; }
+.box-6.top { top: -2px; border-top: none; }
+.box-6.bottom { bottom: -2px; border-bottom: none; }
+.half-line { width: 100%; top: 50%; border-top: 2px solid rgba(255,255,255,0.4); }
+.center-circle { width: 20%; padding-top: 20%; top: 40%; left: 40%; border-radius: 50%; }
+
+/* Player Kit on Pitch */
+.pitch-player { position: absolute; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; width: 80px; }
+.kit-shirt { width: 40px; height: 40px; background: radial-gradient(circle at 30% 30%, #fff, #ddd); border-radius: 8px 8px 15px 15px; box-shadow: 0 4px 5px rgba(0,0,0,0.3); margin-bottom: 5px; position: relative; }
+/* Simple collar */
+.kit-shirt::after { content:''; position:absolute; top:0; left:12px; width:16px; height:6px; background:var(--bg-color); border-radius:0 0 10px 10px; } 
+
+.player-card-small { background: #fff; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 800; text-align: center; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.player-meta { font-size: 0.65rem; color: #555; display: block; margin-top: -2px; }
+
+/* List View */
+.list-container { background: #1a1a1a; border-radius: 12px; padding: 1rem; overflow-x: auto; }
+.player-table { width: 100%; border-collapse: collapse; min-width: 400px; }
+.player-table th { text-align: left; padding: 10px; color: #888; font-size: 0.8rem; border-bottom: 1px solid #333; }
+.player-table td { padding: 12px 10px; border-bottom: 1px solid #252525; }
+
 /* --- Mobile Fix: Force 1 Column Stack --- */
 @media (max-width: 768px) {
     .stats-strip { padding: 0 10px; } /* Add side spacing */

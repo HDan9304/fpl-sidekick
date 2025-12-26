@@ -84,6 +84,46 @@
             </div>
         </div>
     </div>
+
+    <section class="template-section">
+        <div class="container">
+            <div class="template-header">
+                <h2>The "Template" XI <span style="font-size:0.5em; vertical-align:middle; color:#888;">(Highest Owned)</span></h2>
+                <div class="view-toggle">
+                    <button id="btn-pitch" class="toggle-btn active" onclick="toggleView('pitch')">Pitch</button>
+                    <button id="btn-list" class="toggle-btn" onclick="toggleView('list')">List</button>
+                </div>
+            </div>
+
+            <div id="view-pitch" class="pitch-container">
+                <div class="pitch-lines">
+                    <div class="box-18 top"></div>
+                    <div class="box-6 top"></div>
+                    <div class="center-circle"></div>
+                    <div class="half-line"></div>
+                    <div class="box-18 bottom"></div>
+                    <div class="box-6 bottom"></div>
+                </div>
+                <div id="pitch-players" class="pitch-players">
+                    </div>
+            </div>
+
+            <div id="view-list" class="list-container" style="display: none;">
+                <table class="player-table">
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th>Player</th>
+                            <th>Ownership</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody id="list-players">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
                 
     <section class="features">
         <div class="container">

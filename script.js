@@ -114,6 +114,74 @@ document.addEventListener('DOMContentLoaded', async () => {
         cycleScout(); // Run immediately
         setInterval(cycleScout, 4000);
 
+        // --- E. TEMPLATE TEAM (Highest Owned 3-4-3) ---
+        // 1. Get Sorted Lists by Position
+        const getTop = (type, count) => data.elements
+            .filter(p => p.element_type === type)
+            .sort((a, b) => parseFloat(b.selected_by_percent) - parseFloat(a.selected_by_percent))
+            .slice(0, count);
+
+        const gks = getTop(1, 1);  // 1 GK
+        const defs = getTop(2, 3); // 3 DEF
+        const mids = getTop(3, 4); // 4 MID
+        const fwds = getTop(4, 3); // 3 FWD
+        const templateXI = [...gks, ...defs, ...mids, ...fwds];
+
+        // 2. Render Pitch View
+        const pitchContainer = document.getElementById('pitch-players');
+        const rows = [
+            { players: gks, top: '5%' },
+            { players: defs, top: '25%' },
+            { players: mids, top: '55%' },
+            { players: fwds, top: '80%' }
+        ];
+
+        rows.forEach(row => {
+            row.players.forEach((p, index) => {
+                const count = row.players.length;
+                // Calculate Even Spacing (e.g. 1 player = 50%, 3 players = 25%, 50%, 75%)
+                const leftPos = ((index + 1) * (100 / (count + 1))) + '%';
+                
+                const html = `
+                    <div class="pitch-player" style="top: ${row.top}; left: ${leftPos}">
+                        <div class="kit-shirt"></div>
+                        <div class="player-card-small">
+                            <div>${p.web_name}</div>
+                            <span class="player-meta">${p.selected_by_percent}%</span>
+                        </div>
+                    </div>`;
+                pitchContainer.innerHTML += html;
+            });
+        });
+
+        // 3. Render List View
+        const listBody = document.getElementById('list-players');
+        templateXI.forEach(p => {
+            const posName = p.element_type === 1 ? 'GK' : p.element_type === 2 ? 'DEF' : p.element_type === 3 ? 'MID' : 'FWD';
+            listBody.innerHTML += `
+                <tr>
+                    <td><span style="font-size:0.8em; opacity:0.7">${posName}</span></td>
+                    <td style="font-weight:bold">${p.web_name}</td>
+                    <td>${p.selected_by_percent}%</td>
+                    <td>£${(p.now_cost / 10).toFixed(1)}</td>
+                </tr>`;
+        });
+
+        // 4. Toggle Function (Attached to window for HTML access)
+        window.toggleView = (view) => {
+            if (view === 'pitch') {
+                document.getElementById('view-pitch').style.display = 'block';
+                document.getElementById('view-list').style.display = 'none';
+                document.getElementById('btn-pitch').classList.add('active');
+                document.getElementById('btn-list').classList.remove('active');
+            } else {
+                document.getElementById('view-pitch').style.display = 'none';
+                document.getElementById('view-list').style.display = 'block';
+                document.getElementById('btn-pitch').classList.remove('active');
+                document.getElementById('btn-list').classList.add('active');
+            }
+        };
+
     } catch (error) {
         console.error('Error fetching FPL data:', error);
         deadlineElement.innerText = "Error Loading";
