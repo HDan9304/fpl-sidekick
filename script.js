@@ -114,27 +114,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         cycleScout(); // Run immediately
         setInterval(cycleScout, 4000);
 
-        // --- E. TEMPLATE TEAM (Highest Owned 3-4-3) ---
-        // 1. Get Sorted Lists by Position
+        // --- E. TEMPLATE TEAM (Full 15-Man Squad) ---
+        // 1. Get Top Owned (Total 15: 2 GK, 5 DEF, 5 MID, 3 FWD)
         const getTop = (type, count) => data.elements
             .filter(p => p.element_type === type)
             .sort((a, b) => parseFloat(b.selected_by_percent) - parseFloat(a.selected_by_percent))
             .slice(0, count);
 
-        const gks = getTop(1, 1);  // 1 GK
-        const defs = getTop(2, 3); // 3 DEF
-        const mids = getTop(3, 4); // 4 MID
-        const fwds = getTop(4, 3); // 3 FWD
-        const templateXI = [...gks, ...defs, ...mids, ...fwds];
+        const allGks = getTop(1, 2); 
+        const allDefs = getTop(2, 5); 
+        const allMids = getTop(3, 5); 
+        const allFwds = getTop(4, 3);
+        const templateSquad = [...allGks, ...allDefs, ...allMids, ...allFwds];
 
-        // 2. Render Pitch View
+        // 2. Split into XI (3-4-3) and Bench
+        // XI: GK1, DEF1-3, MID1-4, FWD1-3
+        const xi_gks = allGks.slice(0,1);
+        const xi_defs = allDefs.slice(0,3);
+        const xi_mids = allMids.slice(0,4);
+        const xi_fwds = allFwds.slice(0,3); // Play all 3 Fwds
+        
+        // Bench: GK2, DEF4-5, MID5
+        const bench = [allGks[1], allDefs[3], allDefs[4], allMids[4]].filter(Boolean);
+
+        // 3. Render Pitch View (5 Rows including Bench)
         const pitchContainer = document.getElementById('pitch-players');
         const rows = [
-            { players: gks, top: '5%' },
-            { players: defs, top: '25%' },
-            { players: mids, top: '55%' },
-            { players: fwds, top: '80%' }
+            { players: xi_gks, top: '2%' },
+            { players: xi_defs, top: '18%' },
+            { players: xi_mids, top: '38%' },
+            { players: xi_fwds, top: '58%' },
+            { players: bench, top: '82%' } // Bench Area (Darker bg)
         ];
+
+        pitchContainer.innerHTML = ''; // Clear previous
+        rows.forEach(row => {
+            row.players.forEach((p, index) => {
+                const count = row.players.length;
+                const leftPos = ((index + 1) * (100 / (count + 1))) + '%';
+                
+                const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
+
+                const html = `
+                    <div class="pitch-player" style="top: ${row.top}; left: ${leftPos}">
+                        <img src="${kitUrl}" class="kit-img" alt="Kit" onerror="this.src='https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_0-66.png'">
+                        <div class="player-card-small">
+                            <div>${p.web_name}</div>
+                            <span class="player-meta">${p.selected_by_percent}%</span>
+                        </div>
+                    </div>`;
+                pitchContainer.innerHTML += html;
+            });
+        });
+
+        // 4. Render List View
+        const listBody = document.getElementById('list-players');
+        listBody.innerHTML = ''; // Clear previous
+        templateSquad.forEach(p => {
 
         rows.forEach(row => {
             row.players.forEach((p, index) => {
