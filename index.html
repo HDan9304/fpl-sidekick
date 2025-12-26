@@ -53,13 +53,24 @@
                     <strong>GW19: Sat 11:00</strong>
                 </div>
             </div>
+            <div class="container stats-flex">
+            <div class="stat-box">
+                <div class="stat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff85" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div class="stat-info">
+                    <span class="live-pulse">● Live</span>
+                    <span>Next Deadline</span>
+                    <strong id="gw-deadline">Loading...</strong>
+                </div>
+            </div>
             <div class="stat-box">
                 <div class="stat-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff85" stroke-width="2"><path d="M2 12h5l3 5 5-11 4 7h3"/></svg>
                 </div>
                 <div class="stat-info">
-                    <span>Scout Pick</span>
-                    <strong>Salah <span style="font-size:0.8em; color:#888;">(vs LEI)</span></strong>
+                    <span>Scout Recommendation</span>
+                    <strong id="scout-pick">Calculating...</strong>
                 </div>
             </div>
             <div class="stat-box">
@@ -67,13 +78,20 @@
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff85" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
                 </div>
                 <div class="stat-info">
-                    <span>Avg Score</span>
-                    <strong>54 pts</strong>
+                    <span>Predicted Avg</span>
+                    <strong id="avg-score">...</strong>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff85" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                </div>
+                <div class="stat-info">
+                    <span>Top Transfer In</span>
+                    <strong id="market-mover">Analyzing...</strong>
                 </div>
             </div>
         </div>
-    </div>
-
                 
     <section class="features">
         <div class="container">
@@ -102,5 +120,7 @@
         </div>
     </footer>
 
+    <script src="script.js"></script>
 </body>
+
 </html>
