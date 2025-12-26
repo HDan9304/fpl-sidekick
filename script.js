@@ -1,45 +1,75 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     
-    // --- 1. Smart Timezone Deadline ---
     const deadlineElement = document.getElementById('gw-deadline');
-    // Set next deadline (UTC). Example: Jan 4, 2025 at 11:00 UTC
-    const nextDeadlineUTC = new Date('2025-01-04T11:00:00Z');
+    const scoutElement = document.getElementById('scout-pick');
+    const avgElement = document.getElementById('avg-score');
+    const marketElement = document.getElementById('market-mover');
+
+    // 1. Define the API URL through a Proxy (AllOrigins)
+    // We use 'raw' to get the JSON directly.
+    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+    const FPL_API_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/';
     
-    const options = { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false };
-    const userTime = nextDeadlineUTC.toLocaleTimeString([], options);
-    
-    // Calculate hours remaining
-    const now = new Date();
-    const diffMs = nextDeadlineUTC - now;
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    
-    deadlineElement.innerHTML = `${userTime} <span style="font-size:0.7em; color:#888;">(${diffHrs}h left)</span>`;
+    try {
+        // Fetch data from real FPL API via Proxy
+        const response = await fetch(PROXY_URL + encodeURIComponent(FPL_API_URL));
+        
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        
+        // --- A. REAL DEADLINE LOGIC ---
+        // Find the first event (Gameweek) where 'finished' is false
+        const nextGw = data.events.find(event => event.finished === false);
+        
+        if (nextGw) {
+            const deadlineDate = new Date(nextGw.deadline_time);
+            const now = new Date();
+            
+            // Format time for user's locale
+            const userTime = deadlineDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const userDay = deadlineDate.toLocaleDateString([], { weekday: 'short' });
 
+            // Calculate hours left
+            const diffMs = deadlineDate - now;
+            const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
 
-    // --- 2. Scout Pick Formula (Simulated Logic) ---
-    // In the future, this will fetch from an API. 
-    // Logic: Compare 3 players and pick the one with lowest "Fixture Difficulty Rating" (FDR)
-    const candidates = [
-        { name: "Haaland", opponent: "LIV (A)", fdr: 5 },
-        { name: "Salah", opponent: "IPS (H)", fdr: 2 },
-        { name: "Palmer", opponent: "CRY (H)", fdr: 2 }
-    ];
-    
-    // Sort by easiest fixture (lowest FDR)
-    const bestPick = candidates.sort((a, b) => a.fdr - b.fdr)[0];
-    document.getElementById('scout-pick').innerText = `${bestPick.name} vs ${bestPick.opponent}`;
+            // Update DOM
+            deadlineElement.innerHTML = `GW${nextGw.id}: ${userDay} ${userTime} <span style="font-size:0.7em; color:#888;">(${diffHrs}h left)</span>`;
+            
+            // Update Average Score (using previous GW data if available, or current)
+            const currentGw = data.events.find(event => event.is_current === true);
+            if (currentGw) {
+                avgElement.innerText = `${currentGw.average_entry_score} pts`;
+            } else {
+                avgElement.innerText = "-"; // Season break or pre-season
+            }
 
+        } else {
+            deadlineElement.innerText = "Season Finished";
+        }
 
-    // --- 3. Avg Score Prediction (Simulated Logic) ---
-    // Logic: Base score (45) + Random variance based on "tough gameweek" factor
-    const baseScore = 45;
-    const difficultyFactor = Math.floor(Math.random() * 15); // Random number between 0-15
-    const predictedAvg = baseScore + difficultyFactor;
-    document.getElementById('avg-score').innerText = `${predictedAvg} pts`;
+        // --- B. REAL MARKET MOVER (Most Transferred In) ---
+        // We need to look at the 'elements' (players) array
+        // Sort by 'transfers_in_event' (current GW transfers)
+        const players = data.elements;
+        const topMover = players.sort((a, b) => b.transfers_in_event - a.transfers_in_event)[0];
+        
+        if (topMover) {
+            // Convert large numbers to 'k' format (e.g. 150000 -> 150k)
+            const countK = (topMover.transfers_in_event / 1000).toFixed(1) + 'k';
+            marketElement.innerHTML = `${topMover.web_name} <span style="font-size:0.7em; color:#00ff85;">+${countK}</span>`;
+        }
 
+        // --- C. SCOUT PICK (Still Simulated for now) ---
+        // The bootstrap-static API doesn't give "Scout Picks" directly.
+        // We will keep your logic or placeholder here until we build a "Scout" scraper.
+        scoutElement.innerText = "Haaland (vs LIV)"; 
 
-    // --- 4. Market Mover (New Data) ---
-    const topTransfer = { name: "Isak", count: "185k" };
-    document.getElementById('market-mover').innerHTML = `${topTransfer.name} <span style="font-size:0.7em; color:#00ff85;">+${topTransfer.count}</span>`;
-
+    } catch (error) {
+        console.error('Error fetching FPL data:', error);
+        deadlineElement.innerText = "Error Loading";
+        marketElement.innerText = "-";
+        avgElement.innerText = "-";
+    }
 });
