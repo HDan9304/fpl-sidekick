@@ -88,10 +88,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             marketElement.innerHTML = `${topMover.web_name} <span style="font-size:0.7em; color:#00ff85;">+${countK}</span>`;
         }
 
-        // --- D. SCOUT PICK (Still Simulated for now) ---
-        // The bootstrap-static API doesn't give "Scout Picks" directly.
-        // We will keep your logic or placeholder here until we build a "Scout" scraper.
-        scoutElement.innerText = "Haaland (vs LIV)"; 
+        // --- D. SMART SCOUT & DIFFERENTIAL (Form Based) ---
+        // Filter for available players with form data
+        const activePlayers = data.elements.filter(p => p.status === 'a' && parseFloat(p.form) > 0);
+        
+        // 1. Scout Pick: Highest Form (Overall)
+        const bestForm = [...activePlayers].sort((a, b) => parseFloat(b.form) - parseFloat(a.form))[0];
+        
+        // 2. Differential: High Form + Low Ownership (< 10%)
+        const differential = activePlayers
+            .filter(p => parseFloat(p.selected_by_percent) < 10)
+            .sort((a, b) => parseFloat(b.form) - parseFloat(a.form))[0];
+
+        // Toggle display between Scout Pick and Differential every 4 seconds
+        let showDiff = false;
+        const cycleScout = () => {
+            if (showDiff && differential) {
+                scoutElement.innerHTML = `<span style="color:#00e5ff">Diff:</span> ${differential.web_name} <span style="font-size:0.7em; color:#aaa;">(${differential.form})</span>`;
+            } else if (bestForm) {
+                scoutElement.innerHTML = `Form: ${bestForm.web_name} <span style="font-size:0.7em; color:#aaa;">(${bestForm.form})</span>`;
+            }
+            showDiff = !showDiff;
+        };
+        
+        cycleScout(); // Run immediately
+        setInterval(cycleScout, 4000);
 
     } catch (error) {
         console.error('Error fetching FPL data:', error);
