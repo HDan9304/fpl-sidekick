@@ -208,6 +208,9 @@ footer {
     .hero h1 { font-size: 2.2rem; }
     .hero p { font-size: 1rem; }
     .btn { display: block; margin: 10px 0; width: 100%; text-align: center; }
+    
+    /* Force 1 column on mobile */
+    .stats-flex { grid-template-columns: 1fr; }
 }
 
 
@@ -225,7 +228,7 @@ footer {
 
 /* --- Gameweek Dashboard --- */
 .stats-strip { margin-top: -2rem; padding-bottom: 3rem; position: relative; z-index: 10; }
-.stats-flex { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+.stats-flex { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; } /* 2 per line */
 
 .stat-box {
     background: rgba(255, 255, 255, 0.03);
