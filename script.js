@@ -5,18 +5,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const avgElement = document.getElementById('avg-score');
     const marketElement = document.getElementById('market-mover');
 
-    // 1. Define the API URL through a Proxy (AllOrigins)
-    // We use 'raw' to get the JSON directly.
+    // 1. Define the API URLs through a Proxy
     const PROXY_URL = 'https://api.allorigins.win/raw?url=';
-    const FPL_API_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/';
+    const BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/';
+    const FIXTURES_URL = 'https://fantasy.premierleague.com/api/fixtures/?future=1'; // Fetch future fixtures
     
     try {
-        // Fetch data from real FPL API via Proxy
-        const response = await fetch(PROXY_URL + encodeURIComponent(FPL_API_URL));
+        // Fetch BOTH endpoints in parallel using Promise.all
+        const [bootstrapRes, fixturesRes] = await Promise.all([
+            fetch(PROXY_URL + encodeURIComponent(BOOTSTRAP_URL)),
+            fetch(PROXY_URL + encodeURIComponent(FIXTURES_URL))
+        ]);
         
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!bootstrapRes.ok || !fixturesRes.ok) throw new Error('Network response was not ok');
         
-        const data = await response.json();
+        const data = await bootstrapRes.json();     // Main Data
+        const fixtures = await fixturesRes.json();  // Fixtures Data (Available for future features)
         
         // --- A. REAL DEADLINE LOGIC ---
         // Find the first event (Gameweek) where 'finished' is false
