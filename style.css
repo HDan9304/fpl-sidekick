@@ -179,6 +179,7 @@ footer {
     .nav-toggle:checked ~ .nav-burger span:nth-child(2) { opacity: 0; }
     .nav-toggle:checked ~ .nav-burger span:nth-child(3) { transform: rotate(-45deg) translate(5px, -6px); }
 
+    .hero { height: auto; padding: 140px 0 60px 0; } /* Fix gap */
     .hero h1 { font-size: 2.2rem; }
     .hero p { font-size: 1rem; }
     .btn { display: block; margin: 10px 0; width: 100%; text-align: center; }
@@ -198,7 +199,27 @@ footer {
 .tutorial-pill strong { color: var(--accent-color); }
 
 /* --- Gameweek Dashboard --- */
-.stats-strip { background: var(--card-bg); border-bottom: 1px solid #333; padding: 2rem 0; }
-.stats-flex { display: flex; justify-content: space-around; text-align: center; flex-wrap: wrap; gap: 20px; }
-.stat-box span { display: block; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-.stat-box strong { font-size: 1.5rem; color: var(--accent-color); font-weight: 800; }
+.stats-strip { margin-top: -2rem; padding-bottom: 3rem; position: relative; z-index: 10; }
+.stats-flex { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+
+.stat-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.2s;
+}
+.stat-box:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.05); }
+
+.stat-icon { background: rgba(0, 255, 133, 0.1); padding: 10px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.stat-info { display: flex; flex-direction: column; }
+.stat-info span { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-info strong { font-size: 1.1rem; color: #fff; font-weight: 700; margin-top: 2px; }
+
+/* Pulse Animation for "Live" text */
+.live-pulse { color: #ff4d4d !important; font-weight: bold; animation: pulse 1.5s infinite; margin-bottom: 4px; display: inline-block; }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
