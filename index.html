@@ -2110,6 +2110,8 @@
                 document.getElementById('teamID').value = savedId;
                 app.load(savedId);
             }
+            // Fix: Initialize Browser History State
+            history.replaceState({ tool: app.currentTool }, '', '');
         },
 
         fetchUrl: async (targetUrl) => {
@@ -2156,7 +2158,8 @@
             document.getElementById('menuOverlay').classList.toggle('open');
         },
 
-        switchTool: (t, suppressMenu = false) => {
+        switchTool: (t, suppressMenu = false, fromHistory = false) => {
+            if (!fromHistory) history.pushState({ tool: t }, '', ''); // Push new state
             if (!suppressMenu) app.toggleMenu();
             
             app.currentTool = t;
@@ -3558,8 +3561,15 @@ if (transfers && transfers.length > 0) {
 
     function closeModal() { app.closeModal(); }
     
+    // Fix: Handle Browser Back Button
+    window.onpopstate = (event) => {
+        if (event.state && event.state.tool) {
+            app.switchTool(event.state.tool, true, true); // suppressMenu=true, fromHistory=true
+        }
+    };
+
     document.getElementById('playerModalOverlay').addEventListener('click', (e) => { 
-        if (e.target.id === 'playerModalOverlay') closeModal(); 
+        if (e.target.id === 'playerModalOverlay') closeModal();
     });
     
     document.addEventListener('DOMContentLoaded', app.init);
