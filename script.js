@@ -142,9 +142,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Calculate Even Spacing (e.g. 1 player = 50%, 3 players = 25%, 50%, 75%)
                 const leftPos = ((index + 1) * (100 / (count + 1))) + '%';
                 
+                // Construct Official Kit URL (using team_code)
+                const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
+
                 const html = `
                     <div class="pitch-player" style="top: ${row.top}; left: ${leftPos}">
-                        <div class="kit-shirt"></div>
+                        <img src="${kitUrl}" class="kit-img" alt="Kit" onerror="this.src='https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_0-66.png'">
                         <div class="player-card-small">
                             <div>${p.web_name}</div>
                             <span class="player-meta">${p.selected_by_percent}%</span>
