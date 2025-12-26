@@ -165,26 +165,29 @@ footer {
     }
 
     .nav-links {
-        position: fixed; top: 0; right: 0; height: 100vh; width: 80%; max-width: 320px;
-        background: linear-gradient(145deg, rgba(20,20,20,0.98), rgba(40,30,50,0.95)); /* Richer gradient */
-        backdrop-filter: blur(15px);
-        flex-direction: column; align-items: center; justify-content: center; /* Vertically Center */
-        gap: 2rem; /* More breathing room */
-        padding-top: 0; 
+        position: fixed; top: 0; right: 0; height: 100vh; width: 75%; max-width: 300px;
+        background: #121212; /* Clean dark bg */
+        flex-direction: column; align-items: flex-start; justify-content: flex-start; /* Start from top */
+        gap: 0; /* Remove gap, use padding in links */
+        padding-top: 100px; /* Space for top header */
         transform: translateX(100%);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: -10px 0 40px rgba(0,0,0,0.6);
+        transition: transform 0.3s ease-in-out;
+        box-shadow: -5px 0 20px rgba(0,0,0,0.5);
         z-index: 1000;
-        border-left: 1px solid rgba(255,255,255,0.1);
+        border-left: 1px solid #333;
     }
     
-    .nav-links li { width: 80%; }
+    .nav-links li { width: 100%; }
     .nav-links a { 
-        display: block; padding: 18px 0; border-radius: 50px; /* Full rounded pills */
-        font-size: 1.2rem; font-weight: 700; text-align: center; /* Centered Text */
-        color: #fff; background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.05);
+        display: block; padding: 20px 40px; border-radius: 0; /* No pills */
+        font-size: 1.1rem; font-weight: 500; text-align: left; /* Left align */
+        color: var(--text-muted); background: transparent;
+        border: none; border-bottom: 1px solid rgba(255,255,255,0.05);
         transition: all 0.2s;
+    }
+    .nav-links a:hover {
+        background: rgba(255,255,255,0.05); color: var(--accent-color);
+        padding-left: 50px; /* Slide effect */
     }
     .nav-links a:hover { 
         background: rgba(255,255,255,0.08); color: #fff; 

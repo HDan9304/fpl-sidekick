@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const marketElement = document.getElementById('market-mover');
 
     // 1. Define the API URLs through a Proxy
-    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+    // Switching to corsproxy.io for faster response times
+    const PROXY_URL = 'https://corsproxy.io/?';
     const BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/';
     const FIXTURES_URL = 'https://fantasy.premierleague.com/api/fixtures/?future=1'; // Fetch future fixtures
     
