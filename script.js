@@ -137,15 +137,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Bench: GK2, DEF4-5, MID5
         const bench = [allGks[1], allDefs[3], allDefs[4], allMids[4]].filter(Boolean);
 
-        // 3. Render Pitch View (5 Rows including Bench)
+        // 3. Render Pitch View (Adjusted for 3D Perspective)
         const pitchContainer = document.getElementById('pitch-players');
         const rows = [
-            { players: xi_gks, top: '2%' },
-            { players: xi_defs, top: '18%' },
-            { players: xi_mids, top: '38%' },
-            { players: xi_fwds, top: '58%' },
-            { players: bench, top: '82%' } // Bench Area (Darker bg)
-        ];
+            { players: xi_gks, top: '8%' },    // Pushed down slightly
+            { players: xi_defs, top: '22%' },  // Defenders
+            { players: xi_mids, top: '42%' },  // Midfielders
+            { players: xi_fwds, top: '62%' },  // Forwards
+            { players: bench, top: '88%' }     // Bench (Inside dark area)
+        ];        
 
         pitchContainer.innerHTML = ''; // Clear previous
         rows.forEach(row => {
