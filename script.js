@@ -171,31 +171,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const listBody = document.getElementById('list-players');
         listBody.innerHTML = ''; // Clear previous
         templateSquad.forEach(p => {
-
-        rows.forEach(row => {
-            row.players.forEach((p, index) => {
-                const count = row.players.length;
-                // Calculate Even Spacing (e.g. 1 player = 50%, 3 players = 25%, 50%, 75%)
-                const leftPos = ((index + 1) * (100 / (count + 1))) + '%';
-                
-                // Construct Official Kit URL (using team_code)
-                const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}-66.png`;
-
-                const html = `
-                    <div class="pitch-player" style="top: ${row.top}; left: ${leftPos}">
-                        <img src="${kitUrl}" class="kit-img" alt="Kit" onerror="this.src='https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_0-66.png'">
-                        <div class="player-card-small">
-                            <div>${p.web_name}</div>
-                            <span class="player-meta">${p.selected_by_percent}%</span>
-                        </div>
-                    </div>`;
-                pitchContainer.innerHTML += html;
-            });
-        });
-
-        // 3. Render List View
-        const listBody = document.getElementById('list-players');
-        templateXI.forEach(p => {
             const posName = p.element_type === 1 ? 'GK' : p.element_type === 2 ? 'DEF' : p.element_type === 3 ? 'MID' : 'FWD';
             listBody.innerHTML += `
                 <tr>
@@ -206,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </tr>`;
         });
 
-        // 4. Toggle Function (Attached to window for HTML access)
+        // 5. Toggle Function (Attached to window for HTML access)
         window.toggleView = (view) => {
             if (view === 'pitch') {
                 document.getElementById('view-pitch').style.display = 'block';
