@@ -1,9 +1,14 @@
 /* CORE RESET & VARIABLES */
 :root {
-    --fpl-orange: #ff8c00;
+    /* CHANGED: New Vibrant Red-Orange */
+    --fpl-orange: #FF3D00; 
+    
     --fpl-black: #0f0f0f;
     --glass-bg: rgba(20, 20, 20, 0.7);
-    --glass-border: rgba(255, 140, 0, 0.1);
+    
+    /* CHANGED: Updated border color to match the new orange */
+    --glass-border: rgba(255, 61, 0, 0.25); 
+    
     --text-color: #ffffff;
 }
 
@@ -17,11 +22,11 @@
 /* BODY BACKGROUND */
 body {
     background-color: var(--fpl-black);
-    /* Gradient to show off transparency */
+    /* CHANGED: Slightly increased opacity in gradient to show off new color */
     background-image: 
-        radial-gradient(circle at 10% 20%, rgba(255, 140, 0, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(255, 140, 0, 0.1) 0%, transparent 40%);
-    min-height: 150vh; /* Ensures page is scrollable */
+        radial-gradient(circle at 10% 20%, rgba(255, 61, 0, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(255, 61, 0, 0.1) 0%, transparent 40%);
+    min-height: 150vh; 
     color: var(--text-color);
 }
 
@@ -78,6 +83,8 @@ body {
 
 .brand-logo span {
     color: var(--fpl-orange);
+    /* OPTIONAL: Adds a subtle glow to the text for extra vibrancy */
+    text-shadow: 0 0 15px rgba(255, 61, 0, 0.4); 
 }
 
 /* ACCOUNT ICON */
@@ -95,6 +102,8 @@ body {
 
 .account-btn svg {
     stroke: var(--fpl-orange);
+    /* OPTIONAL: Adds a subtle drop shadow to the icon stroke */
+    filter: drop-shadow(0 0 2px rgba(255, 61, 0, 0.5));
     fill: none;
     stroke-width: 2;
     width: 24px;
@@ -102,12 +111,12 @@ body {
 }
 
 .account-btn:hover svg {
-    fill: rgba(255, 140, 0, 0.2);
+    fill: rgba(255, 61, 0, 0.2);
 }
 
 /* PLACEHOLDER CONTENT STYLING */
 .content-placeholder {
-    padding-top: 120px; /* Push content down below header */
+    padding-top: 120px; 
     padding-left: 20px;
     padding-right: 20px;
     text-align: center;
