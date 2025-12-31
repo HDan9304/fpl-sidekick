@@ -480,7 +480,7 @@ body {
     position: relative;
     width: 100%;
     max-width: 500px; /* Constrains width on Desktop */
-    height: 700px; /* Vertical Aspect Ratio */
+    height: 600px; /* Reduced height for better fit */
     margin: 0 auto;
     background: linear-gradient(to bottom, #388E3C 0%, #388E3C 50%, #2E7D32 50%, #2E7D32 100%);
     background-size: 100% 100px; /* Creates stripes */
