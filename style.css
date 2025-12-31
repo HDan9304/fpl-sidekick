@@ -615,3 +615,29 @@ body {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- BENCH STYLES --- */
+.bench-label {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #aaa;
+    letter-spacing: 2px;
+    font-weight: 700;
+}
+
+.bench-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px; /* Spacing between bench players */
+    margin-top: 10px;
+    padding: 15px;
+    
+    /* GLASS BOX CONTAINER */
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+    max-width: 500px; /* Match pitch width */
+    margin-left: auto;
+    margin-right: auto;
+}

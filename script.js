@@ -224,6 +224,13 @@ async function initTemplateTeam() {
         const mids = sorted.filter(p => p.element_type === 3).slice(0, 4);
         const fwds = sorted.filter(p => p.element_type === 4).slice(0, 3);
 
+        // Get Bench (Next Best: 1 GK, 1 MID, 2 DEF)
+        const bench = [
+            ...sorted.filter(p => p.element_type === 1).slice(1, 2), // 2nd GK
+            ...sorted.filter(p => p.element_type === 3).slice(4, 5), // 5th MID
+            ...sorted.filter(p => p.element_type === 2).slice(3, 5)  // 4th & 5th DEF
+        ];
+
         // Render Function
         const renderRow = (players, containerId) => {
             const container = document.getElementById(containerId);
@@ -259,6 +266,7 @@ async function initTemplateTeam() {
         renderRow(defs, 'pitch-def');
         renderRow(mids, 'pitch-mid');
         renderRow(fwds, 'pitch-fwd');
+        renderRow(bench, 'pitch-bench'); // Inject Bench
 
     } catch (error) {
         console.error("Template Team Error:", error);
