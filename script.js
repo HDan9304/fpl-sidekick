@@ -135,17 +135,21 @@ async function initCountdown() {
     
     try {
         container.style.display = 'inline-block'; // Show container
-        
-        // RELIABLE PROXY: AllOrigins (Slower but stable)
-        const proxyUrl = 'https://api.allorigins.win/get?url=';
         const apiUrl = encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/');
-        
-        const response = await fetch(proxyUrl + apiUrl);
-        const data = await response.json();
-        
-        // Parse the inner JSON contents
-        if (!data.contents) throw new Error("Network Error");
-        const fplStatic = JSON.parse(data.contents);
+        let fplStatic;
+
+        try {
+            // 1. Try Fast Proxy
+            const r1 = await fetch('https://corsproxy.io/?' + apiUrl);
+            if (!r1.ok) throw new Error("Blocked");
+            fplStatic = await r1.json();
+        } catch (e) {
+            // 2. Fallback to Reliable Proxy
+            console.log("Fast proxy failed, switching to backup...");
+            const r2 = await fetch('https://api.allorigins.win/get?url=' + apiUrl);
+            const data = await r2.json();
+            fplStatic = JSON.parse(data.contents);
+        }
 
         // Find Next Gameweek
         const nextGw = fplStatic.events.find(event => event.is_next);
@@ -194,14 +198,21 @@ initTemplateTeam();
 // --- TEMPLATE TEAM LOGIC ---
 async function initTemplateTeam() {
     try {
-        // Reuse the direct proxy for speed
-        const proxyUrl = 'https://corsproxy.io/?';
         const apiUrl = encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/');
-        
-        const response = await fetch(proxyUrl + apiUrl);
-        if (!response.ok) return; // Silent fail if API down
-        
-        const data = await response.json();
+        let data;
+
+        try {
+            // 1. Try Fast Proxy
+            const r1 = await fetch('https://corsproxy.io/?' + apiUrl);
+            if (!r1.ok) throw new Error("Blocked");
+            data = await r1.json();
+        } catch (e) {
+            // 2. Fallback to Reliable Proxy
+            const r2 = await fetch('https://api.allorigins.win/get?url=' + apiUrl);
+            const wrapped = await r2.json();
+            data = JSON.parse(wrapped.contents);
+        }
+
         const elements = data.elements; // All players
 
         // Filter and Sort by Ownership % (High to Low)
