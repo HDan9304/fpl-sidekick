@@ -133,3 +133,109 @@ body {
         font-size: 1.5rem;
     }
 }
+
+/* --- SIDEBAR STYLES --- */
+
+/* The Dark Overlay */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8); /* Darker dimming */
+    z-index: 1001; /* Behind sidebar, above header */
+    opacity: 0;
+    pointer-events: none; /* Allows clicking through when hidden */
+    transition: opacity 0.3s ease;
+}
+
+.overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* The Sliding Menu */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px; /* Standard mobile width */
+    height: 100vh;
+    background: var(--fpl-black); /* Solid background for readability */
+    border-right: 1px solid var(--glass-border);
+    z-index: 1002; /* Topmost layer */
+    transform: translateX(-100%); /* Hides it off-screen to the left */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth 'ease-out' */
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar.open {
+    transform: translateX(0);
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    height: 70px; /* Matches main header height */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.menu-title {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--text-color);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: var(--fpl-orange);
+}
+
+/* Navigation Links */
+.nav-links {
+    list-style: none;
+    padding-top: 20px;
+    flex-grow: 1;
+}
+
+.nav-links li a {
+    display: block;
+    padding: 15px 25px;
+    color: #aaaaaa; /* Greyed out initially */
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent; /* Prepare for hover effect */
+}
+
+/* Hover & Active States */
+.nav-links li a:hover, 
+.nav-links li a.active {
+    color: #ffffff;
+    background: linear-gradient(90deg, rgba(255, 61, 0, 0.1) 0%, transparent 100%);
+    border-left: 3px solid var(--fpl-orange); /* THE VIBRANT ACCENT */
+    padding-left: 35px; /* Subtle movement to the right */
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #555;
+    font-size: 0.8rem;
+    text-align: center;
+}
