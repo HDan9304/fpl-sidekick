@@ -1,33 +1,44 @@
 console.log("FPL Sidekick Loaded");
 
-// Select DOM elements
-const accountBtn = document.getElementById('loginToggle');
+// --- SELECT ELEMENTS ---
 const menuBtn = document.getElementById('menuBtn');
+const closeBtn = document.getElementById('closeBtn');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+const accountBtn = document.getElementById('loginToggle');
 
-// State Variables
+// --- SIDEBAR LOGIC ---
+
+// Function to open menu
+function openMenu() {
+    sidebar.classList.add('open');
+    overlay.classList.add('active');
+}
+
+// Function to close menu
+function closeMenu() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+}
+
+// Event Listeners
+menuBtn.addEventListener('click', openMenu);
+closeBtn.addEventListener('click', closeMenu);
+overlay.addEventListener('click', closeMenu); // Close when clicking the dark background
+
+// --- ACCOUNT LOGIC (Kept from previous step) ---
 let isLoggedIn = false;
 
-// 1. Handle Login/Logout Logic
 accountBtn.addEventListener('click', () => {
     if (!isLoggedIn) {
-        // In the future, this will open a modal or redirect to login page
         isLoggedIn = true;
         alert("Success: You are now logged in to FPL Sidekick.");
-        
-        // Optional: Visual feedback (change icon fill)
-        accountBtn.querySelector('svg').style.fill = "#FF3D00"; 
+        accountBtn.querySelector('svg').style.fill = "#FF3D00"; // New Orange
     } else {
         const confirmLogout = confirm("Are you sure you want to log out?");
         if (confirmLogout) {
             isLoggedIn = false;
-            // Optional: Remove visual feedback
             accountBtn.querySelector('svg').style.fill = "none";
         }
     }
-});
-
-// 2. Handle Hamburger Menu (Placeholder Logic)
-menuBtn.addEventListener('click', () => {
-    console.log("Menu button clicked");
-    // We will populate this when we build the sidebar
 });
