@@ -534,8 +534,9 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 85px; /* Slightly tighter width */
-    height: 95px; /* Fixed height for consistency */
+    width: 75px; /* Compact width to fit 4 in a row */
+    height: 90px; /* Adjusted height */
+    flex-shrink: 0; /* Prevents squashing on small screens */
     animation: fadeIn 0.5s ease-out;
     position: relative;
     
@@ -588,12 +589,13 @@ body {
     display: block;
     background: transparent; /* Removed old dark bg */
     color: #fff;
-    font-size: 0.75rem;
+    font-size: 0.65rem; /* Smaller font to fit name */
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     margin-bottom: 2px;
+    max-width: 100%; /* Ensure text truncates */
 }
 
 .player-meta {
