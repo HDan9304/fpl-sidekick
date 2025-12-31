@@ -114,13 +114,49 @@ body {
     fill: rgba(255, 61, 0, 0.2);
 }
 
-/* PLACEHOLDER CONTENT STYLING */
+/* HERO SECTION STYLING */
 .content-placeholder {
-    padding-top: 120px; 
+    padding-top: 140px; /* More space for the header */
     padding-left: 20px;
     padding-right: 20px;
     text-align: center;
-    opacity: 0.6;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.hero-title .highlight {
+    color: var(--fpl-orange);
+}
+
+.hero-desc {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #cccccc;
+    margin-bottom: 30px;
+}
+
+.hero-tags {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.tag {
+    background: rgba(255, 61, 0, 0.1); /* Low opacity orange bg */
+    border: 1px solid var(--fpl-orange);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
 }
 
 /* RESPONSIVE TWEAKS */
