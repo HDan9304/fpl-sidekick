@@ -136,16 +136,16 @@ async function initCountdown() {
     try {
         container.style.display = 'inline-block'; // Show container
         
-        // FASTER PROXY: Direct Stream
-        const proxyUrl = 'https://corsproxy.io/?';
+        // RELIABLE PROXY: AllOrigins (Slower but stable)
+        const proxyUrl = 'https://api.allorigins.win/get?url=';
         const apiUrl = encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/');
         
         const response = await fetch(proxyUrl + apiUrl);
+        const data = await response.json();
         
-        if (!response.ok) throw new Error("Network Error");
-        
-        // Direct JSON parse
-        const fplStatic = await response.json();
+        // Parse the inner JSON contents
+        if (!data.contents) throw new Error("Network Error");
+        const fplStatic = JSON.parse(data.contents);
 
         // Find Next Gameweek
         const nextGw = fplStatic.events.find(event => event.is_next);
