@@ -221,18 +221,27 @@ async function initTemplateTeam() {
             players.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'player-card';
-                // Simple SVG Shirt Path
-                const jerseySvg = `
-                    <svg class="jersey-svg" viewBox="0 0 24 24">
-                        <path d="M16 2 H8 C6.8 2 6 3 6 4 V7 H2 V11 H6 V20 C6 21 7 22 8 22 H16 C17 22 18 21 18 20 V11 H22 V7 H18 V4 C18 3 17.2 2 16 2 Z" />
-                    </svg>
-                `;
+                
+                // Determine Kit Image (GKP has a different file suffix)
+                // element_type 1 = Goalkeeper. Standard suffix = -66.png, GKP suffix = _1-66.png
+                const suffix = p.element_type === 1 ? '_1-66.png' : '-66.png';
+                const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}${suffix}`;
 
                 card.innerHTML = `
                     <div class="jersey-container">
-                        ${jerseySvg}
+                        <img src="${kitUrl}" alt="${p.web_name} Kit" class="jersey-img" onerror="this.style.display='none'">
                     </div>
                     <div class="player-info-box">
+                        <div class="player-name">${p.web_name}</div>
+                        <div class="player-meta">
+                            <span>£${(p.now_cost / 10).toFixed(1)}</span>
+                            <span class="own">${p.selected_by_percent}%</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        };
                         <div class="player-name">${p.web_name}</div>
                         <div class="player-meta">
                             <span>£${(p.now_cost / 10).toFixed(1)}</span>
