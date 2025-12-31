@@ -221,10 +221,24 @@ async function initTemplateTeam() {
             players.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'player-card';
+                // Simple SVG Shirt Path
+                const jerseySvg = `
+                    <svg class="jersey-svg" viewBox="0 0 24 24">
+                        <path d="M16 2 H8 C6.8 2 6 3 6 4 V7 H2 V11 H6 V20 C6 21 7 22 8 22 H16 C17 22 18 21 18 20 V11 H22 V7 H18 V4 C18 3 17.2 2 16 2 Z" />
+                    </svg>
+                `;
+
                 card.innerHTML = `
-                    <div class="kit-icon">${p.now_cost / 10}</div>
-                    <div class="player-name">${p.web_name}</div>
-                    <div class="player-own">${p.selected_by_percent}%</div>
+                    <div class="jersey-container">
+                        ${jerseySvg}
+                    </div>
+                    <div class="player-info-box">
+                        <div class="player-name">${p.web_name}</div>
+                        <div class="player-meta">
+                            <span>£${(p.now_cost / 10).toFixed(1)}</span>
+                            <span class="own">${p.selected_by_percent}%</span>
+                        </div>
+                    </div>
                 `;
                 container.appendChild(card);
             });
