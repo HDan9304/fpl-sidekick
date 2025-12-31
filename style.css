@@ -335,3 +335,32 @@ body {
     background: none; border: none; color: #aaa;
     font-size: 1.5rem; cursor: pointer;
 }
+
+/* --- PROFILE CARD STYLES --- */
+.id-badge {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--fpl-orange);
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+}
+
+.btn-danger {
+    background: rgba(255, 60, 60, 0.2);
+    border: 1px solid #ff3c3c;
+    color: #ff3c3c;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    background: #ff3c3c;
+    color: white;
+}
