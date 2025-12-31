@@ -74,6 +74,29 @@
             </div>
         </section>
     </main>
+    
+    <main class="content-placeholder">
+        </main>
+
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-glass">
+            <h2 style="margin-bottom: 10px;">Welcome Manager</h2>
+            <p style="color: #aaa; margin-bottom: 20px;">Enter your Team ID to sync or take a quick tour.</p>
+            
+            <input type="text" id="teamIdInput" placeholder="Enter FPL Team ID" class="fpl-input">
+            
+            <div class="modal-actions">
+                <button class="btn-primary" id="loginConfirmBtn">Login</button>
+                <button class="btn-outline" id="startTourBtn">Start Tutorial</button>
+            </div>
+            <button class="close-modal-x" id="closeModalX">&times;</button>
+        </div>
+    </div>
+
+    <div class="tour-tooltip" id="tourTooltip">
+        <p id="tourText">Info here</p>
+        <button id="tourNextBtn">Next</button>
+    </div>
 
     <script src="script.js" defer></script>
 </body>
