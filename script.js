@@ -189,3 +189,54 @@ async function initCountdown() {
 
 // Run on Load
 initCountdown();
+initTemplateTeam();
+
+// --- TEMPLATE TEAM LOGIC ---
+async function initTemplateTeam() {
+    try {
+        // Reuse the direct proxy for speed
+        const proxyUrl = 'https://corsproxy.io/?';
+        const apiUrl = encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/');
+        
+        const response = await fetch(proxyUrl + apiUrl);
+        if (!response.ok) return; // Silent fail if API down
+        
+        const data = await response.json();
+        const elements = data.elements; // All players
+
+        // Filter and Sort by Ownership % (High to Low)
+        const sorted = elements.sort((a, b) => parseFloat(b.selected_by_percent) - parseFloat(a.selected_by_percent));
+
+        // Get Top Picks per Position (Standard 3-4-3 Formation)
+        const gkps = sorted.filter(p => p.element_type === 1).slice(0, 1);
+        const defs = sorted.filter(p => p.element_type === 2).slice(0, 3);
+        const mids = sorted.filter(p => p.element_type === 3).slice(0, 4);
+        const fwds = sorted.filter(p => p.element_type === 4).slice(0, 3);
+
+        // Render Function
+        const renderRow = (players, containerId) => {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            players.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.innerHTML = `
+                    <div class="kit-icon">${p.now_cost / 10}</div>
+                    <div class="player-name">${p.web_name}</div>
+                    <div class="player-own">${p.selected_by_percent}%</div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        // Inject into Pitch
+        renderRow(gkps, 'pitch-gkp');
+        renderRow(defs, 'pitch-def');
+        renderRow(mids, 'pitch-mid');
+        renderRow(fwds, 'pitch-fwd');
+
+    } catch (error) {
+        console.error("Template Team Error:", error);
+    }
+}
