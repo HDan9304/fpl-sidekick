@@ -127,3 +127,62 @@ logoutBtn.addEventListener('click', () => {
 // 4. Guide Navigation
 showGuideBtn.addEventListener('click', () => switchView('guide'));
 backToLoginBtn.addEventListener('click', () => switchView('login'));
+
+// --- GAMEWEEK COUNTDOWN LOGIC ---
+async function initCountdown() {
+    const container = document.getElementById('countdownContainer');
+    const label = document.getElementById('gwLabel');
+    
+    try {
+        container.style.display = 'inline-block'; // Show container
+        
+        // Fetch General Data (Events/Gameweeks)
+        const proxyUrl = 'https://api.allorigins.win/get?url=';
+        const apiUrl = encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/');
+        
+        const response = await fetch(proxyUrl + apiUrl);
+        const data = await response.json();
+        const fplStatic = JSON.parse(data.contents);
+
+        // Find Next Gameweek
+        const nextGw = fplStatic.events.find(event => event.is_next);
+
+        if (!nextGw) {
+            label.innerText = "Season Finished";
+            return;
+        }
+
+        label.innerText = `${nextGw.name} Deadline`;
+        const deadlineDate = new Date(nextGw.deadline_time);
+
+        // Start Timer Interval
+        setInterval(() => {
+            const now = new Date();
+            const diff = deadlineDate - now;
+
+            if (diff <= 0) {
+                label.innerText = "Deadline Passed";
+                document.getElementById('cdDays').innerText = "00";
+                document.getElementById('cdHours').innerText = "00";
+                document.getElementById('cdMins').innerText = "00";
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            document.getElementById('cdDays').innerText = days.toString().padStart(2, '0');
+            document.getElementById('cdHours').innerText = hours.toString().padStart(2, '0');
+            document.getElementById('cdMins').innerText = minutes.toString().padStart(2, '0');
+
+        }, 1000);
+
+    } catch (error) {
+        console.error("Countdown Error:", error);
+        label.innerText = "Countdown Unavailable";
+    }
+}
+
+// Run on Load
+initCountdown();
