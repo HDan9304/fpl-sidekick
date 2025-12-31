@@ -242,16 +242,6 @@ async function initTemplateTeam() {
                 container.appendChild(card);
             });
         };
-                        <div class="player-name">${p.web_name}</div>
-                        <div class="player-meta">
-                            <span>£${(p.now_cost / 10).toFixed(1)}</span>
-                            <span class="own">${p.selected_by_percent}%</span>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        };
 
         // Inject into Pitch
         renderRow(gkps, 'pitch-gkp');
