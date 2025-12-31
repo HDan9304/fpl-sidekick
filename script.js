@@ -15,7 +15,7 @@ accountBtn.addEventListener('click', () => {
         alert("Success: You are now logged in to FPL Sidekick.");
         
         // Optional: Visual feedback (change icon fill)
-        accountBtn.querySelector('svg').style.fill = "#ff8c00"; 
+        accountBtn.querySelector('svg').style.fill = "#FF3D00"; 
     } else {
         const confirmLogout = confirm("Are you sure you want to log out?");
         if (confirmLogout) {
