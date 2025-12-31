@@ -77,16 +77,16 @@ loginConfirmBtn.addEventListener('click', async () => {
     loginConfirmBtn.style.opacity = "0.7";
 
     try {
-        // Fetch via CORS Proxy (AllOrigins)
-        const proxyUrl = 'https://api.allorigins.win/get?url=';
+        // FASTER PROXY: Direct Stream via corsproxy.io
+        const proxyUrl = 'https://corsproxy.io/?';
         const apiUrl = encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/`);
         
         const response = await fetch(proxyUrl + apiUrl);
-        const data = await response.json();
         
-        // Parse the inner JSON contents
-        if (!data.contents) throw new Error("Network Error");
-        const fplData = JSON.parse(data.contents);
+        if (!response.ok) throw new Error("Network Error");
+        
+        // Direct JSON parse (No double unwrapping needed)
+        const fplData = await response.json();
 
         if (fplData.detail === "Not found") throw new Error("Invalid Team ID");
 
@@ -136,13 +136,16 @@ async function initCountdown() {
     try {
         container.style.display = 'inline-block'; // Show container
         
-        // Fetch General Data (Events/Gameweeks)
-        const proxyUrl = 'https://api.allorigins.win/get?url=';
+        // FASTER PROXY: Direct Stream
+        const proxyUrl = 'https://corsproxy.io/?';
         const apiUrl = encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/');
         
         const response = await fetch(proxyUrl + apiUrl);
-        const data = await response.json();
-        const fplStatic = JSON.parse(data.contents);
+        
+        if (!response.ok) throw new Error("Network Error");
+        
+        // Direct JSON parse
+        const fplStatic = await response.json();
 
         // Find Next Gameweek
         const nextGw = fplStatic.events.find(event => event.is_next);
