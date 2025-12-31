@@ -77,24 +77,32 @@
 
     <div class="modal-overlay" id="authModal">
         <div class="modal-glass">
-            <h2 style="margin-bottom: 10px;">Welcome Manager</h2>
-            <p style="color: #aaa; margin-bottom: 20px;">Enter your Team ID to sync or take a quick tour.</p>
-            
-            <input type="text" id="teamIdInput" placeholder="Enter FPL Team ID" class="fpl-input">
-            
-            <div class="modal-actions">
-                <button class="btn-primary" id="loginConfirmBtn">Login</button>
-                <button class="btn-outline" id="startTourBtn">Start Tutorial</button>
+            <div id="loginView">
+                <h2 style="margin-bottom: 10px;">Welcome Manager</h2>
+                <p style="color: #aaa; margin-bottom: 20px;">Enter your Team ID to sync.</p>
+                <input type="text" id="teamIdInput" placeholder="Enter FPL Team ID" class="fpl-input">
+                <div class="modal-actions">
+                    <button class="btn-primary" id="loginConfirmBtn">Login</button>
+                    <button class="btn-outline" id="showGuideBtn">Where is my ID?</button>
+                </div>
             </div>
+
+            <div id="guideView" style="display: none; text-align: left;">
+                <h3 style="color: var(--fpl-orange); margin-bottom: 15px;">How to find your ID</h3>
+                <ol style="padding-left: 20px; color: #ccc; line-height: 1.6; margin-bottom: 20px;">
+                    <li>Go to the <a href="https://fantasy.premierleague.com/" target="_blank" style="color:#fff; text-decoration: underline;">FPL Website</a>.</li>
+                    <li>Click on the <strong>"Points"</strong> tab.</li>
+                    <li>Look at the browser URL.</li>
+                    <li>The number after <code>/entry/</code> is your ID.</li>
+                </ol>
+                <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; margin-bottom: 20px; color: #fff; text-align: center;">
+                    .../entry/<span style="color: var(--fpl-orange);">123456</span>/event/...
+                </div>
+                <button class="btn-outline" id="backToLoginBtn" style="width: 100%;">Back to Login</button>
+            </div>
+
             <button class="close-modal-x" id="closeModalX">&times;</button>
         </div>
     </div>
 
-    <div class="tour-tooltip" id="tourTooltip">
-        <p id="tourText">Info here</p>
-        <button id="tourNextBtn">Next</button>
-    </div>
-
     <script src="script.js" defer></script>
-</body>
-</html>

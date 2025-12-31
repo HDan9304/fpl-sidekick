@@ -26,14 +26,16 @@ menuBtn.addEventListener('click', openMenu);
 closeBtn.addEventListener('click', closeMenu);
 overlay.addEventListener('click', closeMenu); // Close when clicking the dark background
 
-// --- MODAL & TUTORIAL LOGIC ---
+// --- MODAL & ID GUIDE LOGIC ---
 const authModal = document.getElementById('authModal');
 const closeModalX = document.getElementById('closeModalX');
 const loginConfirmBtn = document.getElementById('loginConfirmBtn');
-const startTourBtn = document.getElementById('startTourBtn');
-const tourTooltip = document.getElementById('tourTooltip');
-const tourText = document.getElementById('tourText');
-const tourNextBtn = document.getElementById('tourNextBtn');
+
+// View Toggling Elements
+const showGuideBtn = document.getElementById('showGuideBtn');
+const backToLoginBtn = document.getElementById('backToLoginBtn');
+const loginView = document.getElementById('loginView');
+const guideView = document.getElementById('guideView');
 
 let isLoggedIn = false;
 
@@ -45,12 +47,13 @@ accountBtn.addEventListener('click', () => {
             accountBtn.querySelector('svg').style.fill = "none";
         }
     } else {
-        // Open Modal
         authModal.classList.add('active');
+        // Reset to login view when opening
+        loginView.style.display = 'block';
+        guideView.style.display = 'none';
     }
 });
 
-// Close Modal Logic
 closeModalX.addEventListener('click', () => { authModal.classList.remove('active'); });
 
 // 2. Login Action
@@ -64,44 +67,13 @@ loginConfirmBtn.addEventListener('click', () => {
     }
 });
 
-// 3. Tutorial System
-const tourSteps = [
-    { el: 'menuBtn', text: "Use this menu to navigate between Dashboard, Fixtures, and Stats." },
-    { el: 'loginToggle', text: "Click here to Login or manage your FPL Account settings." },
-    { el: 'brand-logo', text: "Welcome to FPL Sidekick. Good luck this season!" }
-];
-
-let currentStep = 0;
-
-startTourBtn.addEventListener('click', () => {
-    authModal.classList.remove('active'); // Close modal
-    currentStep = 0;
-    runTourStep();
+// 3. Toggle Guide Logic
+showGuideBtn.addEventListener('click', () => {
+    loginView.style.display = 'none';
+    guideView.style.display = 'block';
 });
 
-function runTourStep() {
-    if(currentStep >= tourSteps.length) {
-        tourTooltip.style.display = 'none'; // End tour
-        return;
-    }
-
-    const step = tourSteps[currentStep];
-    const targetEl = document.getElementsByClassName(step.el)[0] || document.getElementById(step.el);
-    
-    if(targetEl) {
-        // Calculate Position
-        const rect = targetEl.getBoundingClientRect();
-        
-        tourTooltip.style.display = 'block';
-        tourTooltip.style.top = (rect.bottom + 15) + 'px';
-        // Center tooltip horizontally relative to target
-        tourTooltip.style.left = (rect.left + (rect.width/2) - 100) + 'px'; 
-        
-        tourText.innerText = step.text;
-    }
-}
-
-tourNextBtn.addEventListener('click', () => {
-    currentStep++;
-    runTourStep();
+backToLoginBtn.addEventListener('click', () => {
+    guideView.style.display = 'none';
+    loginView.style.display = 'block';
 });

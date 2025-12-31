@@ -335,30 +335,3 @@ body {
     background: none; border: none; color: #aaa;
     font-size: 1.5rem; cursor: pointer;
 }
-
-/* --- TUTORIAL TOOLTIP --- */
-.tour-tooltip {
-    position: absolute;
-    background: var(--fpl-orange);
-    color: white;
-    padding: 15px;
-    border-radius: 8px;
-    width: 200px;
-    z-index: 3000;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-    display: none; /* Hidden by default */
-}
-/* Little arrow for the tooltip */
-.tour-tooltip::after {
-    content: ''; position: absolute; top: -6px; left: 50%;
-    transform: translateX(-50%);
-    border-left: 6px solid transparent; border-right: 6px solid transparent;
-    border-bottom: 6px solid var(--fpl-orange);
-}
-
-.tour-tooltip button {
-    margin-top: 10px; width: 100%;
-    padding: 6px; border: none; background: white;
-    color: var(--fpl-orange); font-weight: 700;
-    border-radius: 4px; cursor: pointer;
-}
