@@ -103,15 +103,16 @@
 
             <div id="profileView" style="display: none;">
                 <div style="margin-bottom: 20px;">
-                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#FF3D00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                 </div>
-                <h2 style="margin-bottom: 5px;">Login Successful!</h2>
-                <p style="color: #aaa; margin-bottom: 25px;">Active Team ID</p>
                 
-                <div class="id-badge" id="displayTeamId">---</div>
+                <h2 id="displayTeamName" class="team-name-large">Loading...</h2>
+                <p id="displayManagerName" class="manager-name">...</p>
+                
+                <div class="id-badge" id="displayTeamId">ID: ---</div>
                 
                 <button class="btn-danger" id="logoutBtn" style="width: 100%;">Log Out</button>
             </div>

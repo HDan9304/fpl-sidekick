@@ -66,19 +66,48 @@ accountBtn.addEventListener('click', () => {
 
 closeModalX.addEventListener('click', () => { authModal.classList.remove('active'); });
 
-// 2. Login Action
-loginConfirmBtn.addEventListener('click', () => {
+// 2. Login Action (Async with API Fetch)
+loginConfirmBtn.addEventListener('click', async () => {
     const id = document.getElementById('teamIdInput').value;
-    if(id) {
+    if(!id) return;
+
+    // UI Loading State
+    const originalText = loginConfirmBtn.innerText;
+    loginConfirmBtn.innerText = "Verifying...";
+    loginConfirmBtn.style.opacity = "0.7";
+
+    try {
+        // Fetch via CORS Proxy (AllOrigins)
+        const proxyUrl = 'https://api.allorigins.win/get?url=';
+        const apiUrl = encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/`);
+        
+        const response = await fetch(proxyUrl + apiUrl);
+        const data = await response.json();
+        
+        // Parse the inner JSON contents
+        if (!data.contents) throw new Error("Network Error");
+        const fplData = JSON.parse(data.contents);
+
+        if (fplData.detail === "Not found") throw new Error("Invalid Team ID");
+
+        // Success: Update State & UI
         isLoggedIn = true;
         currentTeamId = id;
+
+        document.getElementById('displayTeamName').innerText = fplData.name;
+        document.getElementById('displayManagerName').innerText = `${fplData.player_first_name} ${fplData.player_last_name}`;
+        document.getElementById('displayTeamId').innerText = `ID: ${fplData.id}`;
         
-        // Update UI
         accountBtn.querySelector('svg').style.fill = "#FF3D00";
-        displayTeamId.innerText = id;
-        
-        // Switch to Profile Card
         switchView('profile');
+
+    } catch (error) {
+        alert("Error: Could not retrieve team. Please check your ID.");
+        console.error(error);
+    } finally {
+        // Reset Button
+        loginConfirmBtn.innerText = originalText;
+        loginConfirmBtn.style.opacity = "1";
     }
 });
 

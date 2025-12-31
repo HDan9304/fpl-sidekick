@@ -364,3 +364,19 @@ body {
     background: #ff3c3c;
     color: white;
 }
+
+/* --- DYNAMIC TEXT STYLES --- */
+.team-name-large {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 5px;
+    line-height: 1.2;
+}
+
+.manager-name {
+    font-size: 1rem;
+    color: #aaa;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
