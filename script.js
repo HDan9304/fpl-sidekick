@@ -1,5 +1,8 @@
 console.log("FPL Sidekick Loaded");
 
+// !!! REPLACE THIS WITH YOUR CLOUDFLARE WORKER URL !!!
+const MY_PROXY = 'https://fpl-proxy.harithdanish0309.workers.dev/?url=';
+
 // --- SELECT ELEMENTS ---
 const menuBtn = document.getElementById('menuBtn');
 const closeBtn = document.getElementById('closeBtn');
@@ -77,15 +80,13 @@ loginConfirmBtn.addEventListener('click', async () => {
     loginConfirmBtn.style.opacity = "0.7";
 
     try {
-        // FASTER PROXY: Direct Stream via corsproxy.io
-        const proxyUrl = 'https://corsproxy.io/?';
-        const apiUrl = encodeURIComponent(`https://fantasy.premierleague.com/api/entry/${id}/`);
+        // PRIVATE CLOUDFLARE PROXY
+        const apiUrl = `https://fantasy.premierleague.com/api/entry/${id}/`;
         
-        const response = await fetch(proxyUrl + apiUrl);
+        const response = await fetch(MY_PROXY + apiUrl);
         
         if (!response.ok) throw new Error("Network Error");
         
-        // Direct JSON parse (No double unwrapping needed)
         const fplData = await response.json();
 
         if (fplData.detail === "Not found") throw new Error("Invalid Team ID");
@@ -135,21 +136,11 @@ async function initCountdown() {
     
     try {
         container.style.display = 'inline-block'; // Show container
-        const apiUrl = encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/');
-        let fplStatic;
-
-        try {
-            // 1. Try Fast Proxy
-            const r1 = await fetch('https://corsproxy.io/?' + apiUrl);
-            if (!r1.ok) throw new Error("Blocked");
-            fplStatic = await r1.json();
-        } catch (e) {
-            // 2. Fallback to Reliable Proxy
-            console.log("Fast proxy failed, switching to backup...");
-            const r2 = await fetch('https://api.allorigins.win/get?url=' + apiUrl);
-            const data = await r2.json();
-            fplStatic = JSON.parse(data.contents);
-        }
+        const apiUrl = 'https://fantasy.premierleague.com/api/bootstrap-static/';
+        
+        // Single Fast Request
+        const response = await fetch(MY_PROXY + apiUrl);
+        const fplStatic = await response.json();
 
         // Find Next Gameweek
         const nextGw = fplStatic.events.find(event => event.is_next);
@@ -198,20 +189,11 @@ initTemplateTeam();
 // --- TEMPLATE TEAM LOGIC ---
 async function initTemplateTeam() {
     try {
-        const apiUrl = encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/');
-        let data;
-
-        try {
-            // 1. Try Fast Proxy
-            const r1 = await fetch('https://corsproxy.io/?' + apiUrl);
-            if (!r1.ok) throw new Error("Blocked");
-            data = await r1.json();
-        } catch (e) {
-            // 2. Fallback to Reliable Proxy
-            const r2 = await fetch('https://api.allorigins.win/get?url=' + apiUrl);
-            const wrapped = await r2.json();
-            data = JSON.parse(wrapped.contents);
-        }
+        const apiUrl = 'https://fantasy.premierleague.com/api/bootstrap-static/';
+        
+        // Single Fast Request
+        const response = await fetch(MY_PROXY + apiUrl);
+        const data = await response.json();
 
         window.fplTeams = data.teams; // Save teams globally for lookup
         const elements = data.elements; // All players
@@ -338,19 +320,11 @@ async function openPlayerProfile(player) {
     fixturesList.innerHTML = '<div style="color:#aaa;">Fetching data...</div>';
 
     try {
-        const apiUrl = encodeURIComponent(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
-        let summary;
-
-        // Dual Proxy Fetch
-        try {
-            const r1 = await fetch('https://corsproxy.io/?' + apiUrl);
-            if (!r1.ok) throw new Error("Blocked");
-            summary = await r1.json();
-        } catch (e) {
-            const r2 = await fetch('https://api.allorigins.win/get?url=' + apiUrl);
-            const data = await r2.json();
-            summary = JSON.parse(data.contents);
-        }
+        const apiUrl = `https://fantasy.premierleague.com/api/element-summary/${player.id}/`;
+        
+        // Single Fast Request
+        const response = await fetch(MY_PROXY + apiUrl);
+        const summary = await response.json();
 
         // Render Fixtures
         const upcoming = summary.fixtures.slice(0, 5); // Next 5 games
