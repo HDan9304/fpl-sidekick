@@ -232,7 +232,28 @@ async function initTemplateTeam() {
             ...sorted.filter(p => p.element_type === 2).slice(3, 5)  // 4th & 5th DEF
         ];
 
-        // Render Function
+        // Combine all for List View (Sorted by Position: GKP=1, DEF=2...)
+        const allTemplate = [...gkps, ...defs, ...mids, ...fwds, ...bench].sort((a,b) => a.element_type - b.element_type);
+
+        // --- RENDER LIST VIEW ---
+        const listContainer = document.getElementById('list-content');
+        listContainer.innerHTML = '';
+        const posMap = {1:'GKP', 2:'DEF', 3:'MID', 4:'FWD'};
+
+        allTemplate.forEach(p => {
+            const row = document.createElement('div');
+            row.className = 'list-row';
+            row.onclick = () => openPlayerProfile(p); // Reuse modal logic
+            row.innerHTML = `
+                <div class="col-pos">${posMap[p.element_type]}</div>
+                <div class="col-name">${p.web_name}</div>
+                <div class="col-price">£${(p.now_cost / 10).toFixed(1)}</div>
+                <div class="col-own">${p.selected_by_percent}%</div>
+            `;
+            listContainer.appendChild(row);
+        });
+
+        // --- RENDER PITCH VIEW ---
         const renderRow = (players, containerId) => {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
@@ -272,6 +293,26 @@ async function initTemplateTeam() {
         renderRow(mids, 'pitch-mid');
         renderRow(fwds, 'pitch-fwd');
         renderRow(bench, 'pitch-bench'); // Inject Bench
+
+        // --- TOGGLE LOGIC ---
+        const btnPitch = document.getElementById('btn-view-pitch');
+        const btnList = document.getElementById('btn-view-list');
+        const viewPitch = document.getElementById('view-pitch');
+        const viewList = document.getElementById('view-list');
+
+        btnPitch.onclick = () => {
+            viewPitch.style.display = 'block';
+            viewList.style.display = 'none';
+            btnPitch.classList.add('active');
+            btnList.classList.remove('active');
+        };
+
+        btnList.onclick = () => {
+            viewPitch.style.display = 'none';
+            viewList.style.display = 'block';
+            btnList.classList.add('active');
+            btnPitch.classList.remove('active');
+        };
 
     } catch (error) {
         console.error("Template Team Error:", error);

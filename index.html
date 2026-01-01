@@ -87,23 +87,40 @@
             <h2 class="section-title">The <span class="highlight">Template</span> Team</h2>
             <p class="section-subtitle">Highest ownership players currently in the game.</p>
             
-            <div class="pitch-container">
-                <div class="pitch-lines">
-                    <div class="center-circle"></div>
-                    <div class="half-line"></div>
-                    <div class="box-top"></div>
-                    <div class="box-bottom"></div>
-                </div>
-
-                <div class="formation-row" id="pitch-gkp"></div>
-                <div class="formation-row" id="pitch-def"></div>
-                <div class="formation-row" id="pitch-mid"></div>
-                <div class="formation-row" id="pitch-fwd"></div>
+            <div class="view-toggle-container">
+                <button class="view-toggle-btn active" id="btn-view-pitch">Pitch</button>
+                <button class="view-toggle-btn" id="btn-view-list">List</button>
             </div>
 
-            <div class="bench-label">BENCH</div>
-            <div class="bench-container" id="pitch-bench">
+            <div id="view-pitch">
+                <div class="pitch-container">
+                    <div class="pitch-lines">
+                        <div class="center-circle"></div>
+                        <div class="half-line"></div>
+                        <div class="box-top"></div>
+                        <div class="box-bottom"></div>
+                    </div>
+
+                    <div class="formation-row" id="pitch-gkp"></div>
+                    <div class="formation-row" id="pitch-def"></div>
+                    <div class="formation-row" id="pitch-mid"></div>
+                    <div class="formation-row" id="pitch-fwd"></div>
                 </div>
+
+                <div class="bench-label">BENCH</div>
+                <div class="bench-container" id="pitch-bench"></div>
+            </div>
+
+            <div id="view-list" style="display: none;">
+                <div class="list-header">
+                    <span style="width: 40px;">Pos</span>
+                    <span style="flex-grow: 1; text-align: left;">Player</span>
+                    <span style="width: 60px;">Price</span>
+                    <span style="width: 60px;">Own%</span>
+                </div>
+                <div id="list-content" class="list-content-box">
+                    </div>
+            </div>
         </section>
     </main>
 

@@ -629,20 +629,79 @@ body {
 
 .bench-container {
     display: flex;
-    justify-content: center;
-    gap: 15px; /* Spacing between bench players */
-    margin-top: 10px;
-    padding: 15px;
-    
-    /* GLASS BOX CONTAINER */
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    backdrop-filter: blur(5px);
-    max-width: 500px; /* Match pitch width */
-    margin-left: auto;
+    /* ... existing bench styles ... */
     margin-right: auto;
 }
+
+/* --- VIEW SWITCHER --- */
+.view-toggle-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.view-toggle-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #888;
+    padding: 8px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.view-toggle-btn.active {
+    background: var(--fpl-orange);
+    color: #fff;
+    border-color: var(--fpl-orange);
+    box-shadow: 0 0 15px rgba(255, 61, 0, 0.3);
+}
+
+/* --- LIST VIEW STYLES --- */
+#view-list {
+    max-width: 600px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.list-header {
+    display: flex;
+    padding: 10px 15px;
+    font-size: 0.8rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
+    text-align: right; /* Default alignment for numbers */
+}
+
+.list-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+    text-align: right;
+}
+
+.list-row:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
+}
+
+/* List Columns */
+.col-pos { width: 40px; font-size: 0.7rem; color: #aaa; text-align: left; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; text-align: center; }
+.col-name { flex-grow: 1; text-align: left; font-weight: 600; color: #fff; padding-left: 10px; }
+.col-price { width: 60px; color: #ccc; }
+.col-own { width: 60px; color: var(--fpl-orange); font-weight: 700; }
 
 /* --- PLAYER PROFILE MODAL (RESPONSIVE CONTRACT) --- */
 
