@@ -661,6 +661,12 @@ body {
     padding: 25px 20px 40px 20px; /* Extra bottom padding for phones */
     transform: translateY(100%); /* Start off-screen */
     transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1);
+    
+    /* PERFORMANCE FIXES */
+    backdrop-filter: none !important; /* Turn off expensive blur */
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.5); /* Simple shadow instead */
+    will-change: transform; /* Tell GPU to prepare for movement */
 }
 
 #playerModal.active .pp-glass {
