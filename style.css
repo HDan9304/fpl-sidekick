@@ -644,41 +644,97 @@ body {
     margin-right: auto;
 }
 
-/* --- PLAYER PROFILE MODAL --- */
-.fixture-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
+/* --- PLAYER PROFILE MODAL (RESPONSIVE CONTRACT) --- */
+
+/* 1. MOBILE FIRST (Bottom Sheet Design) */
+#playerModal {
+    align-items: flex-end; /* Align to bottom for mobile */
+    padding: 0;
 }
 
+.pp-glass {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0; /* Rounded top only */
+    background: #1a1a1a; /* Solid dark bg for contrast */
+    border-top: 1px solid var(--fpl-orange);
+    padding: 25px 20px 40px 20px; /* Extra bottom padding for phones */
+    transform: translateY(100%); /* Start off-screen */
+    transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1);
+}
+
+#playerModal.active .pp-glass {
+    transform: translateY(0); /* Slide up */
+}
+
+/* Typography & Layout */
+.pp-header { margin-bottom: 25px; text-align: left; }
+.pp-name { font-size: 1.8rem; line-height: 1.1; color: #fff; margin-bottom: 4px; }
+.pp-team { font-size: 1rem; color: #888; font-weight: 500; }
+.pp-subtitle { 
+    text-align: left; font-size: 0.85rem; text-transform: uppercase; 
+    letter-spacing: 1px; color: #666; margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 8px;
+}
+
+/* Fixture List */
+.fixture-list { display: flex; flex-direction: column; gap: 8px; }
 .fixture-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 10px;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px;
 }
+.fixture-opp { font-size: 0.95rem; font-weight: 500; }
 
-.fixture-opp {
-    font-weight: 500;
+/* FDR Badges */
+.fdr-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 800; min-width: 30px; text-align: center; color: #fff; }
+.fdr-1 { background: #375523; }
+.fdr-2 { background: #01fc7a; color: #000; }
+.fdr-3 { background: #e7e7e7; color: #000; }
+.fdr-4 { background: #ff1751; }
+.fdr-5 { background: #80072d; }
+
+/* 2. DESKTOP EXPERIENCE (≥1024px) */
+@media (min-width: 1024px) {
+    #playerModal {
+        align-items: center; /* Center on screen */
+        padding: 20px;
+    }
+
+    .pp-glass {
+        width: 700px; /* Wide Canvas */
+        max-width: 90%;
+        border-radius: 16px; /* Full rounded corners */
+        background: rgba(20, 20, 20, 0.95); /* Return to Glass */
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        padding: 40px;
+        transform: translateY(20px); /* Subtle fade up */
+        opacity: 0;
+    }
+
+    #playerModal.active .pp-glass {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    /* Two-Column Grid Layout */
+    .pp-grid-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr; /* 40% Left, 60% Right */
+        gap: 40px;
+        align-items: start;
+        text-align: left;
+    }
+
+    .pp-header {
+        margin-bottom: 0;
+        padding-right: 20px;
+        border-right: 1px solid rgba(255,255,255,0.1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .pp-name { font-size: 2.5rem; margin-bottom: 10px; }
+    .pp-team { font-size: 1.2rem; }
 }
-
-.fdr-badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: #fff;
-    min-width: 30px;
-    text-align: center;
-}
-
-/* FDR Colors (Fixture Difficulty Rating) */
-.fdr-1 { background: #375523; } /* Dark Green (Easy) */
-.fdr-2 { background: #01fc7a; color: #000; } /* Green */
-.fdr-3 { background: #e7e7e7; color: #000; } /* Grey */
-.fdr-4 { background: #ff1751; } /* Red */
-.fdr-5 { background: #80072d; } /* Dark Red (Hard) */

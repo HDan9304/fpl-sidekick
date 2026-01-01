@@ -154,15 +154,21 @@
     </div>
 
     <div class="modal-overlay" id="playerModal">
-        <div class="modal-glass">
-            <h2 id="modalPlayerName" style="margin-bottom: 5px;">Loading...</h2>
-            <p id="modalPlayerTeam" style="color: #aaa; margin-bottom: 20px; font-size: 0.9rem;">...</p>
+        <div class="modal-glass pp-glass">
+            <button class="close-modal-x" id="closePlayerModal">&times;</button>
             
-            <h4 style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Upcoming Fixtures</h4>
-            <div id="modalFixtures" class="fixture-list">
+            <div class="pp-grid-wrapper">
+                <div class="pp-header">
+                    <h2 id="modalPlayerName" class="pp-name">Loading...</h2>
+                    <p id="modalPlayerTeam" class="pp-team">...</p>
                 </div>
 
-            <button class="close-modal-x" id="closePlayerModal">&times;</button>
+                <div class="pp-body">
+                    <h4 class="pp-subtitle">Upcoming Fixtures</h4>
+                    <div id="modalFixtures" class="fixture-list">
+                        </div>
+                </div>
+            </div>
         </div>
     </div>
 
