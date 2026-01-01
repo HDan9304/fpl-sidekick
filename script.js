@@ -213,6 +213,7 @@ async function initTemplateTeam() {
             data = JSON.parse(wrapped.contents);
         }
 
+        window.fplTeams = data.teams; // Save teams globally for lookup
         const elements = data.elements; // All players
 
         // Filter and Sort by Ownership % (High to Low)
@@ -245,6 +246,10 @@ async function initTemplateTeam() {
                 const suffix = p.element_type === 1 ? '_1-66.png' : '-66.png';
                 const kitUrl = `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.team_code}${suffix}`;
 
+                // Add Click Event
+                card.onclick = () => openPlayerProfile(p);
+                card.style.cursor = "pointer";
+
                 card.innerHTML = `
                     <div class="jersey-container">
                         <img src="${kitUrl}" alt="${p.web_name} Kit" class="jersey-img" onerror="this.style.display='none'">
@@ -270,5 +275,62 @@ async function initTemplateTeam() {
 
     } catch (error) {
         console.error("Template Team Error:", error);
+    }
+}
+
+// --- PLAYER PROFILE LOGIC ---
+const playerModal = document.getElementById('playerModal');
+const closePlayerModal = document.getElementById('closePlayerModal');
+
+closePlayerModal.addEventListener('click', () => playerModal.classList.remove('active'));
+
+async function openPlayerProfile(player) {
+    playerModal.classList.add('active');
+    document.getElementById('modalPlayerName').innerText = player.web_name;
+    document.getElementById('modalPlayerTeam').innerText = "Loading fixtures...";
+    const fixturesList = document.getElementById('modalFixtures');
+    fixturesList.innerHTML = '<div style="color:#aaa;">Fetching data...</div>';
+
+    try {
+        const apiUrl = encodeURIComponent(`https://fantasy.premierleague.com/api/element-summary/${player.id}/`);
+        let summary;
+
+        // Dual Proxy Fetch
+        try {
+            const r1 = await fetch('https://corsproxy.io/?' + apiUrl);
+            if (!r1.ok) throw new Error("Blocked");
+            summary = await r1.json();
+        } catch (e) {
+            const r2 = await fetch('https://api.allorigins.win/get?url=' + apiUrl);
+            const data = await r2.json();
+            summary = JSON.parse(data.contents);
+        }
+
+        // Render Fixtures
+        const upcoming = summary.fixtures.slice(0, 5); // Next 5 games
+        fixturesList.innerHTML = '';
+        
+        // Update Team Name (Look up from global variable)
+        const team = window.fplTeams.find(t => t.code === player.team_code);
+        document.getElementById('modalPlayerTeam').innerText = team ? team.name : "Premier League";
+
+        upcoming.forEach(fix => {
+            const isHome = fix.is_home;
+            const oppId = isHome ? fix.team_a : fix.team_h;
+            const oppTeam = window.fplTeams.find(t => t.id === oppId);
+            const oppName = oppTeam ? oppTeam.short_name : "UNK";
+            
+            const row = document.createElement('div');
+            row.className = 'fixture-row';
+            row.innerHTML = `
+                <span class="fixture-opp">${isHome ? '(H)' : '(A)'} vs ${oppName}</span>
+                <span class="fdr-badge fdr-${fix.difficulty}">${fix.difficulty}</span>
+            `;
+            fixturesList.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error(error);
+        fixturesList.innerHTML = '<div style="color:red;">Data Unavailable</div>';
     }
 }
