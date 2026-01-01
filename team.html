@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Team - FPL Sidekick</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="fpl-header">
+        <a href="index.html" class="menu-btn" style="text-decoration: none; color: white;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <a href="index.html" class="brand-logo">FPL <span>Sidekick</span></a>
+        <div style="width: 24px;"></div> </header>
+
+    <main class="content-placeholder">
+        
+        <div id="loadingState" style="margin-top: 50px;">
+            <h2>Loading Team...</h2>
+        </div>
+
+        <div id="errorState" style="display: none; margin-top: 50px;">
+            <h2 style="color: #ff3c3c;">No Team Found</h2>
+            <p style="color: #aaa; margin-bottom: 20px;">Please login on the Dashboard first.</p>
+            <a href="index.html" class="btn-primary" style="text-decoration: none;">Go to Dashboard</a>
+        </div>
+
+        <div id="teamContent" style="display: none;">
+            <div class="id-badge" id="teamNameDisplay" style="margin-top: 20px; border: none; background: none; padding: 0; color: #fff;">
+                Team Name
+            </div>
+            <p id="managerNameDisplay" style="color: #888; margin-bottom: 20px;">Manager Name</p>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-label">GW Points</span>
+                    <span class="stat-value highlight" id="gwPoints">--</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Total Points</span>
+                    <span class="stat-value" id="totalPoints">--</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Overall Rank</span>
+                    <span class="stat-value" id="overallRank">--</span>
+                </div>
+            </div>
+            
+            <p style="font-size: 0.8rem; color: #555;">More stats coming soon...</p>
+        </div>
+
+    </main>
+
+    <script src="team.js"></script>
+</body>
+</html>
