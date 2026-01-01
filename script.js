@@ -94,6 +94,7 @@ loginConfirmBtn.addEventListener('click', async () => {
         // Success: Update State & UI
         isLoggedIn = true;
         currentTeamId = id;
+        localStorage.setItem('fplTeamId', id); // Save ID
 
         document.getElementById('displayTeamName').innerText = fplData.name;
         document.getElementById('displayManagerName').innerText = `${fplData.player_first_name} ${fplData.player_last_name}`;
@@ -103,7 +104,8 @@ loginConfirmBtn.addEventListener('click', async () => {
         switchView('profile');
 
     } catch (error) {
-        alert("Error: Could not retrieve team. Please check your ID.");
+        // Only alert if the modal is open (prevents alerts during auto-login)
+        if (authModal.classList.contains('active')) alert("Error: Could not retrieve team. Please check your ID.");
         console.error(error);
     } finally {
         // Reset Button
@@ -116,6 +118,7 @@ loginConfirmBtn.addEventListener('click', async () => {
 logoutBtn.addEventListener('click', () => {
     isLoggedIn = false;
     currentTeamId = null;
+    localStorage.removeItem('fplTeamId'); // Clear ID
     
     // Reset UI
     accountBtn.querySelector('svg').style.fill = "none";
@@ -185,6 +188,13 @@ async function initCountdown() {
 // Run on Load
 initCountdown();
 initTemplateTeam();
+
+// Auto-Login if ID saved
+const savedId = localStorage.getItem('fplTeamId');
+if (savedId) {
+    document.getElementById('teamIdInput').value = savedId;
+    loginConfirmBtn.click(); // Trigger login logic
+}
 
 // --- TEMPLATE TEAM LOGIC ---
 async function initTemplateTeam() {
