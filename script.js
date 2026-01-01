@@ -282,10 +282,15 @@ async function initTemplateTeam() {
 const playerModal = document.getElementById('playerModal');
 const closePlayerModal = document.getElementById('closePlayerModal');
 
-closePlayerModal.addEventListener('click', () => playerModal.classList.remove('active'));
+closePlayerModal.addEventListener('click', () => {
+    playerModal.classList.remove('active');
+    document.body.style.overflow = ''; // Restore Background Scroll
+});
 
 async function openPlayerProfile(player) {
     playerModal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Lock Background Scroll
+    
     document.getElementById('modalPlayerName').innerText = player.web_name;
     document.getElementById('modalPlayerTeam').innerText = "Loading fixtures...";
     const fixturesList = document.getElementById('modalFixtures');
