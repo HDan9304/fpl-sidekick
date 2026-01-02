@@ -845,38 +845,73 @@ body {
     }
 }
 
-/* --- MY TEAM PAGE STYLES --- */
+/* --- MY TEAM PAGE STYLES (PREMIUM HUD) --- */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
-    margin-top: 30px;
-    margin-bottom: 40px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Wider boxes */
+    gap: 20px;
+    margin-top: 40px;
+    margin-bottom: 50px;
 }
 
 .stat-box {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 20px 10px;
+    background: linear-gradient(145deg, rgba(30,30,30,0.9), rgba(15,15,15,0.95));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 25px 20px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+    backdrop-filter: blur(10px);
+}
+
+.stat-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    border-color: rgba(255,255,255,0.2);
+}
+
+/* Special Styling for the Main "GW Points" Box */
+.stat-box.hero-box {
+    border: 1px solid rgba(255, 61, 0, 0.3);
+    background: linear-gradient(145deg, rgba(40,20,20,0.9), rgba(15,15,15,0.95));
+    box-shadow: 0 0 20px rgba(255, 61, 0, 0.15);
+}
+
+.stat-icon {
+    background: rgba(255,255,255,0.05);
+    width: 50px; height: 50px;
     border-radius: 12px;
-    text-align: center;
-    backdrop-filter: blur(5px);
+    display: flex; align-items: center; justify-content: center;
+    color: #888;
+}
+
+.hero-box .stat-icon {
+    color: var(--fpl-orange);
+    background: rgba(255, 61, 0, 0.15);
 }
 
 .stat-label {
     display: block;
     color: #888;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 5px;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    margin-bottom: 2px;
 }
 
 .stat-value {
     display: block;
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 800;
     color: #fff;
+    line-height: 1;
 }
 
-.stat-value.highlight { color: var(--fpl-orange); }
+.highlight-neon {
+    color: var(--fpl-orange);
+    text-shadow: 0 0 15px rgba(255, 61, 0, 0.4);
+}
